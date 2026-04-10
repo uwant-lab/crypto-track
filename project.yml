@@ -26,8 +26,33 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         GENERATE_INFOPLIST_FILE: true
         SWIFT_EMIT_LOC_STRINGS: true
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "앱 잠금 해제를 위해 Face ID를 사용합니다."
       configs:
         debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
         release:
           SWIFT_COMPILATION_MODE: wholemodule
+
+  CryptoTrackTests_iOS:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: CryptoTrackTests
+    dependencies:
+      - target: CryptoTrack_iOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cryptotrack.tests
+        GENERATE_INFOPLIST_FILE: true
+
+  CryptoTrackTests_macOS:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: CryptoTrackTests
+    dependencies:
+      - target: CryptoTrack_macOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cryptotrack.tests
+        GENERATE_INFOPLIST_FILE: true
