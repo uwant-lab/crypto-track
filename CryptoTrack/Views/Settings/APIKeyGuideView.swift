@@ -18,11 +18,9 @@ struct APIKeyGuideView: View {
                 }
                 .padding(20)
             }
-            .background(.background)
+            .background(AppColor.background)
             .navigationTitle("API 키 발급 안내")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("닫기") { dismiss() }
@@ -69,7 +67,7 @@ struct APIKeyGuideView: View {
                     stepRow(number: index + 1, text: step, isLast: index == guide.steps.count - 1)
                 }
             }
-            .background(Color.secondary.opacity(0.12))
+            .background(AppColor.secondaryBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
@@ -174,15 +172,7 @@ struct APIKeyGuideView: View {
     }
 
     private var exchangeColor: Color {
-        switch guide.exchange {
-        case .upbit: .blue
-        case .binance: .yellow
-        case .bithumb: .orange
-        case .bybit: .purple
-        case .coinone: .green
-        case .korbit: .cyan
-        case .okx: .indigo
-        }
+        AppColor.exchange(guide.exchange)
     }
 }
 

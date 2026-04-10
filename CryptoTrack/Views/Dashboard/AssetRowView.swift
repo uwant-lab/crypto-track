@@ -8,7 +8,7 @@ struct AssetRowView: View {
     let profitRate: Double
 
     private var isProfitable: Bool { profit >= 0 }
-    private var profitColor: Color { isProfitable ? .green : .red }
+    private var profitColor: Color { isProfitable ? AppColor.profit : AppColor.loss }
     private var profitSign: String { isProfitable ? "+" : "" }
 
     var body: some View {
@@ -73,15 +73,7 @@ struct AssetRowView: View {
     // MARK: - Helpers
 
     private func badgeColor(for exchange: Exchange) -> Color {
-        switch exchange {
-        case .upbit:    return .blue
-        case .binance:  return .yellow
-        case .bithumb:  return .orange
-        case .bybit:    return .purple
-        case .coinone:  return .green
-        case .korbit:   return .red
-        case .okx:      return .teal
-        }
+        AppColor.exchange(exchange)
     }
 }
 

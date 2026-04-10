@@ -5,17 +5,9 @@ struct LockScreenView: View {
     @State private var errorMessage: String? = nil
     @State private var isAuthenticating = false
 
-    private var backgroundColor: Color {
-        #if os(macOS)
-        Color(nsColor: .windowBackgroundColor)
-        #else
-        Color(uiColor: .systemBackground)
-        #endif
-    }
-
     var body: some View {
         ZStack {
-            backgroundColor
+            AppColor.background
                 .ignoresSafeArea()
 
             VStack(spacing: 32) {
