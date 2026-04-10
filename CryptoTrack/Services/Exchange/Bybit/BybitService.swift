@@ -79,6 +79,37 @@ final class BybitService: ExchangeService {
         return tickers
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// Bybit API: GET /v5/market/kline
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let interval: String
+        switch timeframe {
+        case .minute1: interval = "1"
+        case .minute5: interval = "5"
+        case .minute15: interval = "15"
+        case .hour1: interval = "60"
+        case .hour4: interval = "240"
+        case .day1: interval = "D"
+        case .week1: interval = "W"
+        case .month1: interval = "M"
+        }
+
+        let tradingPair = symbol.uppercased() + "USDT"
+        let queryString = "category=spot&symbol=\(tradingPair)&interval=\(interval)&limit=\(limit)"
+        let request = try buildRequest(path: "/v5/market/kline", queryString: queryString)
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(BybitResponse<BybitKlineResult>.self, from: data)
+        try validateRetCode(decoded.retCode, message: decoded.retMsg)
+
+        guard let result = decoded.result else { return [] }
+        return result
+            .toKlines(symbol: symbol.uppercased(), timeframe: timeframe)
+            .sorted { $0.timestamp < $1.timestamp }
+    }
+
     /// API 키 유효성을 검증합니다.
     /// Bybit API: GET /v5/account/wallet-balance 호출 성공 여부로 판단합니다.
     func validateConnection() async throws -> Bool {

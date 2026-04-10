@@ -126,6 +126,61 @@ final class BithumbService: ExchangeService, Sendable {
         }
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// Bithumb API: GET /public/candlestick/{symbol}_KRW/{timeframe}
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let interval: String
+        switch timeframe {
+        case .minute1: interval = "1m"
+        case .minute5: interval = "5m"
+        case .minute15: interval = "15m"
+        case .hour1: interval = "1h"
+        case .hour4: interval = "4h"
+        case .day1: interval = "24h"
+        case .week1: interval = "24h"  // 빗썸은 주봉 미지원, 일봉으로 대체
+        case .month1: interval = "24h" // 빗썸은 월봉 미지원, 일봉으로 대체
+        }
+
+        let uppercasedSymbol = symbol.uppercased()
+        guard let url = URL(string: "\(baseURL)/public/candlestick/\(uppercasedSymbol)_KRW/\(interval)") else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.networkError(error)
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(BithumbCandlestickResponse.self, from: data)
+            guard decoded.isSuccess else {
+                throw BithumbServiceError.apiError(decoded.status, nil)
+            }
+            let klines = decoded.data
+                .compactMap { BithumbCandleValue.toKline(from: $0, symbol: uppercasedSymbol, timeframe: timeframe) }
+                .sorted { $0.timestamp < $1.timestamp }
+            // limit 제한 적용 (최신 N개)
+            if klines.count > limit {
+                return Array(klines.suffix(limit))
+            }
+            return klines
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func fetchSingleTicker(symbol: String) async throws -> Ticker {

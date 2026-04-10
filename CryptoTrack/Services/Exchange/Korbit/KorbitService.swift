@@ -138,6 +138,11 @@ final class KorbitService: ExchangeService, Sendable {
         }
     }
 
+    /// 캔들스틱 데이터 조회 — Korbit은 캔들 API 미지원
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        throw KorbitServiceError.unsupportedOperation("Korbit은 캔들스틱 API를 지원하지 않습니다.")
+    }
+
     // MARK: - Private Helpers
 
     private func validateHTTPResponse(_ response: URLResponse) throws {
@@ -158,6 +163,7 @@ enum KorbitServiceError: LocalizedError {
     case httpError(Int)
     case networkError(Error)
     case decodingFailed(Error)
+    case unsupportedOperation(String)
 
     var errorDescription: String? {
         switch self {
@@ -171,6 +177,8 @@ enum KorbitServiceError: LocalizedError {
             return "네트워크 오류: \(error.localizedDescription)"
         case .decodingFailed(let error):
             return "데이터 파싱에 실패했습니다: \(error.localizedDescription)"
+        case .unsupportedOperation(let message):
+            return message
         }
     }
 }

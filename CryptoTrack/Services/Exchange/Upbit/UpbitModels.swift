@@ -38,6 +38,29 @@ struct UpbitTicker: Decodable, Sendable {
     }
 }
 
+// MARK: - Kline (GET /v1/candles/...)
+
+/// Upbit 캔들스틱 응답 모델
+struct UpbitKline: Decodable, Sendable {
+    let candleDateTimeKst: String
+    let openingPrice: Double
+    let highPrice: Double
+    let lowPrice: Double
+    let tradePrice: Double
+    let candleAccTradeVolume: Double
+    let timestamp: Int64
+
+    enum CodingKeys: String, CodingKey {
+        case candleDateTimeKst = "candle_date_time_kst"
+        case openingPrice = "opening_price"
+        case highPrice = "high_price"
+        case lowPrice = "low_price"
+        case tradePrice = "trade_price"
+        case candleAccTradeVolume = "candle_acc_trade_volume"
+        case timestamp
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension UpbitAccount {
@@ -70,6 +93,25 @@ extension UpbitTicker {
             volume24h: accTradeVolume24h,
             exchange: .upbit,
             timestamp: date
+        )
+    }
+}
+
+extension UpbitKline {
+    /// Upbit 캔들 응답을 공통 Kline 모델로 변환합니다.
+    func toKline(symbol: String, timeframe: ChartTimeframe) -> Kline {
+        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+        return Kline(
+            id: "upbit-\(symbol)-\(timestamp)",
+            timestamp: date,
+            open: openingPrice,
+            high: highPrice,
+            low: lowPrice,
+            close: tradePrice,
+            volume: candleAccTradeVolume,
+            timeframe: timeframe,
+            exchange: .upbit,
+            symbol: symbol
         )
     }
 }

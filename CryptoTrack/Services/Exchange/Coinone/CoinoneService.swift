@@ -119,6 +119,65 @@ final class CoinoneService: ExchangeService, Sendable {
         }
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// Coinone API: GET /public/v2/chart/KRW/{symbol}
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let interval: String
+        switch timeframe {
+        case .minute1: interval = "1m"
+        case .minute5: interval = "5m"
+        case .minute15: interval = "15m"
+        case .hour1: interval = "1h"
+        case .hour4: interval = "4h"
+        case .day1: interval = "1d"
+        case .week1, .month1:
+            // Coinone은 주봉/월봉 미지원, 빈 배열 반환
+            return []
+        }
+
+        let upperSymbol = symbol.uppercased()
+        guard var components = URLComponents(string: "\(baseURL)/public/v2/chart/KRW/\(upperSymbol)") else {
+            throw CoinoneServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "interval", value: interval),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw CoinoneServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.networkError(error)
+        }
+
+        do {
+            let response = try JSONDecoder().decode(CoinoneChartResponse.self, from: data)
+            guard response.result == "success" else {
+                let code = response.errorCode ?? "알 수 없음"
+                throw CoinoneServiceError.apiError(code)
+            }
+            return (response.chart ?? [])
+                .map { $0.toKline(symbol: upperSymbol, timeframe: timeframe) }
+                .sorted { $0.timestamp < $1.timestamp }
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func fetchSingleTicker(symbol: String) async throws -> Ticker? {

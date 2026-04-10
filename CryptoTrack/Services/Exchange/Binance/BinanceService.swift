@@ -60,6 +60,39 @@ final class BinanceService: ExchangeService {
         }
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// Binance API: GET /api/v3/klines
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let interval: String
+        switch timeframe {
+        case .minute1: interval = "1m"
+        case .minute5: interval = "5m"
+        case .minute15: interval = "15m"
+        case .hour1: interval = "1h"
+        case .hour4: interval = "4h"
+        case .day1: interval = "1d"
+        case .week1: interval = "1w"
+        case .month1: interval = "1M"
+        }
+
+        let tradingPair = symbol.uppercased() + "USDT"
+        let queryItems = [
+            URLQueryItem(name: "symbol", value: tradingPair),
+            URLQueryItem(name: "interval", value: interval),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        let request = try buildRequest(path: "/api/v3/klines", queryItems: queryItems)
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let rows = try JSONDecoder().decode([[JSONValue]].self, from: data)
+        return rows
+            .compactMap { BinanceKline.parse(from: $0) }
+            .map { $0.toKline(symbol: symbol.uppercased(), timeframe: timeframe) }
+            .sorted { $0.timestamp < $1.timestamp }
+    }
+
     /// API 키 유효성을 검증합니다.
     /// Binance API: GET /api/v3/account 호출 성공 여부로 판단합니다.
     func validateConnection() async throws -> Bool {

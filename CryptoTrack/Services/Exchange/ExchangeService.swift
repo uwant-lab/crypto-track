@@ -46,6 +46,14 @@ protocol ExchangeService: Sendable {
     /// API 연결 상태를 확인합니다.
     /// - Returns: 연결 성공 여부
     func validateConnection() async throws -> Bool
+
+    /// 캔들스틱(Kline) 데이터를 조회합니다.
+    /// - Parameters:
+    ///   - symbol: 조회할 심볼 (예: "BTC")
+    ///   - timeframe: 봉 간격
+    ///   - limit: 최대 조회 개수
+    /// - Returns: 공통 Kline 모델 배열 (시간순 정렬)
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline]
 }
 
 extension ExchangeService {
