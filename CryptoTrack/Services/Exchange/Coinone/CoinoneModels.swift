@@ -62,6 +62,57 @@ struct CoinoneTicker: Decodable, Sendable {
     }
 }
 
+// MARK: - Kline Response
+
+/// Coinone GET /public/v2/chart/KRW/{symbol} 응답 모델
+struct CoinoneChartResponse: Decodable, Sendable {
+    let result: String
+    let errorCode: String?
+    let chart: [CoinoneCandle]?
+
+    enum CodingKeys: String, CodingKey {
+        case result
+        case errorCode = "error_code"
+        case chart
+    }
+}
+
+struct CoinoneCandle: Decodable, Sendable {
+    let timestamp: String
+    let open: String
+    let high: String
+    let low: String
+    let close: String
+    let targetVolume: String
+
+    enum CodingKeys: String, CodingKey {
+        case timestamp
+        case open
+        case high
+        case low
+        case close
+        case targetVolume = "target_volume"
+    }
+}
+
+extension CoinoneCandle {
+    func toKline(symbol: String, timeframe: ChartTimeframe) -> Kline {
+        let ts = Double(timestamp) ?? 0
+        return Kline(
+            id: "coinone-\(symbol)-\(timestamp)",
+            timestamp: Date(timeIntervalSince1970: ts / 1000),
+            open: Double(open) ?? 0,
+            high: Double(high) ?? 0,
+            low: Double(low) ?? 0,
+            close: Double(close) ?? 0,
+            volume: Double(targetVolume) ?? 0,
+            timeframe: timeframe,
+            exchange: .coinone,
+            symbol: symbol
+        )
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension CoinoneBalance {

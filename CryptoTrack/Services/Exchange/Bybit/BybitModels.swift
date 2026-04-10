@@ -49,6 +49,41 @@ struct BybitTicker: Decodable {
     let volume24h: String
 }
 
+// MARK: - Kline Response
+
+/// Bybit GET /v5/market/kline 응답 모델
+struct BybitKlineResult: Decodable {
+    let list: [[String]]
+}
+
+extension BybitKlineResult {
+    /// Bybit kline 응답 [[timestamp, open, high, low, close, volume], ...]을 Kline 배열로 변환합니다.
+    func toKlines(symbol: String, timeframe: ChartTimeframe) -> [Kline] {
+        list.compactMap { row -> Kline? in
+            guard row.count >= 6,
+                  let ts = Int64(row[0]),
+                  let open = Double(row[1]),
+                  let high = Double(row[2]),
+                  let low = Double(row[3]),
+                  let close = Double(row[4]),
+                  let volume = Double(row[5])
+            else { return nil }
+            return Kline(
+                id: "bybit-\(symbol)-\(ts)",
+                timestamp: Date(timeIntervalSince1970: Double(ts) / 1000),
+                open: open,
+                high: high,
+                low: low,
+                close: close,
+                volume: volume,
+                timeframe: timeframe,
+                exchange: .bybit,
+                symbol: symbol
+            )
+        }
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension BybitCoinBalance {

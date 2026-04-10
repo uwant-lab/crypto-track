@@ -60,6 +60,45 @@ struct OKXTicker: Decodable {
     }
 }
 
+// MARK: - Kline Response
+
+/// OKX GET /api/v5/market/candles 응답 파서
+/// 응답 형식: {"code":"0","data":[[ts, o, h, l, c, vol, ...], ...]}
+struct OKXKlineResponse: Decodable {
+    let code: String
+    let msg: String
+    let data: [[String]]
+
+    var isSuccess: Bool { code == "0" }
+}
+
+extension OKXKlineResponse {
+    func toKlines(symbol: String, timeframe: ChartTimeframe) -> [Kline] {
+        data.compactMap { row -> Kline? in
+            guard row.count >= 6,
+                  let ts = Int64(row[0]),
+                  let open = Double(row[1]),
+                  let high = Double(row[2]),
+                  let low = Double(row[3]),
+                  let close = Double(row[4]),
+                  let volume = Double(row[5])
+            else { return nil }
+            return Kline(
+                id: "okx-\(symbol)-\(ts)",
+                timestamp: Date(timeIntervalSince1970: Double(ts) / 1000),
+                open: open,
+                high: high,
+                low: low,
+                close: close,
+                volume: volume,
+                timeframe: timeframe,
+                exchange: .okx,
+                symbol: symbol
+            )
+        }
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension OKXBalanceDetail {

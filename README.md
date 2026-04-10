@@ -38,6 +38,15 @@ TradingView 수준의 인터랙티브 차트를 앱 내에서 제공합니다.
 - 연동된 거래소의 Kline/Candlestick API를 직접 호출
 - 차트 데이터도 서버를 거치지 않는 클라이언트 직접 통신 유지
 
+### iCloud 동기화 (Planned)
+모든 Apple 기기(macOS, iOS, iPadOS)에서 동일한 환경을 유지합니다.
+
+- **API Key 동기화:** iCloud Keychain을 통한 자동 동기화 (추가 구현 불필요)
+- **거래소 등록 상태:** NSUbiquitousKeyValueStore로 기기 간 실시간 동기화
+- **차트 드로잉 데이터:** CloudKit 기반 동기화 (심볼별 드로잉 보존)
+- **앱 설정:** 테마, 잠금 설정 등 NSUbiquitousKeyValueStore로 동기화
+- **충돌 해결:** 최신 타임스탬프 우선 (last-write-wins) 전략
+
 ## 🛠 기술 스택
 - **Language:** Swift 6.0+ (Swift Concurrency 활용)
 - **UI Framework:** SwiftUI (macOS/iOS 공용)

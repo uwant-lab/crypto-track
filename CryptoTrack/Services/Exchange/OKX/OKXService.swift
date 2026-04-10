@@ -73,6 +73,41 @@ final class OKXService: ExchangeService {
             .map { $0.toTicker() }
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// OKX API: GET /api/v5/market/candles
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let bar: String
+        switch timeframe {
+        case .minute1: bar = "1m"
+        case .minute5: bar = "5m"
+        case .minute15: bar = "15m"
+        case .hour1: bar = "1H"
+        case .hour4: bar = "4H"
+        case .day1: bar = "1D"
+        case .week1: bar = "1W"
+        case .month1: bar = "1M"
+        }
+
+        let instId = symbol.uppercased() + "-USDT"
+        let queryItems = [
+            URLQueryItem(name: "instId", value: instId),
+            URLQueryItem(name: "bar", value: bar),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        let request = try buildRequest(path: "/api/v5/market/candles", queryItems: queryItems)
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(OKXKlineResponse.self, from: data)
+        guard decoded.isSuccess else {
+            throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+        }
+        return decoded
+            .toKlines(symbol: symbol.uppercased(), timeframe: timeframe)
+            .sorted { $0.timestamp < $1.timestamp }
+    }
+
     /// API 키 유효성을 검증합니다.
     /// OKX API: GET /api/v5/account/balance 호출 성공 여부로 판단합니다.
     func validateConnection() async throws -> Bool {

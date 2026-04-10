@@ -126,6 +126,69 @@ final class UpbitService: ExchangeService, Sendable {
         }
     }
 
+    /// 캔들스틱 데이터를 조회합니다. (공개 API)
+    /// - Parameters:
+    ///   - symbol: 심볼 (예: "BTC")
+    ///   - timeframe: 봉 간격
+    ///   - limit: 최대 조회 개수
+    func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
+        let market = "KRW-\(symbol.uppercased())"
+        let path: String
+        switch timeframe {
+        case .minute1:
+            path = "/v1/candles/minutes/1"
+        case .minute5:
+            path = "/v1/candles/minutes/5"
+        case .minute15:
+            path = "/v1/candles/minutes/15"
+        case .hour1:
+            path = "/v1/candles/minutes/60"
+        case .hour4:
+            path = "/v1/candles/minutes/240"
+        case .day1:
+            path = "/v1/candles/days"
+        case .week1:
+            path = "/v1/candles/weeks"
+        case .month1:
+            path = "/v1/candles/months"
+        }
+
+        guard var components = URLComponents(string: "\(baseURL)\(path)") else {
+            throw UpbitServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "market", value: market),
+            URLQueryItem(name: "count", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw UpbitServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as UpbitServiceError {
+            throw error
+        } catch {
+            throw UpbitServiceError.networkError(error)
+        }
+
+        do {
+            let klines = try JSONDecoder().decode([UpbitKline].self, from: data)
+            return klines
+                .map { $0.toKline(symbol: symbol.uppercased(), timeframe: timeframe) }
+                .sorted { $0.timestamp < $1.timestamp }
+        } catch {
+            throw UpbitServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func validateHTTPResponse(_ response: URLResponse) throws {

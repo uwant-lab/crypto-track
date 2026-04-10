@@ -82,6 +82,47 @@ struct BithumbTickerData: Decodable, Sendable {
     }
 }
 
+// MARK: - Kline (GET /public/candlestick/{symbol}_KRW/{timeframe})
+
+/// 빗썸 캔들스틱 응답 래퍼
+struct BithumbCandlestickResponse: Decodable, Sendable {
+    let status: String
+    let data: [[BithumbCandleValue]]
+
+    var isSuccess: Bool { status == "0000" }
+}
+
+/// 빗썸 캔들 배열 내 개별 값 (문자열 또는 숫자 혼합)
+enum BithumbCandleValue: Decodable, Sendable {
+    case string(String)
+    case int(Int64)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let v = try? container.decode(Int64.self) {
+            self = .int(v)
+        } else if let v = try? container.decode(String.self) {
+            self = .string(v)
+        } else {
+            self = .string("")
+        }
+    }
+
+    var doubleValue: Double {
+        switch self {
+        case .string(let s): return Double(s) ?? 0
+        case .int(let i): return Double(i)
+        }
+    }
+
+    var int64Value: Int64 {
+        switch self {
+        case .int(let i): return i
+        case .string(let s): return Int64(s) ?? 0
+        }
+    }
+}
+
 // MARK: - Dynamic Coding Key Helper
 
 private struct DynamicCodingKey: CodingKey {
@@ -112,6 +153,31 @@ extension BithumbCurrencyBalance {
             averageBuyPrice: avgPrice,
             exchange: .bithumb,
             lastUpdated: Date()
+        )
+    }
+}
+
+extension BithumbCandleValue {
+    /// 빗썸 캔들 배열 [timestamp, open, close, high, low, volume]을 Kline으로 변환합니다.
+    static func toKline(from row: [BithumbCandleValue], symbol: String, timeframe: ChartTimeframe) -> Kline? {
+        guard row.count >= 6 else { return nil }
+        let ts = row[0].int64Value
+        let open = row[1].doubleValue
+        let close = row[2].doubleValue
+        let high = row[3].doubleValue
+        let low = row[4].doubleValue
+        let volume = row[5].doubleValue
+        return Kline(
+            id: "bithumb-\(symbol)-\(ts)",
+            timestamp: Date(timeIntervalSince1970: Double(ts) / 1000),
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+            volume: volume,
+            timeframe: timeframe,
+            exchange: .bithumb,
+            symbol: symbol
         )
     }
 }

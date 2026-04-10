@@ -48,12 +48,19 @@ struct DashboardView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(viewModel.assets) { asset in
-                        AssetRowView(
-                            asset: asset,
-                            currentValue: viewModel.currentValue(for: asset),
-                            profit: viewModel.profit(for: asset),
-                            profitRate: viewModel.profitRate(for: asset)
-                        )
+                        NavigationLink {
+                            CandlestickChartView(
+                                symbol: asset.symbol,
+                                exchange: asset.exchange
+                            )
+                        } label: {
+                            AssetRowView(
+                                asset: asset,
+                                currentValue: viewModel.currentValue(for: asset),
+                                profit: viewModel.profit(for: asset),
+                                profitRate: viewModel.profitRate(for: asset)
+                            )
+                        }
                     }
                 }
             }

@@ -28,6 +28,77 @@ struct BinanceTicker: Decodable {
     let volume: String
 }
 
+// MARK: - Kline Response
+
+/// Binance GET /api/v3/klines 응답 파서
+/// 응답 형식: [[openTime, open, high, low, close, volume, ...], ...]
+struct BinanceKline: Sendable {
+    let openTime: Int64
+    let open: Double
+    let high: Double
+    let low: Double
+    let close: Double
+    let volume: Double
+}
+
+extension BinanceKline {
+    /// Binance kline 배열 응답을 파싱합니다.
+    static func parse(from array: [JSONValue]) -> BinanceKline? {
+        guard array.count >= 6,
+              case .int(let openTime) = array[0],
+              case .string(let openStr) = array[1],
+              case .string(let highStr) = array[2],
+              case .string(let lowStr) = array[3],
+              case .string(let closeStr) = array[4],
+              case .string(let volStr) = array[5]
+        else { return nil }
+        return BinanceKline(
+            openTime: openTime,
+            open: Double(openStr) ?? 0,
+            high: Double(highStr) ?? 0,
+            low: Double(lowStr) ?? 0,
+            close: Double(closeStr) ?? 0,
+            volume: Double(volStr) ?? 0
+        )
+    }
+
+    func toKline(symbol: String, timeframe: ChartTimeframe) -> Kline {
+        Kline(
+            id: "binance-\(symbol)-\(openTime)",
+            timestamp: Date(timeIntervalSince1970: Double(openTime) / 1000),
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+            volume: volume,
+            timeframe: timeframe,
+            exchange: .binance,
+            symbol: symbol
+        )
+    }
+}
+
+/// JSON 값 파싱을 위한 헬퍼 열거형
+enum JSONValue: Decodable {
+    case string(String)
+    case int(Int64)
+    case double(Double)
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let v = try? container.decode(String.self) {
+            self = .string(v)
+        } else if let v = try? container.decode(Int64.self) {
+            self = .int(v)
+        } else if let v = try? container.decode(Double.self) {
+            self = .double(v)
+        } else {
+            self = .null
+        }
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension BinanceBalance {
