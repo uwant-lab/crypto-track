@@ -54,6 +54,12 @@ protocol ExchangeService: Sendable {
     ///   - limit: 최대 조회 개수
     /// - Returns: 공통 Kline 모델 배열 (시간순 정렬)
     func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline]
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order>
+
+    /// 입금 내역을 조회합니다.
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit>
 }
 
 extension ExchangeService {
