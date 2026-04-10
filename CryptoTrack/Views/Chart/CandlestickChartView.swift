@@ -1,18 +1,5 @@
 import SwiftUI
 
-// MARK: - Platform Background Color Helper
-
-private extension Color {
-    /// iOS의 systemBackground / macOS의 windowBackgroundColor에 해당하는 배경색
-    static var platformBackground: Color {
-        #if os(iOS)
-        Color.platformBackground
-        #else
-        Color(NSColor.windowBackgroundColor)
-        #endif
-    }
-}
-
 /// 캔들스틱 차트 메인 컨테이너 화면입니다.
 struct CandlestickChartView: View {
     @State private var viewModel: ChartViewModel
@@ -33,9 +20,7 @@ struct CandlestickChartView: View {
             }
         }
         .navigationTitle("\(viewModel.symbol) (\(viewModel.exchange.rawValue))")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .inlineNavigationTitle()
         .task { await viewModel.loadData() }
     }
 
@@ -50,7 +35,7 @@ struct CandlestickChartView: View {
                     await viewModel.changeTimeframe(timeframe)
                 }
             )
-            .background(Color.platformBackground)
+            .background(AppColor.background)
 
             Divider()
 
@@ -89,7 +74,7 @@ struct CandlestickChartView: View {
 
             Divider()
         }
-        .background(Color.platformBackground)
+        .background(AppColor.background)
     }
 
     // MARK: - State Views
@@ -171,9 +156,7 @@ private struct _ChartPreviewWrapper: View {
                     .frame(height: 80)
             }
             .navigationTitle("BTC (Binance)")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
+            .inlineNavigationTitle()
         }
     }
 }

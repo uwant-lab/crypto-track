@@ -59,9 +59,7 @@ struct ExchangeSetupView: View {
             }
         }
         .navigationTitle(exchange.rawValue)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .inlineNavigationTitle()
         .alert("알림", isPresented: $showAlert) {
             Button("확인", role: .cancel) {}
         } message: {
