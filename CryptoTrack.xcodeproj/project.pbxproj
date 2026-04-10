@@ -42,6 +42,7 @@
 		7AC8C21F964A0AEBC4757585 /* ExchangeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31C31C0F6C0F65F23C7E6C /* ExchangeManager.swift */; };
 		813DF19805F5CA0D00287738 /* BybitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8D4118909D5194348EB00 /* BybitAuthenticator.swift */; };
 		81C0D4C538C81B420987AAAD /* CryptoTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */; };
+		85EC2C97085BF668654A70EC /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		8C986F7E571D170C2BD4E345 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
 		8F1C462AA011D9B6D252DFEE /* CoinoneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06868FAC22000898FF2EAD94 /* CoinoneModels.swift */; };
 		8F9127AA55E3231BCE5F897B /* UpbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */; };
@@ -55,6 +56,7 @@
 		A8B83B1C68CBC677554B956C /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
 		A9CDD485BC0B104FD906A05D /* UpbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */; };
 		B30708FD724C5D21D82E38EB /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */; };
+		B5A74FB2AD7AC94A06A5E186 /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		BA79881312796B6CF28D8A0F /* OKXService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D5BEA612E533AD6B38D565 /* OKXService.swift */; };
 		BB3AAFC2EFC6EA87B2D6F195 /* KorbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39E8518D3D082761DAC5B1C /* KorbitModels.swift */; };
 		C1459737EA3473519873308E /* AssetRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829E5D79CAA13AF24C902797 /* AssetRowView.swift */; };
@@ -93,6 +95,7 @@
 		4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitService.swift; sourceTree = "<group>"; };
 		6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		75469FAFD9005DCCF734F4DC /* CryptoTrack.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CryptoTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyGuideView.swift; sourceTree = "<group>"; };
 		817492FE8F1013795D10D037 /* BinanceAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinanceAuthenticator.swift; sourceTree = "<group>"; };
 		81CBEA1D951A4B51950D02BC /* CryptoTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		829E5D79CAA13AF24C902797 /* AssetRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetRowView.swift; sourceTree = "<group>"; };
@@ -247,6 +250,7 @@
 		B16827E26DCCF16EFF055A17 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */,
 				CB11900502BD1E82CF55967D /* ExchangeSetupView.swift */,
 				D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */,
 			);
@@ -384,6 +388,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5A74FB2AD7AC94A06A5E186 /* APIKeyGuideView.swift in Sources */,
 				D1F01C198F1DCE33FE1D1A0C /* Asset.swift in Sources */,
 				C1459737EA3473519873308E /* AssetRowView.swift in Sources */,
 				3334B8AF5CEE0CD88A9E0529 /* BinanceAuthenticator.swift in Sources */,
@@ -427,6 +432,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85EC2C97085BF668654A70EC /* APIKeyGuideView.swift in Sources */,
 				A320FF6F48E111326B977724 /* Asset.swift in Sources */,
 				0D7E7B30C4252603D2B8298B /* AssetRowView.swift in Sources */,
 				797846C2A4C595B57C553CC9 /* BinanceAuthenticator.swift in Sources */,

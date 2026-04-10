@@ -9,6 +9,7 @@ struct ExchangeSetupView: View {
     @State private var secretKey: String = ""
     @State private var passphrase: String = ""
     @State private var showDeleteConfirmation = false
+    @State private var showGuide = false
     @State private var alertMessage: String? = nil
     @State private var showAlert = false
     @Environment(\.dismiss) private var dismiss
@@ -45,10 +46,16 @@ struct ExchangeSetupView: View {
 
     var body: some View {
         Form {
+            guideSection
             credentialsSection
             actionSection
             if isSaved {
                 deleteSection
+            }
+        }
+        .sheet(isPresented: $showGuide) {
+            if let guide = ExchangeGuide.all[exchange] {
+                APIKeyGuideView(guide: guide)
             }
         }
         .navigationTitle(exchange.rawValue)
@@ -73,6 +80,24 @@ struct ExchangeSetupView: View {
     }
 
     // MARK: - Sections
+
+    private var guideSection: some View {
+        Section {
+            Button {
+                showGuide = true
+            } label: {
+                HStack {
+                    Image(systemName: "questionmark.circle.fill")
+                        .foregroundStyle(.blue)
+                    Text("API 키 발급 방법 안내")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
 
     private var credentialsSection: some View {
         Section {
