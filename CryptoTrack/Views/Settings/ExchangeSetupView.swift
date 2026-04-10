@@ -45,6 +45,32 @@ struct ExchangeSetupView: View {
     // MARK: - Body
 
     var body: some View {
+        platformContent
+            .navigationTitle(exchange.rawValue)
+            .sheet(isPresented: $showGuide) {
+                if let guide = ExchangeGuide.all[exchange] {
+                    APIKeyGuideView(guide: guide)
+                }
+            }
+            .alert("알림", isPresented: $showAlert) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(alertMessage ?? "")
+            }
+            .confirmationDialog(
+                "\(exchange.rawValue) API 키를 삭제하시겠습니까?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("삭제", role: .destructive) {
+                    deleteKeys()
+                }
+                Button("취소", role: .cancel) {}
+            }
+    }
+
+    @ViewBuilder
+    private var platformContent: some View {
         #if os(macOS)
         ScrollView {
             VStack(spacing: 20) {
@@ -60,26 +86,6 @@ struct ExchangeSetupView: View {
             .frame(maxWidth: 480)
             .frame(maxWidth: .infinity)
         }
-        .sheet(isPresented: $showGuide) {
-            if let guide = ExchangeGuide.all[exchange] {
-                APIKeyGuideView(guide: guide)
-            }
-        }
-        .alert("알림", isPresented: $showAlert) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(alertMessage ?? "")
-        }
-        .confirmationDialog(
-            "\(exchange.rawValue) API 키를 삭제하시겠습니까?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("삭제", role: .destructive) {
-                deleteKeys()
-            }
-            Button("취소", role: .cancel) {}
-        }
         #else
         Form {
             guideSection
@@ -89,28 +95,7 @@ struct ExchangeSetupView: View {
                 deleteSection
             }
         }
-        .sheet(isPresented: $showGuide) {
-            if let guide = ExchangeGuide.all[exchange] {
-                APIKeyGuideView(guide: guide)
-            }
-        }
-        .navigationTitle(exchange.rawValue)
         .inlineNavigationTitle()
-        .alert("알림", isPresented: $showAlert) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(alertMessage ?? "")
-        }
-        .confirmationDialog(
-            "\(exchange.rawValue) API 키를 삭제하시겠습니까?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("삭제", role: .destructive) {
-                deleteKeys()
-            }
-            Button("취소", role: .cancel) {}
-        }
         #endif
     }
 
@@ -257,38 +242,12 @@ struct ExchangeSetupView: View {
             }
 
             if isSaved {
-                HStack(spacing: 8) {
-                    switch connectionStatus {
-                    case .untested:
-                        Image(systemName: "minus.circle")
-                            .foregroundStyle(.secondary)
-                        Text("테스트 전")
-                            .foregroundStyle(.secondary)
-                    case .testing:
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("연결 확인 중…")
-                            .foregroundStyle(.secondary)
-                    case .success:
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("연결 성공")
-                            .foregroundStyle(.green)
-                    case .failed(let message):
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                        Text(message)
-                            .foregroundStyle(.red)
-                            .lineLimit(2)
-                    }
-                    Spacer()
-                }
-                .font(.subheadline)
-                .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(AppColor.secondaryBackground)
-                )
+                connectionStatusRow
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(AppColor.secondaryBackground)
+                    )
             }
         }
     }
