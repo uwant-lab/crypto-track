@@ -62,18 +62,35 @@ final class DashboardViewModel {
         return (profit(for: asset) / asset.totalCost) * 100
     }
 
+    // MARK: - Dependencies
+
+    private let exchangeManager: ExchangeManager
+
+    init(exchangeManager: ExchangeManager = .shared) {
+        self.exchangeManager = exchangeManager
+    }
+
     // MARK: - Data Loading
 
-    /// 자산 및 시세 데이터를 새로고침합니다.
+    /// 등록된 거래소에서 자산 및 시세 데이터를 새로고침합니다.
     func refresh() async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
 
         do {
-            try await Task.sleep(for: .milliseconds(600))
-            assets = Self.sampleAssets
-            tickers = Self.sampleTickers
+            let fetchedAssets = try await exchangeManager.fetchAllAssets()
+            let symbols = Array(Set(fetchedAssets.map { $0.symbol }))
+            let fetchedTickers = try await exchangeManager.fetchAllTickers(symbols: symbols)
+
+            assets = fetchedAssets
+            tickers = fetchedTickers
+
+            if assets.isEmpty && !exchangeManager.registeredExchanges.isEmpty {
+                errorMessage = "자산 데이터를 불러오지 못했습니다."
+            } else if exchangeManager.registeredExchanges.isEmpty {
+                errorMessage = "설정에서 거래소를 등록해주세요."
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -157,7 +174,7 @@ final class DashboardViewModel {
 
     /// 프리뷰용 샘플 ViewModel
     static var preview: DashboardViewModel {
-        let vm = DashboardViewModel()
+        let vm = DashboardViewModel(exchangeManager: ExchangeManager())
         vm.assets = sampleAssets
         vm.tickers = sampleTickers
         return vm
