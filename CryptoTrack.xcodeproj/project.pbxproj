@@ -9,10 +9,14 @@
 /* Begin PBXBuildFile section */
 		015060CDB3630B368B305AD7 /* UpbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F8AC2B260C922C237C900A /* UpbitModels.swift */; };
 		0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */; };
+		02EE5B557E66DEDEDB7AE247 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
+		051A81CB3C4B40C6C5379B00 /* Indicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4856176E66B8312A1BCA7F8 /* Indicator.swift */; };
+		0B5E04C7439ACE7E89B5B8BB /* IndicatorOverlayCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED6E2B632B4DF17045B1451D /* IndicatorOverlayCanvas.swift */; };
 		0BC504FBC24C21A41E373C8C /* CryptoTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */; };
 		0D7E7B30C4252603D2B8298B /* AssetRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829E5D79CAA13AF24C902797 /* AssetRowView.swift */; };
 		13C07F479E2B4FFAA0CD976C /* UpbitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2794D5492839B07BDFD497D9 /* UpbitAuthenticator.swift */; };
 		1437BAF292408FCE23692858 /* BybitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8D4118909D5194348EB00 /* BybitAuthenticator.swift */; };
+		16899562332A724069A6E2EA /* IndicatorOverlayCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED6E2B632B4DF17045B1451D /* IndicatorOverlayCanvas.swift */; };
 		18B4D92FAA6FBCD19099DE9F /* BinanceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6AFD933DEFFE11FD71FF26D /* BinanceModels.swift */; };
 		1C308663E6FEB4F1FCD5395A /* PortfolioSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */; };
 		1C7567C75552FB525EA1C986 /* CoinoneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06868FAC22000898FF2EAD94 /* CoinoneModels.swift */; };
@@ -24,7 +28,9 @@
 		24E0B07711370F457D6276F7 /* ChartDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4953FA9EE5EF8533299807D /* ChartDataManager.swift */; };
 		2578F560529BF09A07970277 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11AB07926A32E57D69BA2FB /* Theme.swift */; };
 		25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
+		26A16AC1057994EFDD2A6163 /* ChartDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD12669DE8019FE76315CB9 /* ChartDrawing.swift */; };
 		2D6EAD059902F121E1197C59 /* VolumeBarCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB7273BA1A3124D3EEF4A21 /* VolumeBarCanvas.swift */; };
+		2ED7655AE5504CA35E0151B8 /* DrawingStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8A0AD438E938DEFC4EACB8 /* DrawingStorageService.swift */; };
 		3334B8AF5CEE0CD88A9E0529 /* BinanceAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817492FE8F1013795D10D037 /* BinanceAuthenticator.swift */; };
 		3545122DD543B52CE0C4060E /* KeychainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */; };
 		3819CC63F4D072B7E88EE4AD /* ChartDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4953FA9EE5EF8533299807D /* ChartDataManager.swift */; };
@@ -46,6 +52,7 @@
 		5C2A87F45A99E2F89ADB7F0D /* ExchangeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */; };
 		631ECD27BD26DF740F384567 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
 		64A0FC0AD467B15C7E31D02C /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BF77678F8F9CD0D05864F6 /* KeychainService.swift */; };
+		67D1CC35B2B89B4302350516 /* ChartDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD12669DE8019FE76315CB9 /* ChartDrawing.swift */; };
 		6AFD99701C9764E7A493AECB /* ExchangeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31C31C0F6C0F65F23C7E6C /* ExchangeManager.swift */; };
 		6B8C4D40C08BB36B72834C13 /* BithumbService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E90302837D216377EE23F496 /* BithumbService.swift */; };
 		6CAB3C9B0D2E611F0DACB7BC /* Ticker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A380BE2B8D5C0AAC816B247 /* Ticker.swift */; };
@@ -53,17 +60,21 @@
 		6D871484572C35CACC3BE3CD /* OKXModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD631E0111F8EB380D2A416 /* OKXModels.swift */; };
 		6E0010687169DF56F915E388 /* ExchangeSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB11900502BD1E82CF55967D /* ExchangeSetupView.swift */; };
 		6E2D2188DE723F7D6F4C20B8 /* ExchangeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */; };
+		707285F0E5DA545CCFA6B7D0 /* DrawingToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */; };
 		70A58A3309621338DE228847 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA4769E89A5F115B6254A2A5 /* DashboardView.swift */; };
 		78314D75E5843AD28F1C6301 /* OKXService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D5BEA612E533AD6B38D565 /* OKXService.swift */; };
 		797846C2A4C595B57C553CC9 /* BinanceAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817492FE8F1013795D10D037 /* BinanceAuthenticator.swift */; };
+		79B82F4C460AF7BCEE3E2B34 /* IndicatorCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */; };
 		7AC8C21F964A0AEBC4757585 /* ExchangeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB31C31C0F6C0F65F23C7E6C /* ExchangeManager.swift */; };
 		813DF19805F5CA0D00287738 /* BybitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8D4118909D5194348EB00 /* BybitAuthenticator.swift */; };
 		81C0D4C538C81B420987AAAD /* CryptoTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */; };
 		8223A42ABDACB908D27E11A7 /* VolumeBarCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB7273BA1A3124D3EEF4A21 /* VolumeBarCanvas.swift */; };
 		82444F479BFD12E9C8AD6046 /* ChartViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3092225FF81F8060019A4DD9 /* ChartViewModel.swift */; };
+		83073A2A9407495B55EE3B7D /* IndicatorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A615985E2DDAF424352324 /* IndicatorPickerView.swift */; };
 		85EC2C97085BF668654A70EC /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		861F85EA05EC1695DE051E9F /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809FB31723C5AD62E650CB0 /* AppLockManager.swift */; };
 		8C986F7E571D170C2BD4E345 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
+		8E8C9B34E942D0D5D68254BF /* Indicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4856176E66B8312A1BCA7F8 /* Indicator.swift */; };
 		8F1C462AA011D9B6D252DFEE /* CoinoneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06868FAC22000898FF2EAD94 /* CoinoneModels.swift */; };
 		8F67491E187C6A3148588AF4 /* BiometricAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A127C65831639A419465DB /* BiometricAuthService.swift */; };
 		8F9127AA55E3231BCE5F897B /* UpbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */; };
@@ -72,6 +83,7 @@
 		9C1FAF37269967BAC68147AE /* BithumbAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97ED7469C6C4333F23604A /* BithumbAuthenticator.swift */; };
 		9F2B4DB3DE1CAD6714C06B17 /* BinanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE37BB3FB354C45B96CB492 /* BinanceService.swift */; };
 		A2E4CBC4C272E55B737F430E /* UpbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F8AC2B260C922C237C900A /* UpbitModels.swift */; };
+		A2F495AF5AA4EEA031017126 /* IndicatorSubPanelCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2BA39F701B53799B9312EB /* IndicatorSubPanelCanvas.swift */; };
 		A320FF6F48E111326B977724 /* Asset.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAD125E46CB3EB8D808C0451 /* Asset.swift */; };
 		A5291BCFC5C18B38807D2C98 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2928C4D84F8D9FC746C47F57 /* ContentView.swift */; };
 		A8B83B1C68CBC677554B956C /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
@@ -82,6 +94,7 @@
 		B5A74FB2AD7AC94A06A5E186 /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		BA79881312796B6CF28D8A0F /* OKXService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D5BEA612E533AD6B38D565 /* OKXService.swift */; };
 		BB3AAFC2EFC6EA87B2D6F195 /* KorbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39E8518D3D082761DAC5B1C /* KorbitModels.swift */; };
+		BBD0216C51A41D71E5C84675 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		BF293FE77E42D574D15423F4 /* BiometricAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A127C65831639A419465DB /* BiometricAuthService.swift */; };
 		C1459737EA3473519873308E /* AssetRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 829E5D79CAA13AF24C902797 /* AssetRowView.swift */; };
 		C1DF507A6895A095F17AE1CF /* KorbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C8256951226340D3F519D7 /* KorbitService.swift */; };
@@ -91,6 +104,7 @@
 		C822FB5F4E23F7ADAFF7DE32 /* CoinoneService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */; };
 		C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */; };
 		CAD28FF7F5D1597B4449F942 /* KorbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39E8518D3D082761DAC5B1C /* KorbitModels.swift */; };
+		CCAEA9D0D34B8ABD6C3059CF /* DrawingToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */; };
 		CF2ADC3506F3439CDC1A2DC5 /* BybitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19049C75B3807E418FB9EC8D /* BybitModels.swift */; };
 		CFFD02CF8C206B97CB4885D7 /* BithumbAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97ED7469C6C4333F23604A /* BithumbAuthenticator.swift */; };
 		D1CC2F26AA40307AC4444772 /* BybitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19049C75B3807E418FB9EC8D /* BybitModels.swift */; };
@@ -98,9 +112,12 @@
 		D2ADFD6A68D806FB79F13C63 /* OKXModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD631E0111F8EB380D2A416 /* OKXModels.swift */; };
 		D40533D3897A66C7B98BE3BD /* OKXAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D3D7E225CDFAF04292D563 /* OKXAuthenticator.swift */; };
 		D47961C7D97EB4EF64626B04 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BF77678F8F9CD0D05864F6 /* KeychainService.swift */; };
+		D6FCDCD9E74BF568FD35BA35 /* IndicatorSubPanelCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2BA39F701B53799B9312EB /* IndicatorSubPanelCanvas.swift */; };
+		D7A965E1F529172FFE19A552 /* DrawingStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8A0AD438E938DEFC4EACB8 /* DrawingStorageService.swift */; };
 		D836B238BD3C25EC0E2E3538 /* CandlestickChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */; };
 		D95C8F7CC1D37B8388AFE97C /* LockScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDAEBAF23818CADBF19CE59 /* LockScreenView.swift */; };
 		D9A485C2F2B2E7F23EBD8EE1 /* KeychainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */; };
+		DB6760635C1422AD221E51B2 /* IndicatorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A615985E2DDAF424352324 /* IndicatorPickerView.swift */; };
 		DC1A382321BC37999D150D11 /* TimeframePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */; };
 		DCD03C9B9065B4E565482D37 /* Ticker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A380BE2B8D5C0AAC816B247 /* Ticker.swift */; };
 		DFFF1464876305AA8244E9CF /* BithumbModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C550256480F6C8FA520961F8 /* BithumbModels.swift */; };
@@ -112,9 +129,12 @@
 		E772E9453227699A6FF285AA /* ExchangeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91775BE24F4D7AC40D474E76 /* ExchangeService.swift */; };
 		EF0FFB3E3AEB7ABB72CF2458 /* PortfolioSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */; };
 		EFD355061F259F180EF2A2CE /* TimeframePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */; };
+		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
+		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
 		FC1476EF3CE1BF44ED449C81 /* ExchangeGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA1965E1B0CE8CFA166B9E5 /* ExchangeGuide.swift */; };
+		FE17C2C2A43616236A8EBA0E /* IndicatorCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -135,6 +155,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorCalculator.swift; sourceTree = "<group>"; };
 		06868FAC22000898FF2EAD94 /* CoinoneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneModels.swift; sourceTree = "<group>"; };
 		0A380BE2B8D5C0AAC816B247 /* Ticker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticker.swift; sourceTree = "<group>"; };
 		0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpbitService.swift; sourceTree = "<group>"; };
@@ -147,13 +168,17 @@
 		2AD631E0111F8EB380D2A416 /* OKXModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OKXModels.swift; sourceTree = "<group>"; };
 		3092225FF81F8060019A4DD9 /* ChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartViewModel.swift; sourceTree = "<group>"; };
 		347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainServiceTests.swift; sourceTree = "<group>"; };
+		35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingToolbarView.swift; sourceTree = "<group>"; };
 		36D1A276D14EC9BBCFFA2888 /* CryptoTrackTests_iOS.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CryptoTrackTests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		44BF77678F8F9CD0D05864F6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewModel.swift; sourceTree = "<group>"; };
 		4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		4EDAEBAF23818CADBF19CE59 /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
 		4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitService.swift; sourceTree = "<group>"; };
 		586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeManagerTests.swift; sourceTree = "<group>"; };
 		66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandlestickChartView.swift; sourceTree = "<group>"; };
+		68A615985E2DDAF424352324 /* IndicatorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorPickerView.swift; sourceTree = "<group>"; };
+		6CD12669DE8019FE76315CB9 /* ChartDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartDrawing.swift; sourceTree = "<group>"; };
 		6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		75469FAFD9005DCCF734F4DC /* CryptoTrack.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CryptoTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyGuideView.swift; sourceTree = "<group>"; };
@@ -162,6 +187,7 @@
 		829E5D79CAA13AF24C902797 /* AssetRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetRowView.swift; sourceTree = "<group>"; };
 		8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSummaryView.swift; sourceTree = "<group>"; };
 		88F8AC2B260C922C237C900A /* UpbitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpbitModels.swift; sourceTree = "<group>"; };
+		8A2BA39F701B53799B9312EB /* IndicatorSubPanelCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorSubPanelCanvas.swift; sourceTree = "<group>"; };
 		8E04BB936E923BFB58D3FD86 /* ViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
 		8E5FC9E6BBCB4B1A6BF02829 /* Kline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kline.swift; sourceTree = "<group>"; };
 		8EE37BB3FB354C45B96CB492 /* BinanceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinanceService.swift; sourceTree = "<group>"; };
@@ -170,6 +196,7 @@
 		9A49290D5E895F8DC2517969 /* KorbitAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitAuthenticator.swift; sourceTree = "<group>"; };
 		9BA1965E1B0CE8CFA166B9E5 /* ExchangeGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeGuide.swift; sourceTree = "<group>"; };
 		A0C8D4118909D5194348EB00 /* BybitAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitAuthenticator.swift; sourceTree = "<group>"; };
+		A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvas.swift; sourceTree = "<group>"; };
 		AB31C31C0F6C0F65F23C7E6C /* ExchangeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeManager.swift; sourceTree = "<group>"; };
 		AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformAdaptiveLayout.swift; sourceTree = "<group>"; };
 		B1D3D7E225CDFAF04292D563 /* OKXAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OKXAuthenticator.swift; sourceTree = "<group>"; };
@@ -187,11 +214,14 @@
 		D11AB07926A32E57D69BA2FB /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DAD125E46CB3EB8D808C0451 /* Asset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Asset.swift; sourceTree = "<group>"; };
 		E39E8518D3D082761DAC5B1C /* KorbitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitModels.swift; sourceTree = "<group>"; };
+		E4856176E66B8312A1BCA7F8 /* Indicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Indicator.swift; sourceTree = "<group>"; };
 		E90302837D216377EE23F496 /* BithumbService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbService.swift; sourceTree = "<group>"; };
 		E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneService.swift; sourceTree = "<group>"; };
 		E9C8256951226340D3F519D7 /* KorbitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitService.swift; sourceTree = "<group>"; };
 		EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneAuthenticator.swift; sourceTree = "<group>"; };
+		EC8A0AD438E938DEFC4EACB8 /* DrawingStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingStorageService.swift; sourceTree = "<group>"; };
 		ECB7273BA1A3124D3EEF4A21 /* VolumeBarCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeBarCanvas.swift; sourceTree = "<group>"; };
+		ED6E2B632B4DF17045B1451D /* IndicatorOverlayCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorOverlayCanvas.swift; sourceTree = "<group>"; };
 		EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoTrackApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -219,7 +249,9 @@
 			isa = PBXGroup;
 			children = (
 				C4953FA9EE5EF8533299807D /* ChartDataManager.swift */,
+				EC8A0AD438E938DEFC4EACB8 /* DrawingStorageService.swift */,
 				AB31C31C0F6C0F65F23C7E6C /* ExchangeManager.swift */,
+				039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */,
 				29C061CA72900C2345DD1AD4 /* Auth */,
 				51F27B882986CCFB52362A83 /* Exchange */,
 				9003A6CA121A071231AAB49E /* Keychain */,
@@ -322,6 +354,11 @@
 				B95E007430B82E724721AC49 /* CandlestickCanvas.swift */,
 				66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */,
 				2121620E53A1B48E7F42840B /* CrosshairOverlayView.swift */,
+				A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */,
+				35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */,
+				ED6E2B632B4DF17045B1451D /* IndicatorOverlayCanvas.swift */,
+				68A615985E2DDAF424352324 /* IndicatorPickerView.swift */,
+				8A2BA39F701B53799B9312EB /* IndicatorSubPanelCanvas.swift */,
 				C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */,
 				ECB7273BA1A3124D3EEF4A21 /* VolumeBarCanvas.swift */,
 			);
@@ -379,6 +416,7 @@
 			children = (
 				3092225FF81F8060019A4DD9 /* ChartViewModel.swift */,
 				6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */,
+				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
 				B28524CE93529E37B8945240 /* SettingsViewModel.swift */,
 			);
 			path = ViewModels;
@@ -437,7 +475,9 @@
 			isa = PBXGroup;
 			children = (
 				DAD125E46CB3EB8D808C0451 /* Asset.swift */,
+				6CD12669DE8019FE76315CB9 /* ChartDrawing.swift */,
 				9BA1965E1B0CE8CFA166B9E5 /* ExchangeGuide.swift */,
+				E4856176E66B8312A1BCA7F8 /* Indicator.swift */,
 				8E5FC9E6BBCB4B1A6BF02829 /* Kline.swift */,
 				0A380BE2B8D5C0AAC816B247 /* Ticker.swift */,
 			);
@@ -572,6 +612,7 @@
 				AD99B2610935A92FF8ED44F7 /* CandlestickCanvas.swift in Sources */,
 				40186E54D402D8996280A5F2 /* CandlestickChartView.swift in Sources */,
 				24E0B07711370F457D6276F7 /* ChartDataManager.swift in Sources */,
+				67D1CC35B2B89B4302350516 /* ChartDrawing.swift in Sources */,
 				82444F479BFD12E9C8AD6046 /* ChartViewModel.swift in Sources */,
 				8C986F7E571D170C2BD4E345 /* CoinoneAuthenticator.swift in Sources */,
 				8F1C462AA011D9B6D252DFEE /* CoinoneModels.swift in Sources */,
@@ -581,10 +622,19 @@
 				0BC504FBC24C21A41E373C8C /* CryptoTrackApp.swift in Sources */,
 				70A58A3309621338DE228847 /* DashboardView.swift in Sources */,
 				9802CCA484054E0D792585DE /* DashboardViewModel.swift in Sources */,
+				BBD0216C51A41D71E5C84675 /* DrawingCanvas.swift in Sources */,
+				D7A965E1F529172FFE19A552 /* DrawingStorageService.swift in Sources */,
+				707285F0E5DA545CCFA6B7D0 /* DrawingToolbarView.swift in Sources */,
+				F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */,
 				54765F0F5CA662C0CEEC67F8 /* ExchangeGuide.swift in Sources */,
 				7AC8C21F964A0AEBC4757585 /* ExchangeManager.swift in Sources */,
 				E772E9453227699A6FF285AA /* ExchangeService.swift in Sources */,
 				46D0931E743893778DE89C8E /* ExchangeSetupView.swift in Sources */,
+				051A81CB3C4B40C6C5379B00 /* Indicator.swift in Sources */,
+				FE17C2C2A43616236A8EBA0E /* IndicatorCalculator.swift in Sources */,
+				0B5E04C7439ACE7E89B5B8BB /* IndicatorOverlayCanvas.swift in Sources */,
+				DB6760635C1422AD221E51B2 /* IndicatorPickerView.swift in Sources */,
+				A2F495AF5AA4EEA031017126 /* IndicatorSubPanelCanvas.swift in Sources */,
 				D47961C7D97EB4EF64626B04 /* KeychainService.swift in Sources */,
 				E5004DEA4B1F7A557F13C005 /* Kline.swift in Sources */,
 				E62D0CA074F92B94E7ECA454 /* KorbitAuthenticator.swift in Sources */,
@@ -650,6 +700,7 @@
 				FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */,
 				D836B238BD3C25EC0E2E3538 /* CandlestickChartView.swift in Sources */,
 				3819CC63F4D072B7E88EE4AD /* ChartDataManager.swift in Sources */,
+				26A16AC1057994EFDD2A6163 /* ChartDrawing.swift in Sources */,
 				59EDEBCFED06D49D0138533C /* ChartViewModel.swift in Sources */,
 				631ECD27BD26DF740F384567 /* CoinoneAuthenticator.swift in Sources */,
 				1C7567C75552FB525EA1C986 /* CoinoneModels.swift in Sources */,
@@ -659,10 +710,19 @@
 				81C0D4C538C81B420987AAAD /* CryptoTrackApp.swift in Sources */,
 				91034B5796142A177D3CD5A3 /* DashboardView.swift in Sources */,
 				B30708FD724C5D21D82E38EB /* DashboardViewModel.swift in Sources */,
+				F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */,
+				2ED7655AE5504CA35E0151B8 /* DrawingStorageService.swift in Sources */,
+				CCAEA9D0D34B8ABD6C3059CF /* DrawingToolbarView.swift in Sources */,
+				02EE5B557E66DEDEDB7AE247 /* DrawingViewModel.swift in Sources */,
 				FC1476EF3CE1BF44ED449C81 /* ExchangeGuide.swift in Sources */,
 				6AFD99701C9764E7A493AECB /* ExchangeManager.swift in Sources */,
 				C5D5D87BFFBE42F86268DCCC /* ExchangeService.swift in Sources */,
 				6E0010687169DF56F915E388 /* ExchangeSetupView.swift in Sources */,
+				8E8C9B34E942D0D5D68254BF /* Indicator.swift in Sources */,
+				79B82F4C460AF7BCEE3E2B34 /* IndicatorCalculator.swift in Sources */,
+				16899562332A724069A6E2EA /* IndicatorOverlayCanvas.swift in Sources */,
+				83073A2A9407495B55EE3B7D /* IndicatorPickerView.swift in Sources */,
+				D6FCDCD9E74BF568FD35BA35 /* IndicatorSubPanelCanvas.swift in Sources */,
 				64A0FC0AD467B15C7E31D02C /* KeychainService.swift in Sources */,
 				1F8985F711BE22D21DF6BB35 /* Kline.swift in Sources */,
 				42DC072FDEB613594FE1DAB4 /* KorbitAuthenticator.swift in Sources */,

@@ -16,6 +16,14 @@ final class ChartViewModel {
     /// 현재 보이는 캔들 인덱스 범위 (줌/스크롤)
     var visibleRange: Range<Int> = 0..<60
 
+    // MARK: - Indicator State
+
+    /// Currently configured indicators (active on the chart)
+    var activeIndicators: [IndicatorConfig] = []
+
+    /// Computed indicator values keyed by IndicatorConfig.id
+    var indicatorValues: [String: [IndicatorValue]] = [:]
+
     // MARK: - Properties
 
     let symbol: String
@@ -47,6 +55,12 @@ final class ChartViewModel {
         klines = sample
         let end = min(sample.count, 60)
         visibleRange = max(0, sample.count - end)..<sample.count
+
+        // Add default MA(20) on first load
+        if activeIndicators.isEmpty {
+            activeIndicators = [IndicatorConfig(type: .ma, parameters: ["period": 20])]
+        }
+        recalculateIndicators()
     }
 
     /// 타임프레임을 변경하고 데이터를 다시 로드합니다.
@@ -54,6 +68,38 @@ final class ChartViewModel {
         selectedTimeframe = timeframe
         crosshairKline = nil
         await loadData()
+    }
+
+    // MARK: - Indicators
+
+    /// Add a new indicator of the given type with default parameters.
+    func addIndicator(_ type: IndicatorType) {
+        guard !activeIndicators.contains(where: { $0.type == type }) else { return }
+        let config = IndicatorConfig(type: type)
+        activeIndicators.append(config)
+        let computed = IndicatorCalculator.calculate(config: config, klines: klines)
+        indicatorValues[config.id] = computed
+    }
+
+    /// Remove the indicator with the given id.
+    func removeIndicator(id: String) {
+        activeIndicators.removeAll { $0.id == id }
+        indicatorValues.removeValue(forKey: id)
+    }
+
+    /// Toggle visibility of the indicator with the given id.
+    func toggleIndicatorVisibility(id: String) {
+        guard let idx = activeIndicators.firstIndex(where: { $0.id == id }) else { return }
+        activeIndicators[idx].isVisible.toggle()
+    }
+
+    /// Recompute all active indicator values from the full klines array.
+    func recalculateIndicators() {
+        var newValues = [String: [IndicatorValue]]()
+        for config in activeIndicators {
+            newValues[config.id] = IndicatorCalculator.calculate(config: config, klines: klines)
+        }
+        indicatorValues = newValues
     }
 
     // MARK: - Zoom / Scroll
