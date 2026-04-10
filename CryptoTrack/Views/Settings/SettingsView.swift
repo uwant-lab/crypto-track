@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @State private var lockManager = AppLockManager.shared
+    @State private var syncService = CloudSyncService.shared
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,8 @@ struct SettingsView: View {
                 }
 
                 SecuritySectionView(lockManager: lockManager)
+
+                iCloudSyncSectionView(syncService: syncService)
             }
             .navigationTitle("설정")
             .onAppear {
@@ -158,6 +161,81 @@ private struct SecuritySectionView: View {
             return "touchid"
         case .none:
             return "lock.fill"
+        }
+    }
+}
+
+// MARK: - iCloud Sync Section
+
+private struct iCloudSyncSectionView: View {
+    var syncService: CloudSyncService
+    @State private var isSyncing = false
+
+    private var connectionText: String {
+        syncService.isICloudAvailable ? "연결됨" : "연결 안됨"
+    }
+
+    private var connectionColor: Color {
+        syncService.isICloudAvailable ? .green : .secondary
+    }
+
+    private var lastSyncText: String {
+        guard let date = syncService.lastSyncDate else { return "없음" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    var body: some View {
+        Section {
+            HStack {
+                Image(systemName: "icloud")
+                    .foregroundStyle(connectionColor)
+                Text("iCloud 상태")
+                Spacer()
+                Text(connectionText)
+                    .foregroundStyle(connectionColor)
+                    .font(.subheadline)
+            }
+
+            HStack {
+                Image(systemName: "clock")
+                    .foregroundStyle(.secondary)
+                Text("마지막 동기화")
+                Spacer()
+                Text(lastSyncText)
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+            }
+
+            Button {
+                guard syncService.isICloudAvailable else { return }
+                isSyncing = true
+                syncService.synchronizeNow()
+                ExchangeManager.shared.syncFromCloud()
+                AppLockManager.shared.syncFromCloud()
+                isSyncing = false
+            } label: {
+                HStack {
+                    if isSyncing {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath.icloud")
+                    }
+                    Text("지금 동기화")
+                }
+            }
+            .disabled(!syncService.isICloudAvailable || isSyncing)
+
+        } header: {
+            Text("iCloud 동기화")
+        } footer: {
+            if !syncService.isICloudAvailable {
+                Text("iCloud에 로그인하면 기기 간 설정이 자동으로 동기화됩니다.")
+            } else {
+                Text("거래소 등록 정보와 앱 설정이 iCloud를 통해 동기화됩니다. API 키는 보안 정책상 동기화되지 않습니다.")
+            }
         }
     }
 }

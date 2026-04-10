@@ -27,6 +27,11 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         SWIFT_EMIT_LOC_STRINGS: true
         INFOPLIST_KEY_NSFaceIDUsageDescription: "앱 잠금 해제를 위해 Face ID를 사용합니다."
+        CODE_SIGN_ENTITLEMENTS: CryptoTrack/CryptoTrack.entitlements
+        CODE_SIGN_STYLE: Automatic
+        # TODO: Set your Apple Developer Team ID here (e.g. "ABCDE12345")
+        # Required for iCloud entitlements. Find it at developer.apple.com under Membership.
+        # DEVELOPMENT_TEAM: ""
       configs:
         debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG

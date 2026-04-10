@@ -5,6 +5,10 @@ struct CryptoTrackApp: App {
     @State private var lockManager = AppLockManager.shared
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        CloudSyncService.shared.startObserving()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

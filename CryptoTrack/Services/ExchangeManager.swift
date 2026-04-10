@@ -27,6 +27,7 @@ final class ExchangeManager {
 
     init() {
         loadRegisteredExchanges()
+        syncFromCloud()
     }
 
     // MARK: - Registration
@@ -112,11 +113,25 @@ final class ExchangeManager {
         return try await service.validateConnection()
     }
 
+    // MARK: - Cloud Sync
+
+    /// iCloud에서 거래소 목록을 가져와 로컬 상태를 업데이트합니다.
+    func syncFromCloud() {
+        guard let cloudExchanges = CloudSyncService.shared.loadRegisteredExchanges() else { return }
+        // 클라우드 목록을 기준으로 로컬 상태를 병합합니다 (last-write-wins).
+        for exchange in cloudExchanges where !isRegistered(exchange) {
+            services[exchange] = createService(for: exchange)
+            registeredExchanges.append(exchange)
+        }
+        saveRegisteredExchanges()
+    }
+
     // MARK: - Persistence
 
     private func saveRegisteredExchanges() {
         let names = registeredExchanges.map { $0.rawValue }
         UserDefaults.standard.set(names, forKey: userDefaultsKey)
+        CloudSyncService.shared.syncRegisteredExchanges(registeredExchanges)
     }
 
     private func loadRegisteredExchanges() {
