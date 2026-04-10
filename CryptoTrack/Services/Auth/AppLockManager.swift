@@ -10,11 +10,10 @@ final class AppLockManager {
     var isAppLockEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isAppLockEnabled, forKey: Self.appLockEnabledKey)
-            if isAppLockEnabled {
-                isLocked = true
-            } else {
-                isLocked = false
-            }
+            isLocked = isAppLockEnabled
+            // iCloud에 설정 동기화
+            let settings = AppSettings(isAppLockEnabled: isAppLockEnabled, lastSyncDate: Date())
+            CloudSyncService.shared.syncSettings(settings)
         }
     }
 
@@ -26,6 +25,18 @@ final class AppLockManager {
         if isAppLockEnabled {
             self.isLocked = true
         }
+        syncFromCloud()
+    }
+
+    // MARK: - Cloud Sync
+
+    /// iCloud에서 앱 잠금 설정을 가져와 로컬 상태를 업데이트합니다.
+    func syncFromCloud() {
+        guard let settings = CloudSyncService.shared.loadSettings() else { return }
+        let cloudValue = settings.isAppLockEnabled
+        guard cloudValue != isAppLockEnabled else { return }
+        isAppLockEnabled = cloudValue
+        UserDefaults.standard.set(isAppLockEnabled, forKey: Self.appLockEnabledKey)
     }
 
     func unlock() async {
