@@ -3,7 +3,9 @@ import SwiftUI
 /// 캔들스틱 차트 메인 컨테이너 화면입니다.
 struct CandlestickChartView: View {
     @State private var viewModel: ChartViewModel
+    @State private var drawingViewModel: DrawingViewModel = DrawingViewModel()
     @State private var crosshairPosition: CGPoint? = nil
+    @State private var showDrawingToolbar: Bool = false
 
     init(symbol: String, exchange: Exchange) {
         _viewModel = State(initialValue: ChartViewModel(symbol: symbol, exchange: exchange))
@@ -21,45 +23,113 @@ struct CandlestickChartView: View {
         }
         .navigationTitle("\(viewModel.symbol) (\(viewModel.exchange.rawValue))")
         .inlineNavigationTitle()
-        .task { await viewModel.loadData() }
+        .task {
+            await viewModel.loadData()
+            await drawingViewModel.loadDrawings(
+                symbol: viewModel.symbol,
+                exchange: viewModel.exchange,
+                timeframe: viewModel.selectedTimeframe
+            )
+        }
+        .onChange(of: viewModel.selectedTimeframe) { _, newTimeframe in
+            Task {
+                await drawingViewModel.loadDrawings(
+                    symbol: viewModel.symbol,
+                    exchange: viewModel.exchange,
+                    timeframe: newTimeframe
+                )
+            }
+        }
     }
 
     // MARK: - Chart Content
 
     private var chartContent: some View {
         VStack(spacing: 0) {
-            // 타임프레임 선택
-            TimeframePickerView(
-                selectedTimeframe: viewModel.selectedTimeframe,
-                onSelect: { timeframe in
-                    await viewModel.changeTimeframe(timeframe)
+            // 타임프레임 선택 + 드로잉 토글
+            HStack(spacing: 0) {
+                TimeframePickerView(
+                    selectedTimeframe: viewModel.selectedTimeframe,
+                    onSelect: { timeframe in
+                        await viewModel.changeTimeframe(timeframe)
+                    }
+                )
+                Spacer()
+                Button {
+                    showDrawingToolbar.toggle()
+                    if !showDrawingToolbar {
+                        drawingViewModel.exitDrawingMode()
+                    }
+                } label: {
+                    Image(systemName: "pencil.tip")
+                        .font(.system(size: 14))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .foregroundStyle(showDrawingToolbar ? Color.accentColor : Color.secondary)
                 }
-            )
+                .buttonStyle(.plain)
+                .help("드로잉 도구")
+            }
             .background(AppColor.background)
+
+            // 드로잉 툴바
+            if showDrawingToolbar {
+                DrawingToolbarView(viewModel: drawingViewModel)
+            }
 
             Divider()
 
-            // 캔들스틱 + 크로스헤어
-            ZStack {
-                CandlestickCanvas(
-                    klines: viewModel.visibleKlines,
-                    onZoom: { scale in viewModel.zoom(scale: scale) },
-                    onScroll: { offset, width in viewModel.scroll(offset: offset, candleWidth: width) },
-                    onCrosshairChanged: { position, kline in
-                        crosshairPosition = position
-                        viewModel.crosshairKline = kline
-                    }
+            // 캔들스틱 + 드로잉 + 크로스헤어
+            GeometryReader { geo in
+                let yAxisWidth: CGFloat = 60
+                let xAxisHeight: CGFloat = 24
+                let chartRect = CGRect(
+                    x: 0,
+                    y: 0,
+                    width: geo.size.width - yAxisWidth,
+                    height: geo.size.height - xAxisHeight
                 )
+                let priceRange = computePriceRange(klines: viewModel.visibleKlines)
 
-                if let pos = crosshairPosition, let kline = viewModel.crosshairKline {
-                    GeometryReader { geo in
+                ZStack {
+                    CandlestickCanvas(
+                        klines: viewModel.visibleKlines,
+                        onZoom: { scale in viewModel.zoom(scale: scale) },
+                        onScroll: { offset, width in viewModel.scroll(offset: offset, candleWidth: width) },
+                        onCrosshairChanged: { position, kline in
+                            crosshairPosition = position
+                            viewModel.crosshairKline = kline
+                        }
+                    )
+
+                    // Drawing canvas overlay
+                    DrawingCanvas(
+                        viewModel: drawingViewModel,
+                        klines: viewModel.visibleKlines,
+                        chartRect: chartRect,
+                        priceRange: priceRange
+                    )
+
+                    // Tap gesture for adding drawing points
+                    if drawingViewModel.isDrawingMode {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .frame(width: chartRect.width, height: geo.size.height)
+                            .onTapGesture { location in
+                                let price = priceFromY(location.y, chartRect: chartRect, priceRange: priceRange)
+                                let timestamp = timestampFromX(location.x, chartRect: chartRect, klines: viewModel.visibleKlines)
+                                drawingViewModel.addPoint(price: price, timestamp: timestamp)
+                            }
+                    }
+
+                    if let pos = crosshairPosition, let kline = viewModel.crosshairKline {
                         CrosshairOverlayView(
                             position: pos,
                             kline: kline,
                             chartSize: geo.size
                         )
+                        .allowsHitTesting(false)
                     }
-                    .allowsHitTesting(false)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -75,6 +145,31 @@ struct CandlestickChartView: View {
             Divider()
         }
         .background(AppColor.background)
+    }
+
+    // MARK: - Drawing Coordinate Helpers
+
+    private func computePriceRange(klines: [Kline]) -> ClosedRange<Double> {
+        guard !klines.isEmpty else { return 0...1 }
+        let low = klines.map(\.low).min()!
+        let high = klines.map(\.high).max()!
+        let padding = (high - low) * 0.05
+        return (low - padding)...(high + padding)
+    }
+
+    private func priceFromY(_ y: CGFloat, chartRect: CGRect, priceRange: ClosedRange<Double>) -> Double {
+        let span = priceRange.upperBound - priceRange.lowerBound
+        let fraction = Double((y - chartRect.minY) / chartRect.height)
+        return priceRange.upperBound - fraction * span
+    }
+
+    private func timestampFromX(_ x: CGFloat, chartRect: CGRect, klines: [Kline]) -> Date {
+        guard klines.count > 1 else { return Date() }
+        let fraction = Double((x - chartRect.minX) / chartRect.width)
+        let first = klines.first!.timestamp.timeIntervalSinceReferenceDate
+        let last = klines.last!.timestamp.timeIntervalSinceReferenceDate
+        let t = first + fraction * (last - first)
+        return Date(timeIntervalSinceReferenceDate: t)
     }
 
     // MARK: - State Views
