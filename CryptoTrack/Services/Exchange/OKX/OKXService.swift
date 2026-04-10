@@ -1,0 +1,195 @@
+import Foundation
+
+/// OKX 거래소 API와 통신하는 서비스 구현체.
+/// `ExchangeService` 프로토콜을 채택하며 HMAC-SHA256 + 패스프레이즈 서명 인증을 사용합니다.
+final class OKXService: ExchangeService {
+
+    // MARK: - ExchangeService
+
+    let exchange: Exchange = .okx
+    let authMethod: AuthMethod = .hmacSHA256WithPassphrase
+
+    // MARK: - Private Properties
+
+    private let baseURL = "https://www.okx.com"
+    private let authenticator: OKXAuthenticator
+    private let session: URLSession
+
+    // MARK: - Init
+
+    init(authenticator: OKXAuthenticator = OKXAuthenticator(),
+         session: URLSession = .shared) {
+        self.authenticator = authenticator
+        self.session = session
+    }
+
+    // MARK: - ExchangeService Implementation
+
+    /// 보유 자산 목록을 조회합니다.
+    /// OKX API: GET /api/v5/account/balance (인증 필요)
+    func fetchAssets() async throws -> [Asset] {
+        let path = "/api/v5/account/balance"
+        let request = try buildAuthenticatedRequest(method: "GET", path: path)
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(OKXResponse<OKXAccountBalance>.self, from: data)
+
+        guard decoded.isSuccess else {
+            throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+        }
+
+        return decoded.data
+            .flatMap { $0.details }
+            .filter { $0.totalBalance > 0 }
+            .map { $0.toAsset() }
+    }
+
+    /// 특정 심볼의 현재 시세를 조회합니다.
+    /// OKX API: GET /api/v5/market/tickers?instType=SPOT
+    /// - Parameter symbols: 조회할 코인 심볼 목록 (예: ["BTC", "ETH"])
+    func fetchTickers(symbols: [String]) async throws -> [Ticker] {
+        let path = "/api/v5/market/tickers"
+        let queryItems = [URLQueryItem(name: "instType", value: "SPOT")]
+        let request = try buildRequest(path: path, queryItems: queryItems)
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(OKXResponse<OKXTicker>.self, from: data)
+
+        guard decoded.isSuccess else {
+            throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+        }
+
+        // 요청한 심볼에 해당하는 USDT 거래 쌍만 필터링합니다.
+        let upperSymbols = symbols.map { $0.uppercased() }
+        return decoded.data
+            .filter { ticker in
+                upperSymbols.contains(ticker.baseSymbol) &&
+                ticker.instId.hasSuffix("-USDT")
+            }
+            .map { $0.toTicker() }
+    }
+
+    /// API 키 유효성을 검증합니다.
+    /// OKX API: GET /api/v5/account/balance 호출 성공 여부로 판단합니다.
+    func validateConnection() async throws -> Bool {
+        do {
+            let path = "/api/v5/account/balance"
+            let request = try buildAuthenticatedRequest(method: "GET", path: path)
+
+            let (data, response) = try await session.data(for: request)
+            try validateHTTPResponse(response, data: data)
+
+            let decoded = try JSONDecoder().decode(OKXResponse<OKXAccountBalance>.self, from: data)
+            guard decoded.isSuccess else {
+                throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+            }
+            return true
+        } catch {
+            throw error
+        }
+    }
+
+    // MARK: - Private Helpers
+
+    /// 인증이 필요한 URLRequest를 생성합니다.
+    private func buildAuthenticatedRequest(
+        method: String,
+        path: String,
+        queryItems: [URLQueryItem] = [],
+        body: String = ""
+    ) throws -> URLRequest {
+        var request = try buildRequest(path: path, queryItems: queryItems)
+        request.httpMethod = method
+
+        // 쿼리 파라미터가 있으면 requestPath에 포함시킵니다.
+        let requestPath: String
+        if !queryItems.isEmpty,
+           var components = URLComponents(string: path) {
+            components.queryItems = queryItems
+            requestPath = components.url?.absoluteString ?? path
+        } else {
+            requestPath = path
+        }
+
+        let headers = try authenticator.authHeaders(
+            method: method,
+            requestPath: requestPath,
+            body: body
+        )
+
+        for (key, value) in headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        return request
+    }
+
+    /// URLRequest를 생성합니다.
+    private func buildRequest(
+        path: String,
+        queryItems: [URLQueryItem] = []
+    ) throws -> URLRequest {
+        guard var components = URLComponents(string: baseURL + path) else {
+            throw OKXServiceError.invalidURL
+        }
+
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+
+        guard let url = components.url else {
+            throw OKXServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        return request
+    }
+
+    /// HTTP 응답 상태 코드를 검증합니다.
+    private func validateHTTPResponse(_ response: URLResponse, data: Data) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw OKXServiceError.invalidResponse
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            if let errorBody = try? JSONDecoder().decode(OKXErrorResponse.self, from: data) {
+                throw OKXServiceError.apiError(code: errorBody.code, message: errorBody.msg)
+            }
+            throw OKXServiceError.httpError(statusCode: httpResponse.statusCode)
+        }
+    }
+}
+
+// MARK: - Error Types
+
+enum OKXServiceError: LocalizedError {
+    case invalidURL
+    case invalidResponse
+    case httpError(statusCode: Int)
+    case apiError(code: String, message: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "잘못된 URL입니다."
+        case .invalidResponse:
+            return "서버 응답을 처리할 수 없습니다."
+        case .httpError(let statusCode):
+            return "HTTP 오류: \(statusCode)"
+        case .apiError(let code, let message):
+            return "OKX API 오류 (\(code)): \(message)"
+        }
+    }
+}
+
+// MARK: - Error Response Model
+
+private struct OKXErrorResponse: Decodable {
+    let code: String
+    let msg: String
+}

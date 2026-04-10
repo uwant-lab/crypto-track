@@ -74,8 +74,13 @@ struct AssetRowView: View {
 
     private func badgeColor(for exchange: Exchange) -> Color {
         switch exchange {
-        case .upbit:   return .blue
-        case .binance: return .yellow
+        case .upbit:    return .blue
+        case .binance:  return .yellow
+        case .bithumb:  return .orange
+        case .bybit:    return .purple
+        case .coinone:  return .green
+        case .korbit:   return .red
+        case .okx:      return .teal
         }
     }
 }

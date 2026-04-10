@@ -4,6 +4,11 @@ import Foundation
 enum Exchange: String, CaseIterable, Sendable {
     case upbit = "Upbit"
     case binance = "Binance"
+    case bithumb = "Bithumb"
+    case bybit = "Bybit"
+    case coinone = "Coinone"
+    case korbit = "Korbit"
+    case okx = "OKX"
 }
 
 /// 거래소별 API 인증 방식을 정의합니다.
@@ -12,6 +17,12 @@ enum AuthMethod: Sendable {
     case jwt
     /// 해외 거래소: HMAC-SHA256 서명
     case hmacSHA256
+    /// 빗썸: HMAC-SHA512 서명
+    case hmacSHA512
+    /// 코빗: OAuth 2.0 Bearer 토큰 인증
+    case oauth2
+    /// OKX: HMAC-SHA256 + 패스프레이즈 서명
+    case hmacSHA256WithPassphrase
 }
 
 /// 거래소 API 통신을 위한 프로토콜.
