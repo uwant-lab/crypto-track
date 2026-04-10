@@ -3,17 +3,48 @@
 개인 정보와 자산 데이터를 서버에 저장하지 않고, 기기 로컬의 **Apple Keychain**을 사용하여 보안을 극대화한 가상화폐 포트폴리오 관리 앱입니다.
 
 ## 🚀 주요 기능
-- **거래소 API 연동:** 업비트(Upbit), 바이낸스(Binance) 등 국내외 거래소 연동.
-- **실시간 자산 추적:** 각 코인별 평단가, 보유량, 총 자산 현황 조회.
-- **손익 자동 계산:** 현재 시세와 연동하여 실시간 수익률(P&L) 및 평가 손익 산출.
-- **로컬 보안 저장소:** API Key를 서버가 아닌 Apple Keychain에 암호화하여 저장.
-- **서버리스 아키텍처:** 모든 데이터 요청은 기기에서 거래소로 직접 전달 (No Middle-man).
+
+### 포트폴리오 관리
+- **거래소 API 연동:** 업비트, 바이낸스, 빗썸, 바이빗, 코인원, 코빗, OKX (7개 거래소)
+- **실시간 자산 추적:** 각 코인별 평단가, 보유량, 총 자산 현황 조회
+- **손익 자동 계산:** 현재 시세와 연동하여 실시간 수익률(P&L) 및 평가 손익 산출
+- **로컬 보안 저장소:** API Key를 서버가 아닌 Apple Keychain에 암호화하여 저장
+- **서버리스 아키텍처:** 모든 데이터 요청은 기기에서 거래소로 직접 전달 (No Middle-man)
+
+### 차트 & 분석 (Planned)
+TradingView 수준의 인터랙티브 차트를 앱 내에서 제공합니다.
+
+#### 차트 뷰어
+- **캔들스틱 차트:** OHLCV(시가/고가/저가/종가/거래량) 캔들 차트
+- **다중 타임프레임:** 1분, 5분, 15분, 1시간, 4시간, 1일, 1주, 1개월
+- **확대/축소 & 스크롤:** 제스처 기반 차트 네비게이션
+- **크로스헤어:** 터치/호버 시 해당 캔들의 상세 정보 표시
+
+#### 기술적 지표 (Technical Indicators)
+- **추세 지표:** MA(이동평균), EMA, 볼린저 밴드
+- **모멘텀 지표:** RSI, MACD, Stochastic
+- **거래량 지표:** Volume, OBV
+- **지표 커스터마이징:** 파라미터 조정 (기간, 색상 등)
+
+#### 드로잉 도구
+- **라인 도구:** 추세선, 수평선, 수직선, 레이(Ray)
+- **피보나치:** 되돌림(Retracement), 확장(Extension)
+- **영역 도구:** 사각형, 평행 채널
+- **텍스트 & 마커:** 메모, 가격 라벨, 아이콘 마커
+- **드로잉 저장:** 심볼+타임프레임별로 드로잉을 로컬에 영구 저장
+- **드로잉 관리:** 개별 편집(이동, 크기 조절), 삭제, 표시/숨기기
+
+#### 데이터 소스
+- 연동된 거래소의 Kline/Candlestick API를 직접 호출
+- 차트 데이터도 서버를 거치지 않는 클라이언트 직접 통신 유지
 
 ## 🛠 기술 스택
 - **Language:** Swift 6.0+ (Swift Concurrency 활용)
 - **UI Framework:** SwiftUI (macOS/iOS 공용)
+- **Chart Rendering:** Canvas / Metal (고성능 차트 렌더링)
 - **Security:** Security Framework (Keychain), Local Authentication (FaceID/TouchID)
-- **Networking:** URLSession / Alamofire
+- **Networking:** URLSession
+- **Data Persistence:** UserDefaults (설정), Keychain (API Key), FileManager (드로잉 데이터)
 - **Architecture:** MVVM (Model-View-ViewModel)
 
 ## 🔒 보안 원칙 (Security Policy)
