@@ -29,6 +29,15 @@ struct ExchangeSetupView: View {
         return false
     }
 
+    private var hasEnteredKeys: Bool {
+        !accessKey.isEmpty && !secretKey.isEmpty && (!showPassphraseField || !passphrase.isEmpty)
+    }
+
+    private var isConnectionSuccess: Bool {
+        if case .success = connectionStatus { return true }
+        return false
+    }
+
     /// Korbit은 Client ID / Client Secret 레이블 사용
     private var accessKeyLabel: String {
         exchange == .korbit ? "Client ID" : "Access Key"
@@ -75,10 +84,11 @@ struct ExchangeSetupView: View {
         ScrollView {
             VStack(spacing: 20) {
                 macHeader
-                macCredentialsBox
-                macActionArea
                 if isSaved {
-                    macDangerZone
+                    macSavedState
+                } else {
+                    macCredentialsBox
+                    macActionArea
                 }
                 macFooter
             }
@@ -88,11 +98,13 @@ struct ExchangeSetupView: View {
         }
         #else
         Form {
-            guideSection
-            credentialsSection
-            actionSection
             if isSaved {
+                savedSection
                 deleteSection
+            } else {
+                guideSection
+                credentialsSection
+                actionSection
             }
         }
         .inlineNavigationTitle()
@@ -220,35 +232,69 @@ struct ExchangeSetupView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 Button {
-                    Task { await settingsViewModel.testConnection(exchange: exchange) }
+                    testConnectionWithoutSaving()
                 } label: {
-                    HStack(spacing: 4) {
-                        if isTestingConnection {
-                            ProgressView()
-                                .scaleEffect(0.6)
-                        }
-                        Text("연결 테스트")
-                    }
+                    Text("연결 테스트")
                 }
-                .disabled(isTestingConnection || !isSaved)
+                .disabled(isTestingConnection || !hasEnteredKeys)
 
                 Button {
-                    saveKeys()
+                    confirmSave()
                 } label: {
                     Text("저장")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(accessKey.isEmpty || secretKey.isEmpty)
+                .disabled(!isConnectionSuccess)
             }
 
-            if isSaved {
-                connectionStatusRow
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(AppColor.secondaryBackground)
-                    )
+            macConnectionStatusArea
+        }
+    }
+
+    private var macConnectionStatusArea: some View {
+        HStack(spacing: 8) {
+            switch connectionStatus {
+            case .untested:
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.secondary)
+                Text("연결 테스트를 실행하세요")
+                    .foregroundStyle(.secondary)
+            case .testing:
+                ProgressView()
+                    .scaleEffect(0.7)
+                Text("연결 확인 중…")
+                    .foregroundStyle(.secondary)
+            case .success:
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("연결 성공")
+                    .foregroundStyle(.green)
+            case .failed(let message):
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.red)
+                Text(message)
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
             }
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, minHeight: 36)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(AppColor.secondaryBackground)
+        )
+    }
+
+    private var macSavedState: some View {
+        VStack(spacing: 16) {
+            connectionStatusRow
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(AppColor.secondaryBackground)
+                )
+            macDangerZone
         }
     }
 
@@ -354,7 +400,7 @@ struct ExchangeSetupView: View {
         Section {
             // 연결 테스트 버튼
             Button {
-                Task { await settingsViewModel.testConnection(exchange: exchange) }
+                testConnectionWithoutSaving()
             } label: {
                 HStack {
                     if isTestingConnection {
@@ -366,16 +412,14 @@ struct ExchangeSetupView: View {
                         .frame(maxWidth: .infinity)
                 }
             }
-            .disabled(isTestingConnection || !isSaved)
+            .disabled(isTestingConnection || !hasEnteredKeys)
 
             // 연결 상태 표시
-            if isSaved {
-                connectionStatusRow
-            }
+            connectionStatusRow
 
             // 저장 버튼
             Button {
-                saveKeys()
+                confirmSave()
             } label: {
                 Text("저장")
                     .frame(maxWidth: .infinity)
@@ -384,7 +428,15 @@ struct ExchangeSetupView: View {
             .buttonStyle(.borderedProminent)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
-            .disabled(accessKey.isEmpty || secretKey.isEmpty)
+            .disabled(!isConnectionSuccess)
+        }
+    }
+
+    private var savedSection: some View {
+        Section {
+            connectionStatusRow
+        } header: {
+            Text("연결 상태")
         }
     }
 
@@ -432,29 +484,49 @@ struct ExchangeSetupView: View {
 
     // MARK: - Actions
 
-    private func saveKeys() {
-        do {
-            try settingsViewModel.saveAPIKeys(
-                exchange: exchange,
-                accessKey: accessKey,
-                secretKey: secretKey,
-                passphrase: showPassphraseField ? passphrase : nil
-            )
-            alertMessage = "API 키가 저장되었습니다."
-            showAlert = true
-            accessKey = ""
-            secretKey = ""
-            passphrase = ""
-        } catch {
-            alertMessage = "저장 실패: \(error.localizedDescription)"
-            showAlert = true
+    /// 임시로 Keychain에 저장 → 연결 테스트 → savedExchanges에서 제거 (미확정 상태)
+    private func testConnectionWithoutSaving() {
+        settingsViewModel.connectionStatus[exchange] = .untested
+        Task {
+            do {
+                // Keychain에 임시 저장 (테스트에 필요)
+                try settingsViewModel.saveAPIKeys(
+                    exchange: exchange,
+                    accessKey: accessKey,
+                    secretKey: secretKey,
+                    passphrase: showPassphraseField ? passphrase : nil
+                )
+                // savedExchanges에서 제거 → isSaved = false 유지
+                settingsViewModel.savedExchanges.remove(exchange)
+
+                await settingsViewModel.testConnection(exchange: exchange)
+
+                // 테스트 실패 시 Keychain에서도 삭제
+                if !isConnectionSuccess {
+                    try? settingsViewModel.deleteAPIKeys(exchange: exchange)
+                }
+            } catch {
+                alertMessage = "키 저장 실패: \(error.localizedDescription)"
+                showAlert = true
+            }
         }
+    }
+
+    /// 사용자가 저장을 확정 — savedExchanges에 추가 (키는 이미 Keychain에 있음)
+    private func confirmSave() {
+        guard isConnectionSuccess else { return }
+        settingsViewModel.savedExchanges.insert(exchange)
+        alertMessage = "API 키가 저장되었습니다."
+        showAlert = true
+        accessKey = ""
+        secretKey = ""
+        passphrase = ""
     }
 
     private func deleteKeys() {
         do {
             try settingsViewModel.deleteAPIKeys(exchange: exchange)
-            dismiss()
+            settingsViewModel.connectionStatus[exchange] = .untested
         } catch {
             alertMessage = "삭제 실패: \(error.localizedDescription)"
             showAlert = true
