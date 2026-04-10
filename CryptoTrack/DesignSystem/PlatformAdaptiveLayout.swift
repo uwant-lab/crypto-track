@@ -13,6 +13,11 @@ struct AdaptiveRootView: View {
                     Label("대시보드", systemImage: "chart.pie.fill")
                 }
                 NavigationLink {
+                    TransactionHistoryView()
+                } label: {
+                    Label("거래 내역", systemImage: "clock.arrow.circlepath")
+                }
+                NavigationLink {
                     SettingsView()
                 } label: {
                     Label("설정", systemImage: "gearshape.fill")
@@ -27,6 +32,11 @@ struct AdaptiveRootView: View {
             DashboardView()
                 .tabItem {
                     Label("대시보드", systemImage: "chart.pie.fill")
+                }
+
+            TransactionHistoryView()
+                .tabItem {
+                    Label("거래 내역", systemImage: "clock.arrow.circlepath")
                 }
 
             SettingsView()

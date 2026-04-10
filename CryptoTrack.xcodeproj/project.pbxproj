@@ -13,6 +13,14 @@
 		AA0002020202020202020202 /* Deposit.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0005050505050505050505 /* Deposit.swift */; };
 		AA0003010101010101010101 /* PagedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0006060606060606060606 /* PagedResult.swift */; };
 		AA0003020202020202020202 /* PagedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0006060606060606060606 /* PagedResult.swift */; };
+		BB0011010101010101010101 /* TransactionHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001010101010101010101 /* TransactionHistoryViewModel.swift */; };
+		BB0012020202020202020202 /* TransactionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002020202020202020202 /* TransactionHistoryView.swift */; };
+		BB0013030303030303030303 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003030303030303030303 /* OrderListView.swift */; };
+		BB0014040404040404040404 /* DepositListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0004040404040404040404 /* DepositListView.swift */; };
+		BB0021010101010101010101 /* TransactionHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0001010101010101010101 /* TransactionHistoryViewModel.swift */; };
+		BB0022020202020202020202 /* TransactionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0002020202020202020202 /* TransactionHistoryView.swift */; };
+		BB0023030303030303030303 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0003030303030303030303 /* OrderListView.swift */; };
+		BB0024040404040404040404 /* DepositListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0004040404040404040404 /* DepositListView.swift */; };
 		015060CDB3630B368B305AD7 /* UpbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F8AC2B260C922C237C900A /* UpbitModels.swift */; };
 		0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */; };
 		02EE5B557E66DEDEDB7AE247 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
@@ -172,6 +180,10 @@
 		AA0004040404040404040404 /* Order.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Order.swift; sourceTree = "<group>"; };
 		AA0005050505050505050505 /* Deposit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deposit.swift; sourceTree = "<group>"; };
 		AA0006060606060606060606 /* PagedResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagedResult.swift; sourceTree = "<group>"; };
+		BB0001010101010101010101 /* TransactionHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionHistoryViewModel.swift; sourceTree = "<group>"; };
+		BB0002020202020202020202 /* TransactionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionHistoryView.swift; sourceTree = "<group>"; };
+		BB0003030303030303030303 /* OrderListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderListView.swift; sourceTree = "<group>"; };
+		BB0004040404040404040404 /* DepositListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositListView.swift; sourceTree = "<group>"; };
 		039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorCalculator.swift; sourceTree = "<group>"; };
 		06868FAC22000898FF2EAD94 /* CoinoneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneModels.swift; sourceTree = "<group>"; };
 		0A380BE2B8D5C0AAC816B247 /* Ticker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticker.swift; sourceTree = "<group>"; };
@@ -312,6 +324,7 @@
 				A1065F6659DE574F5ED5D608 /* Auth */,
 				8A0290F6CF432A2C4130B98A /* Chart */,
 				25D304C4B7B67D5DFA9C78AE /* Dashboard */,
+				BB0005050505050505050505 /* TransactionHistory */,
 				B16827E26DCCF16EFF055A17 /* Settings */,
 			);
 			path = Views;
@@ -434,6 +447,16 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		BB0005050505050505050505 /* TransactionHistory */ = {
+			isa = PBXGroup;
+			children = (
+				BB0004040404040404040404 /* DepositListView.swift */,
+				BB0003030303030303030303 /* OrderListView.swift */,
+				BB0002020202020202020202 /* TransactionHistoryView.swift */,
+			);
+			path = TransactionHistory;
+			sourceTree = "<group>";
+		};
 		C4128D1B5EA8B70E878F3A5F /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -441,6 +464,7 @@
 				6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */,
 				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
 				B28524CE93529E37B8945240 /* SettingsViewModel.swift */,
+				BB0001010101010101010101 /* TransactionHistoryViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -717,6 +741,10 @@
 				1C308663E6FEB4F1FCD5395A /* PortfolioSummaryView.swift in Sources */,
 				0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */,
 				FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */,
+				BB0011010101010101010101 /* TransactionHistoryViewModel.swift in Sources */,
+				BB0012020202020202020202 /* TransactionHistoryView.swift in Sources */,
+				BB0013030303030303030303 /* OrderListView.swift in Sources */,
+				BB0014040404040404040404 /* DepositListView.swift in Sources */,
 				47C9B8D8810B513559FDD24E /* Theme.swift in Sources */,
 				DCD03C9B9065B4E565482D37 /* Ticker.swift in Sources */,
 				DC1A382321BC37999D150D11 /* TimeframePickerView.swift in Sources */,
@@ -811,6 +839,10 @@
 				EF0FFB3E3AEB7ABB72CF2458 /* PortfolioSummaryView.swift in Sources */,
 				1F445143D4A9761684A31625 /* SettingsView.swift in Sources */,
 				25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */,
+				BB0021010101010101010101 /* TransactionHistoryViewModel.swift in Sources */,
+				BB0022020202020202020202 /* TransactionHistoryView.swift in Sources */,
+				BB0023030303030303030303 /* OrderListView.swift in Sources */,
+				BB0024040404040404040404 /* DepositListView.swift in Sources */,
 				2578F560529BF09A07970277 /* Theme.swift in Sources */,
 				6CAB3C9B0D2E611F0DACB7BC /* Ticker.swift in Sources */,
 				EFD355061F259F180EF2A2CE /* TimeframePickerView.swift in Sources */,
