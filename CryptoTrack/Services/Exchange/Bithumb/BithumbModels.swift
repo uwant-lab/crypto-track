@@ -123,6 +123,97 @@ enum BithumbCandleValue: Decodable, Sendable {
     }
 }
 
+// MARK: - Order (POST /info/orders)
+
+/// POST /info/orders 응답의 data 필드 모델
+struct BithumbOrderData: Decodable, Sendable {
+    let orderId: String
+    let orderCurrency: String
+    let type: String
+    let price: String
+    let units: String
+    let fee: String
+    let orderDate: String
+
+    enum CodingKeys: String, CodingKey {
+        case orderId = "order_id"
+        case orderCurrency = "order_currency"
+        case type
+        case price
+        case units
+        case fee
+        case orderDate = "order_date"
+    }
+}
+
+// MARK: - Transaction (POST /info/user_transactions)
+
+/// POST /info/user_transactions 응답의 data 필드 모델
+struct BithumbTransaction: Decodable, Sendable {
+    let transferDate: String
+    let units: String
+    let currency: String?
+    let fee: String
+
+    enum CodingKeys: String, CodingKey {
+        case transferDate = "transfer_date"
+        case units
+        case currency
+        case fee
+    }
+}
+
+// MARK: - Order / Transaction Mapping
+
+extension BithumbOrderData {
+    /// 빗썸 주문 응답을 공통 Order 모델로 변환합니다.
+    func toOrder() -> Order {
+        let orderSide: OrderSide = (type == "bid") ? .buy : .sell
+        let priceValue = Double(price) ?? 0
+        let unitsValue = Double(units) ?? 0
+        let feeValue = Double(fee) ?? 0
+
+        // orderDate는 마이크로초 타임스탬프입니다
+        let microseconds = Double(orderDate) ?? 0
+        let date = Date(timeIntervalSince1970: microseconds / 1_000_000)
+
+        return Order(
+            id: "bithumb-\(orderId)",
+            symbol: orderCurrency,
+            side: orderSide,
+            price: priceValue,
+            amount: unitsValue,
+            totalValue: priceValue * unitsValue,
+            fee: feeValue,
+            exchange: .bithumb,
+            executedAt: date
+        )
+    }
+}
+
+extension BithumbTransaction {
+    /// 빗썸 거래 내역을 공통 Deposit 모델로 변환합니다.
+    func toDeposit() -> Deposit {
+        let symbol = (currency ?? "KRW").uppercased()
+        let depositType: DepositType = (symbol == "KRW") ? .fiat : .crypto
+
+        // transferDate는 마이크로초 타임스탬프입니다
+        let microseconds = Double(transferDate) ?? 0
+        let date = Date(timeIntervalSince1970: microseconds / 1_000_000)
+
+        return Deposit(
+            id: "bithumb-\(transferDate)",
+            symbol: symbol,
+            amount: Double(units) ?? 0,
+            type: depositType,
+            status: .completed,
+            txId: nil,
+            exchange: .bithumb,
+            completedAt: date
+        )
+    }
+}
+
 // MARK: - Dynamic Coding Key Helper
 
 private struct DynamicCodingKey: CodingKey {

@@ -15,6 +15,10 @@ final class BybitService: ExchangeService {
     private let authenticator: BybitAuthenticator
     private let session: URLSession
 
+    /// 커서 기반 페이지네이션 상태
+    private nonisolated(unsafe) var ordersCursor: String?
+    private nonisolated(unsafe) var depositsCursor: String?
+
     // MARK: - Init
 
     init(authenticator: BybitAuthenticator = BybitAuthenticator(),
@@ -126,6 +130,84 @@ final class BybitService: ExchangeService {
         try validateRetCode(decoded.retCode, message: decoded.retMsg)
 
         return true
+    }
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Bybit API: GET /v5/execution/list (커서 기반 페이지네이션)
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        var queryString = "category=spot&startTime=\(startTime)&endTime=\(endTime)&limit=100"
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = ordersCursor, !cursor.isEmpty {
+            queryString += "&cursor=\(cursor)"
+        } else if page == 0 {
+            ordersCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            path: "/v5/execution/list",
+            queryString: queryString
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(BybitResponse<BybitExecutionResult>.self, from: data)
+        try validateRetCode(decoded.retCode, message: decoded.retMsg)
+
+        guard let result = decoded.result else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // 다음 페이지 커서 저장
+        ordersCursor = result.nextPageCursor
+
+        let orders = result.list.map { $0.toOrder() }
+        let hasMore = result.nextPageCursor != nil && !(result.nextPageCursor?.isEmpty ?? true)
+
+        return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Bybit API: GET /v5/asset/deposit/query-record (커서 기반 페이지네이션)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        var queryString = "startTime=\(startTime)&endTime=\(endTime)&limit=50"
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = depositsCursor, !cursor.isEmpty {
+            queryString += "&cursor=\(cursor)"
+        } else if page == 0 {
+            depositsCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            path: "/v5/asset/deposit/query-record",
+            queryString: queryString
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(BybitResponse<BybitDepositResult>.self, from: data)
+        try validateRetCode(decoded.retCode, message: decoded.retMsg)
+
+        guard let result = decoded.result else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // 다음 페이지 커서 저장
+        depositsCursor = result.nextPageCursor
+
+        let deposits = result.rows.map { $0.toDeposit() }
+        let hasMore = result.nextPageCursor != nil && !(result.nextPageCursor?.isEmpty ?? true)
+
+        return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
     }
 
     // MARK: - Private Helpers

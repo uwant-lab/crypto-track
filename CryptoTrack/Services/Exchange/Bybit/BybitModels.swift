@@ -84,6 +84,99 @@ extension BybitKlineResult {
     }
 }
 
+// MARK: - Execution Response (GET /v5/execution/list)
+
+/// Bybit GET /v5/execution/list 응답 모델
+struct BybitExecutionResult: Decodable {
+    let list: [BybitExecution]
+    let nextPageCursor: String?
+}
+
+struct BybitExecution: Decodable {
+    let execId: String
+    let symbol: String
+    let side: String
+    let execPrice: String
+    let execQty: String
+    let execValue: String
+    let execFee: String
+    let execTime: String
+}
+
+// MARK: - Deposit Response (GET /v5/asset/deposit/query-record)
+
+/// Bybit GET /v5/asset/deposit/query-record 응답 모델
+struct BybitDepositResult: Decodable {
+    let rows: [BybitDepositRecord]
+    let nextPageCursor: String?
+}
+
+struct BybitDepositRecord: Decodable {
+    let id: String
+    let coin: String
+    let amount: String
+    let status: Int
+    let txID: String?
+    let successAt: String?
+}
+
+// MARK: - Execution / Deposit Mapping
+
+extension BybitExecution {
+    /// BybitExecution → 공통 Order 모델로 변환
+    func toOrder() -> Order {
+        // BTCUSDT → BTC
+        let baseSymbol = symbol.replacingOccurrences(of: "USDT", with: "")
+        let orderSide: OrderSide = (side == "Buy") ? .buy : .sell
+        let price = Double(execPrice) ?? 0
+        let qty = Double(execQty) ?? 0
+        let value = Double(execValue) ?? 0
+        let fee = Double(execFee) ?? 0
+        let ms = Double(execTime) ?? 0
+
+        return Order(
+            id: "bybit-\(execId)",
+            symbol: baseSymbol,
+            side: orderSide,
+            price: price,
+            amount: qty,
+            totalValue: value,
+            fee: fee,
+            exchange: .bybit,
+            executedAt: Date(timeIntervalSince1970: ms / 1000)
+        )
+    }
+}
+
+extension BybitDepositRecord {
+    /// BybitDepositRecord → 공통 Deposit 모델로 변환
+    func toDeposit() -> Deposit {
+        let depositStatus: DepositStatus
+        switch status {
+        case 3, 4:
+            depositStatus = .completed
+        case 0, 1, 2:
+            depositStatus = .pending
+        default:
+            depositStatus = .cancelled
+        }
+
+        let ms = Double(successAt ?? "0") ?? 0
+        let date = ms > 0 ? Date(timeIntervalSince1970: ms / 1000) : Date()
+
+        return Deposit(
+            id: "bybit-\(id)",
+            symbol: coin,
+            amount: Double(amount) ?? 0,
+            type: .crypto,
+            status: depositStatus,
+            txId: txID,
+            exchange: .bybit,
+            completedAt: date
+        )
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension BybitCoinBalance {

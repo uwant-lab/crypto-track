@@ -181,6 +181,135 @@ final class BithumbService: ExchangeService, Sendable {
         }
     }
 
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Bithumb API: POST /info/orders
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let limit = 100
+        let offset = page * limit
+
+        guard let url = URL(string: "\(baseURL)/info/orders") else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        let parameters = [
+            "order_currency": "ALL",
+            "payment_currency": "KRW",
+            "count": "\(limit)",
+            "offset": "\(offset)"
+        ]
+
+        let authHeaders: [String: String]
+        do {
+            authHeaders = try authenticator.generateAuthHeaders(endpoint: "/info/orders", parameters: parameters)
+        } catch let error as KeychainError {
+            throw error
+        } catch {
+            throw BithumbServiceError.authenticationFailed(error)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        for (field, value) in authHeaders {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
+
+        let bodyString = parameters
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
+            .joined(separator: "&")
+        request.httpBody = bodyString.data(using: .utf8)
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.networkError(error)
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(BithumbResponse<[BithumbOrderData]>.self, from: data)
+            guard decoded.isSuccess else {
+                throw BithumbServiceError.apiError(decoded.status, decoded.message)
+            }
+            let orders = (decoded.data ?? [])
+                .map { $0.toOrder() }
+                .filter { $0.executedAt >= from && $0.executedAt <= to }
+            let hasMore = (decoded.data?.count ?? 0) == limit
+            return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.decodingFailed(error)
+        }
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Bithumb API: POST /info/user_transactions (searchGb=4: 입금)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 100
+        let offset = page * limit
+
+        guard let url = URL(string: "\(baseURL)/info/user_transactions") else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        let parameters = [
+            "searchGb": "4",
+            "count": "\(limit)",
+            "offset": "\(offset)"
+        ]
+
+        let authHeaders: [String: String]
+        do {
+            authHeaders = try authenticator.generateAuthHeaders(endpoint: "/info/user_transactions", parameters: parameters)
+        } catch let error as KeychainError {
+            throw error
+        } catch {
+            throw BithumbServiceError.authenticationFailed(error)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        for (field, value) in authHeaders {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
+
+        let bodyString = parameters
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
+            .joined(separator: "&")
+        request.httpBody = bodyString.data(using: .utf8)
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.networkError(error)
+        }
+
+        do {
+            let decoded = try JSONDecoder().decode(BithumbResponse<[BithumbTransaction]>.self, from: data)
+            guard decoded.isSuccess else {
+                throw BithumbServiceError.apiError(decoded.status, decoded.message)
+            }
+            let deposits = (decoded.data ?? [])
+                .map { $0.toDeposit() }
+                .filter { $0.completedAt >= from && $0.completedAt <= to }
+            let hasMore = (decoded.data?.count ?? 0) == limit
+            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func fetchSingleTicker(symbol: String) async throws -> Ticker {

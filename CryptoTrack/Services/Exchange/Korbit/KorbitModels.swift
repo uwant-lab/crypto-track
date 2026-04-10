@@ -69,6 +69,100 @@ struct KorbitTickerResponse: Decodable, Sendable {
     }
 }
 
+// MARK: - Order Response (GET /v1/user/orders)
+
+/// Korbit 체결 완료 주문 응답 모델
+struct KorbitOrder: Decodable, Sendable {
+    let id: Int64
+    let currencyPair: String
+    let side: String
+    let avgPrice: String
+    let filledAmount: String
+    let fee: String
+    let createdAt: Int64
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case currencyPair = "currency_pair"
+        case side
+        case avgPrice = "avg_price"
+        case filledAmount = "filled_amount"
+        case fee
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Transfer Response (GET /v1/user/transfers)
+
+/// Korbit 입출금 내역 응답 모델
+struct KorbitTransfer: Decodable, Sendable {
+    let id: Int64
+    let type: String
+    let currency: String
+    let amount: String
+    let completedAt: Int64?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case currency
+        case amount
+        case completedAt = "completed_at"
+    }
+}
+
+// MARK: - Order / Transfer Mapping
+
+extension KorbitOrder {
+    /// Korbit 주문 응답을 공통 Order 모델로 변환합니다.
+    func toOrder() -> Order {
+        // "btc_krw" → "BTC"
+        let symbol = currencyPair.split(separator: "_").first.map { $0.uppercased() } ?? currencyPair.uppercased()
+        let orderSide: OrderSide = (side == "bid") ? .buy : .sell
+        let price = Double(avgPrice) ?? 0
+        let amount = Double(filledAmount) ?? 0
+        let feeValue = Double(fee) ?? 0
+        let date = Date(timeIntervalSince1970: Double(createdAt) / 1000)
+
+        return Order(
+            id: "korbit-\(id)",
+            symbol: symbol,
+            side: orderSide,
+            price: price,
+            amount: amount,
+            totalValue: price * amount,
+            fee: feeValue,
+            exchange: .korbit,
+            executedAt: date
+        )
+    }
+}
+
+extension KorbitTransfer {
+    /// Korbit 입출금 응답을 공통 Deposit 모델로 변환합니다.
+    func toDeposit() -> Deposit {
+        let symbol = currency.uppercased()
+        let depositType: DepositType = (symbol == "KRW") ? .fiat : .crypto
+        let date: Date
+        if let ts = completedAt {
+            date = Date(timeIntervalSince1970: Double(ts) / 1000)
+        } else {
+            date = Date()
+        }
+
+        return Deposit(
+            id: "korbit-\(id)",
+            symbol: symbol,
+            amount: Double(amount) ?? 0,
+            type: depositType,
+            status: .completed,
+            txId: nil,
+            exchange: .korbit,
+            completedAt: date
+        )
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension KorbitBalance {

@@ -112,6 +112,84 @@ final class BinanceService: ExchangeService {
         }
     }
 
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Binance API: GET /api/v3/myTrades (심볼별 조회 필요)
+    /// page는 현재 심볼 인덱스로 사용됩니다.
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        // 먼저 보유 자산 목록을 조회하여 심볼 목록을 가져옵니다
+        let assets = try await fetchAssets()
+        let symbols = assets.map { $0.symbol.uppercased() + "USDT" }
+
+        guard !symbols.isEmpty else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // page는 심볼 인덱스 (0-based)
+        guard page < symbols.count else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        let symbol = symbols[page]
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "symbol", value: symbol),
+            URLQueryItem(name: "startTime", value: "\(startTime)"),
+            URLQueryItem(name: "endTime", value: "\(endTime)"),
+            URLQueryItem(name: "limit", value: "1000")
+        ]
+
+        let signedItems = try authenticator.signedQueryItems(from: queryItems)
+        let request = try buildRequest(
+            path: "/api/v3/myTrades",
+            queryItems: signedItems,
+            requiresAPIKey: true
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let trades = try JSONDecoder().decode([BinanceTrade].self, from: data)
+        let orders = trades.map { $0.toOrder() }
+        let hasMore = (page + 1) < symbols.count
+        let progress = Double(page + 1) / Double(symbols.count)
+
+        return PagedResult(items: orders, hasMore: hasMore, progress: progress)
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Binance API: GET /sapi/v1/capital/deposit/hisrec
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 1000
+        let offset = page * limit
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "startTime", value: "\(startTime)"),
+            URLQueryItem(name: "endTime", value: "\(endTime)"),
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+
+        let signedItems = try authenticator.signedQueryItems(from: queryItems)
+        let request = try buildRequest(
+            path: "/sapi/v1/capital/deposit/hisrec",
+            queryItems: signedItems,
+            requiresAPIKey: true
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let deposits = try JSONDecoder().decode([BinanceDeposit].self, from: data)
+        let mapped = deposits.map { $0.toDeposit() }
+        let hasMore = deposits.count == limit
+
+        return PagedResult(items: mapped, hasMore: hasMore, progress: nil)
+    }
+
     // MARK: - Private Helpers
 
     private func fetchSingleTicker(symbol: String, baseSymbol: String) async throws -> [Ticker] {

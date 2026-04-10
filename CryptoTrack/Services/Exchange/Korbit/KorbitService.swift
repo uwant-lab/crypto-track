@@ -138,6 +138,106 @@ final class KorbitService: ExchangeService, Sendable {
         }
     }
 
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Korbit API: GET /v1/user/orders (Bearer 토큰 인증)
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let limit = 40
+        let offset = page * limit
+
+        let authHeader = try await authenticator.authorizationHeader()
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/user/orders") else {
+            throw KorbitServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "status", value: "filled"),
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw KorbitServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as KorbitServiceError {
+            throw error
+        } catch let error as KorbitAuthError {
+            throw error
+        } catch {
+            throw KorbitServiceError.networkError(error)
+        }
+
+        do {
+            let orders = try JSONDecoder().decode([KorbitOrder].self, from: data)
+            let filtered = orders
+                .map { $0.toOrder() }
+                .filter { $0.executedAt >= from && $0.executedAt <= to }
+            let hasMore = orders.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+        } catch {
+            throw KorbitServiceError.decodingFailed(error)
+        }
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Korbit API: GET /v1/user/transfers (Bearer 토큰 인증)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 40
+        let offset = page * limit
+
+        let authHeader = try await authenticator.authorizationHeader()
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/user/transfers") else {
+            throw KorbitServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "type", value: "deposit"),
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw KorbitServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as KorbitServiceError {
+            throw error
+        } catch let error as KorbitAuthError {
+            throw error
+        } catch {
+            throw KorbitServiceError.networkError(error)
+        }
+
+        do {
+            let transfers = try JSONDecoder().decode([KorbitTransfer].self, from: data)
+            let filtered = transfers
+                .map { $0.toDeposit() }
+                .filter { $0.completedAt >= from && $0.completedAt <= to }
+            let hasMore = transfers.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+        } catch {
+            throw KorbitServiceError.decodingFailed(error)
+        }
+    }
+
     /// 캔들스틱 데이터 조회 — Korbit은 캔들 API 미지원
     func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
         throw KorbitServiceError.unsupportedOperation("Korbit은 캔들스틱 API를 지원하지 않습니다.")

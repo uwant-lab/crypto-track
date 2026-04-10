@@ -189,6 +189,125 @@ final class UpbitService: ExchangeService, Sendable {
         }
     }
 
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Upbit API: GET /v1/orders/closed (JWT 인증, 쿼리 해시 필요)
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let limit = 100
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/orders/closed") else {
+            throw UpbitServiceError.invalidURL
+        }
+
+        let queryItems = [
+            URLQueryItem(name: "state", value: "done"),
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+            URLQueryItem(name: "order_by", value: "desc")
+        ]
+        components.queryItems = queryItems
+
+        // 쿼리 해시 생성 (SHA-512)
+        let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
+        let queryData = Data(queryString.utf8)
+        let hash = SHA512.hash(data: queryData)
+        let queryHash = hash.map { String(format: "%02x", $0) }.joined()
+
+        let authHeader = try authenticator.generateAuthorizationHeader(queryHash: queryHash)
+
+        guard let url = components.url else {
+            throw UpbitServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as UpbitServiceError {
+            throw error
+        } catch {
+            throw UpbitServiceError.networkError(error)
+        }
+
+        do {
+            let orders = try JSONDecoder().decode([UpbitOrder].self, from: data)
+            // 기간 필터링
+            let filtered = orders.compactMap { order -> Order? in
+                let mapped = order.toOrder()
+                guard mapped.executedAt >= from && mapped.executedAt <= to else { return nil }
+                return mapped
+            }
+            let hasMore = orders.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+        } catch {
+            throw UpbitServiceError.decodingFailed(error)
+        }
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Upbit API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 100
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/deposits") else {
+            throw UpbitServiceError.invalidURL
+        }
+
+        let queryItems = [
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+            URLQueryItem(name: "order_by", value: "desc")
+        ]
+        components.queryItems = queryItems
+
+        // 쿼리 해시 생성 (SHA-512)
+        let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
+        let queryData = Data(queryString.utf8)
+        let hash = SHA512.hash(data: queryData)
+        let queryHash = hash.map { String(format: "%02x", $0) }.joined()
+
+        let authHeader = try authenticator.generateAuthorizationHeader(queryHash: queryHash)
+
+        guard let url = components.url else {
+            throw UpbitServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as UpbitServiceError {
+            throw error
+        } catch {
+            throw UpbitServiceError.networkError(error)
+        }
+
+        do {
+            let deposits = try JSONDecoder().decode([UpbitDeposit].self, from: data)
+            // 기간 필터링
+            let filtered = deposits.compactMap { deposit -> Deposit? in
+                let mapped = deposit.toDeposit()
+                guard mapped.completedAt >= from && mapped.completedAt <= to else { return nil }
+                return mapped
+            }
+            let hasMore = deposits.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+        } catch {
+            throw UpbitServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func validateHTTPResponse(_ response: URLResponse) throws {
