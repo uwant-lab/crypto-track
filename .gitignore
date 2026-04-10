@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+
+# OMC plugin state
+.omc/
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+
+# Secrets
+*.env
