@@ -96,4 +96,34 @@ final class PortfolioAggregatorTests: XCTestCase {
         XCTAssertTrue(row.hasCostBasis)
         XCTAssertTrue(row.hasPartialCostBasis)
     }
+
+    /// Binance 0.2 BTC + OKX 0.1 BTC, both avgBuyPrice 0 (foreign exchange APIs
+    /// typically don't return cost basis). Tickers at $47,500.
+    /// - hasCostBasis = false
+    /// - profit / profitRate = 0
+    func testAggregateForeignNoCostBasis() {
+        let assets = [
+            asset("BTC", balance: 0.2, avgPrice: 0, exchange: .binance),
+            asset("BTC", balance: 0.1, avgPrice: 0, exchange: .okx),
+        ]
+        let tickers = [
+            ticker("BTC", price: 47_500, exchange: .binance),
+            ticker("BTC", price: 47_500, exchange: .okx),
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 1)
+
+        let row = rows[0]
+        XCTAssertEqual(row.quoteCurrency, .usdt)
+        XCTAssertEqual(row.totalBalance, 0.3, accuracy: 1e-9)
+        XCTAssertEqual(row.averageBuyPrice, 0)
+        XCTAssertEqual(row.currentValue, 14_250, accuracy: 0.01)
+        XCTAssertEqual(row.profit, 0)
+        XCTAssertEqual(row.profitRate, 0)
+        XCTAssertFalse(row.hasCostBasis)
+        XCTAssertFalse(row.hasPartialCostBasis)
+        // Exchange.allCases: binance < okx.
+        XCTAssertEqual(row.exchanges, [.binance, .okx])
+    }
 }
