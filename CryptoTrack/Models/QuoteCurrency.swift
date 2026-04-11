@@ -20,6 +20,14 @@ enum QuoteCurrency: String, Sendable, Hashable {
         case .usdt: return "USD"
         }
     }
+
+    /// Dashboard section header label used when rendering aggregated rows.
+    var sectionTitle: String {
+        switch self {
+        case .krw:  return "원화 거래소 (KRW)"
+        case .usdt: return "해외 거래소 (USD)"
+        }
+    }
 }
 
 extension Exchange {
