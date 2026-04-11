@@ -70,4 +70,30 @@ final class PortfolioAggregatorTests: XCTestCase {
         XCTAssertFalse(row.hasPartialCostBasis)
         XCTAssertTrue(row.hasTicker)
     }
+
+    /// Upbit 0.5 BTC @55M (known) + Bithumb 0.3 BTC @0 (unknown).
+    /// - averageBuyPrice = 55M (only Upbit's cost basis contributes)
+    /// - profit = known-only: 0.5 * 62M - 0.5 * 55M = 3.5M
+    /// - hasPartialCostBasis = true
+    func testAggregatePartialCostBasis() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("BTC", balance: 0.3, avgPrice: 0, exchange: .bithumb),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit),
+            ticker("BTC", price: 62_000_000, exchange: .bithumb),
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 1)
+
+        let row = rows[0]
+        XCTAssertEqual(row.totalBalance, 0.8, accuracy: 1e-9)
+        XCTAssertEqual(row.averageBuyPrice, 55_000_000, accuracy: 0.5)
+        XCTAssertEqual(row.currentValue, 49_600_000, accuracy: 0.5)
+        XCTAssertEqual(row.profit, 3_500_000, accuracy: 0.5)
+        XCTAssertTrue(row.hasCostBasis)
+        XCTAssertTrue(row.hasPartialCostBasis)
+    }
 }
