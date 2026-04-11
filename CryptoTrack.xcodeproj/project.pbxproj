@@ -57,6 +57,7 @@
 		561425FA0844E8337E91E5ED /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9977012669192991B4724869 /* AppSettings.swift */; };
 		56297328F5D62918B0B61E64 /* PriceColorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A990B8501A0DA0715C7326 /* PriceColorMode.swift */; };
 		59EDEBCFED06D49D0138533C /* ChartViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3092225FF81F8060019A4DD9 /* ChartViewModel.swift */; };
+		5A428AA211C39827AEE94908 /* ProfitBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */; };
 		5B55CD0CFC63A1DFA13EA416 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E04BB936E923BFB58D3FD86 /* ViewModifiers.swift */; };
 		5C231CEF3B2189B62F536F27 /* DepositListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B5495164F5590597C3310F /* DepositListView.swift */; };
 		5C2A87F45A99E2F89ADB7F0D /* ExchangeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */; };
@@ -161,6 +162,7 @@
 		E6BAE14CE8BFD2A79AC049A0 /* CloudSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFF3F8BC7E7861AD9C18D /* CloudSyncService.swift */; };
 		E772E9453227699A6FF285AA /* ExchangeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91775BE24F4D7AC40D474E76 /* ExchangeService.swift */; };
 		E7BAC3B7460072442D5C3818 /* QuoteCurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86BD69FA22052B03D02EFCD1 /* QuoteCurrency.swift */; };
+		E9587E840E36643443EE5386 /* ProfitBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */; };
 		EC1F619197D6D154A4E83429 /* ExchangeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C5650608A5ED6B12C917E3 /* ExchangeFilter.swift */; };
 		EF0FFB3E3AEB7ABB72CF2458 /* PortfolioSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */; };
 		EFD355061F259F180EF2A2CE /* TimeframePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */; };
@@ -271,6 +273,7 @@
 		E1B5495164F5590597C3310F /* DepositListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositListView.swift; sourceTree = "<group>"; };
 		E39E8518D3D082761DAC5B1C /* KorbitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitModels.swift; sourceTree = "<group>"; };
 		E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceFormatter.swift; sourceTree = "<group>"; };
+		E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfitBadge.swift; sourceTree = "<group>"; };
 		E4856176E66B8312A1BCA7F8 /* Indicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Indicator.swift; sourceTree = "<group>"; };
 		E90302837D216377EE23F496 /* BithumbService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbService.swift; sourceTree = "<group>"; };
 		E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneService.swift; sourceTree = "<group>"; };
@@ -334,6 +337,7 @@
 			children = (
 				352B5F56FB575782DAFC6D5D /* PriceColor.swift */,
 				E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */,
+				E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -795,6 +799,7 @@
 				F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */,
 				56297328F5D62918B0B61E64 /* PriceColorMode.swift in Sources */,
 				8BD9CD92C03A1127AFF007BA /* PriceFormatter.swift in Sources */,
+				E9587E840E36643443EE5386 /* ProfitBadge.swift in Sources */,
 				E7BAC3B7460072442D5C3818 /* QuoteCurrency.swift in Sources */,
 				0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */,
 				FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */,
@@ -902,6 +907,7 @@
 				5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */,
 				C3D251CC911C45F3C80EDB04 /* PriceColorMode.swift in Sources */,
 				821EFAEF24BAD7F434C4E5BC /* PriceFormatter.swift in Sources */,
+				5A428AA211C39827AEE94908 /* ProfitBadge.swift in Sources */,
 				FE0C60CE83A9FA02C886A49B /* QuoteCurrency.swift in Sources */,
 				1F445143D4A9761684A31625 /* SettingsView.swift in Sources */,
 				25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */,
