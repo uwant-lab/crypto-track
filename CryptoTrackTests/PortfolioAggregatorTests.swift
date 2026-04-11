@@ -174,4 +174,31 @@ final class PortfolioAggregatorTests: XCTestCase {
         XCTAssertEqual(row.currentPrice, 31_000_000 / 0.8, accuracy: 0.5)
         XCTAssertTrue(row.hasTicker)
     }
+
+    /// When a specific exchange filter is selected we don't aggregate — each
+    /// Asset becomes its own row (a single exchange cannot hold the same symbol
+    /// twice). Exchanges array has exactly one element.
+    func testSingleExchangeRowsNoAggregation() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("ETH", balance: 3.2, avgPrice: 2_800_000, exchange: .upbit),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit),
+            ticker("ETH", price: 3_100_000, exchange: .upbit),
+        ]
+
+        let rows = PortfolioAggregator.singleExchangeRows(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 2)
+        for row in rows {
+            XCTAssertEqual(row.exchanges.count, 1)
+            XCTAssertEqual(row.exchanges.first, .upbit)
+            XCTAssertEqual(row.quoteCurrency, .krw)
+            XCTAssertTrue(row.hasCostBasis)
+        }
+        let btc = rows.first { $0.symbol == "BTC" }!
+        XCTAssertEqual(btc.id, "upbit-BTC")
+        XCTAssertEqual(btc.currentValue, 31_000_000, accuracy: 0.5)
+        XCTAssertEqual(btc.averageBuyPrice, 55_000_000, accuracy: 0.5)
+    }
 }

@@ -25,6 +25,22 @@ enum PortfolioAggregator {
         }
     }
 
+    /// 1:1 conversion for the `.exchange(_)` filter. No grouping happens
+    /// (a single exchange cannot hold the same symbol twice), but the same
+    /// `PortfolioRow` shape is produced so the UI can consume one type.
+    static func singleExchangeRows(assets: [Asset], tickers: [Ticker]) -> [PortfolioRow] {
+        let lookup = tickerLookup(tickers)
+        return assets.map { asset in
+            makeRow(
+                id: "\(asset.exchange.rawValue.lowercased())-\(asset.symbol)",
+                symbol: asset.symbol,
+                quoteCurrency: asset.quoteCurrency,
+                groupAssets: [asset],
+                tickers: lookup
+            )
+        }
+    }
+
     // MARK: - Internals
 
     private struct GroupKey: Hashable {
