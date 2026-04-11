@@ -120,13 +120,11 @@
 		AD99B2610935A92FF8ED44F7 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		AF9817B1819304DF74D5F7C1 /* ExchangeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C5650608A5ED6B12C917E3 /* ExchangeFilter.swift */; };
 		B0F0F515014065B45316DD16 /* AssetTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 372EF40FCC9B29C896718109 /* AssetTable.swift */; };
-		B18330A0C01C2B3D441F9638 /* AssetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */; };
 		B1862C4D9F82DC743DFD9BEA /* DashboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081CC708757CD62D33B5547B /* DashboardToolbar.swift */; };
 		B30708FD724C5D21D82E38EB /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */; };
 		B5A74FB2AD7AC94A06A5E186 /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		B619BBDF81714BD338E0CBB4 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9977012669192991B4724869 /* AppSettings.swift */; };
 		B647ADFE49A4E91B47424D8B /* Order.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4E704CC6687341E956BDC9 /* Order.swift */; };
-		B928177FC68D0BC9F29AF8A3 /* AssetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */; };
 		BA79881312796B6CF28D8A0F /* OKXService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D5BEA612E533AD6B38D565 /* OKXService.swift */; };
 		BB3AAFC2EFC6EA87B2D6F195 /* KorbitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39E8518D3D082761DAC5B1C /* KorbitModels.swift */; };
 		BBD0216C51A41D71E5C84675 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
@@ -209,7 +207,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetRow.swift; sourceTree = "<group>"; };
 		039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorCalculator.swift; sourceTree = "<group>"; };
 		06868FAC22000898FF2EAD94 /* CoinoneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneModels.swift; sourceTree = "<group>"; };
 		081CC708757CD62D33B5547B /* DashboardToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardToolbar.swift; sourceTree = "<group>"; };
@@ -533,7 +530,6 @@
 		C4128D1B5EA8B70E878F3A5F /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */,
 				3092225FF81F8060019A4DD9 /* ChartViewModel.swift */,
 				6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */,
 				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
@@ -769,7 +765,6 @@
 				D1F01C198F1DCE33FE1D1A0C /* Asset.swift in Sources */,
 				7BCA1EB9585BBA7D3F6CFA86 /* AssetCardList.swift in Sources */,
 				329539F361ACAEAC5A9F01ED /* AssetFilterTabBar.swift in Sources */,
-				B928177FC68D0BC9F29AF8A3 /* AssetRow.swift in Sources */,
 				B0F0F515014065B45316DD16 /* AssetTable.swift in Sources */,
 				3334B8AF5CEE0CD88A9E0529 /* BinanceAuthenticator.swift in Sources */,
 				1DAE3B5B754BB09951129428 /* BinanceModels.swift in Sources */,
@@ -885,7 +880,6 @@
 				A320FF6F48E111326B977724 /* Asset.swift in Sources */,
 				FEA941EC530D66772DC20F59 /* AssetCardList.swift in Sources */,
 				67D6FCFEA8D77EBCA42306E7 /* AssetFilterTabBar.swift in Sources */,
-				B18330A0C01C2B3D441F9638 /* AssetRow.swift in Sources */,
 				DFC1572DDBF5090243506657 /* AssetTable.swift in Sources */,
 				797846C2A4C595B57C553CC9 /* BinanceAuthenticator.swift in Sources */,
 				18B4D92FAA6FBCD19099DE9F /* BinanceModels.swift in Sources */,

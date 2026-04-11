@@ -49,11 +49,6 @@ final class DashboardViewModel {
     var selectedFilter: ExchangeFilter = .all
     var hideDust: Bool = true
 
-    /// macOS Table에 양방향 바인딩되는 정렬 상태. iOS는 기본값(평가금액 내림차순)만 사용.
-    var tableSortOrder: [KeyPathComparator<AssetRow>] = [
-        KeyPathComparator(\AssetRow.currentValue, order: .reverse)
-    ]
-
     /// Sort state for the KRW section in the new `AssetTableSections` view.
     /// The default order mirrors the pre-refactor behaviour.
     var krwSortOrder: [KeyPathComparator<PortfolioRow>] = [
@@ -97,17 +92,6 @@ final class DashboardViewModel {
         return asset.balance * ticker.currentPrice
     }
 
-    // MARK: - Display Rows (filter → dust → sort)
-
-    /// 필터/dust 적용 후 정렬된 표시용 행 목록.
-    var displayedRows: [AssetRow] {
-        let rows = assets
-            .filter { matchesFilter($0) }
-            .map { makeRow(for: $0) }
-            .filter { !hideDust || !isDust($0) }
-        return rows.sorted(using: tableSortOrder)
-    }
-
     private func matchesFilter(_ asset: Asset) -> Bool {
         switch selectedFilter {
         case .all:
@@ -115,46 +99,6 @@ final class DashboardViewModel {
         case .exchange(let exchange):
             return asset.exchange == exchange
         }
-    }
-
-    private func makeRow(for asset: Asset) -> AssetRow {
-        let ticker = ticker(for: asset)
-        let currentPrice = ticker?.currentPrice ?? 0
-        let value = asset.balance * currentPrice
-        let cost = asset.balance * asset.averageBuyPrice
-        let profit: Double
-        let rate: Double
-        if asset.hasCostBasis {
-            profit = value - cost
-            rate = cost > 0 ? (profit / cost) * 100 : 0
-        } else {
-            profit = 0
-            rate = 0
-        }
-        return AssetRow(
-            id: asset.id,
-            asset: asset,
-            symbol: asset.symbol,
-            exchange: asset.exchange,
-            balance: asset.balance,
-            averageBuyPrice: asset.averageBuyPrice,
-            currentPrice: currentPrice,
-            currentValue: value,
-            profit: profit,
-            profitRate: rate,
-            hasCostBasis: asset.hasCostBasis,
-            hasTicker: ticker != nil,
-            quoteCurrency: asset.quoteCurrency
-        )
-    }
-
-    /// ticker를 모르면 가치를 모르므로 dust로 분류하지 않는다.
-    private func isDust(_ row: AssetRow) -> Bool {
-        guard row.hasTicker else { return false }
-        let threshold: Double = row.quoteCurrency == .krw
-            ? Self.dustThresholdKRW
-            : Self.dustThresholdUSD
-        return row.currentValue < threshold
     }
 
     // MARK: - Display Sections (new sectioned API)
@@ -186,6 +130,13 @@ final class DashboardViewModel {
         if !krwRows.isEmpty { sections.append(RowSection(id: .krw, rows: krwRows)) }
         if !usdRows.isEmpty { sections.append(RowSection(id: .usdt, rows: usdRows)) }
         return sections
+    }
+
+    /// Flat view of all rows across all sections. Preserved so that existing
+    /// `DashboardViewModelTests` cases can assert on row counts and ordering
+    /// without having to walk section by section.
+    var displayedRows: [PortfolioRow] {
+        displayedSections.flatMap(\.rows)
     }
 
     /// Post-aggregation dust filter. A row is dust when its aggregated

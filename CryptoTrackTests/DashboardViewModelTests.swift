@@ -115,7 +115,7 @@ final class DashboardViewModelTests: XCTestCase {
         viewModel.hideDust = false
 
         XCTAssertEqual(viewModel.displayedRows.count, 1)
-        XCTAssertEqual(viewModel.displayedRows.first?.exchange, .upbit)
+        XCTAssertEqual(viewModel.displayedRows.first?.exchanges, [.upbit])
     }
 
     // MARK: - Dust filtering
