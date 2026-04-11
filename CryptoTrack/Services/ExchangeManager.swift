@@ -25,8 +25,11 @@ final class ExchangeManager {
 
     // MARK: - Init
 
-    init() {
-        loadRegisteredExchanges()
+    /// - Parameter hydrateFromKeychain: `true`이면 Keychain에 API 키가 존재하지만
+    ///   UserDefaults `registeredExchanges`에는 빠져 있는 거래소를 자동으로 복구한다.
+    ///   테스트는 `false`로 호출해 머신 Keychain 상태가 테스트에 새어 들어오는 것을 막는다.
+    init(hydrateFromKeychain: Bool = true) {
+        loadRegisteredExchanges(hydrateFromKeychain: hydrateFromKeychain)
         syncFromCloud()
     }
 
@@ -187,13 +190,47 @@ final class ExchangeManager {
         CloudSyncService.shared.syncRegisteredExchanges(registeredExchanges)
     }
 
-    private func loadRegisteredExchanges() {
-        guard let names = UserDefaults.standard.stringArray(forKey: userDefaultsKey) else { return }
-        let exchanges = names.compactMap { Exchange(rawValue: $0) }
-        for exchange in exchanges {
+    private func loadRegisteredExchanges(hydrateFromKeychain: Bool) {
+        let userDefaultsNames = UserDefaults.standard.stringArray(forKey: userDefaultsKey) ?? []
+        let fromUserDefaults = userDefaultsNames.compactMap { Exchange(rawValue: $0) }
+
+        // Self-heal: Keychain 스캔 fallback.
+        // 과거(6bdf92a fix 이전)에 저장되어 Keychain에만 존재하고 UserDefaults
+        // `registeredExchanges`에는 기록되지 않은 거래소를 복구한다.
+        let fromKeychain = hydrateFromKeychain
+            ? Exchange.allCases.filter { Self.hasAPIKeysInKeychain(for: $0) }
+            : []
+
+        // 두 소스를 병합하고 Exchange.allCases 순서로 정렬해 안정적인 UI 순서를 유지한다.
+        let merged: [Exchange] = Exchange.allCases.filter {
+            fromUserDefaults.contains($0) || fromKeychain.contains($0)
+        }
+
+        for exchange in merged {
             services[exchange] = createService(for: exchange)
         }
-        registeredExchanges = exchanges
+        registeredExchanges = merged
+
+        // Keychain으로부터 복구된 항목이 있으면 UserDefaults에 영속화한다.
+        if Set(merged) != Set(fromUserDefaults) {
+            saveRegisteredExchanges()
+        }
+    }
+
+    /// Keychain에 해당 거래소의 API 키가 저장되어 있는지 확인합니다.
+    /// 거래소별 primary key 이름이 다르므로 switch로 분기합니다.
+    private static func hasAPIKeysInKeychain(for exchange: Exchange) -> Bool {
+        let account = exchange.rawValue.lowercased()
+        let primaryKey: String
+        switch exchange {
+        case .korbit:
+            primaryKey = "clientId"
+        case .okx:
+            primaryKey = "apiKey"
+        default:
+            primaryKey = "accessKey"
+        }
+        return (try? KeychainService.shared.read(key: primaryKey, account: account)) != nil
     }
 
     // MARK: - Factory
