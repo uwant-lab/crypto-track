@@ -65,12 +65,30 @@ final class BithumbService: ExchangeService, Sendable {
     }
 
     /// 특정 심볼의 KRW 마켓 현재 시세를 조회합니다.
+    ///
+    /// 빗썸의 `/v1/ticker?markets=A,B,C` 배치 엔드포인트는 **하나의 심볼이라도
+    /// KRW 마켓에 존재하지 않으면 전체 응답을 `{"error":{"name":404, ...}}`
+    /// 로 대체**해 버린다 (HTTP 200). 상장 폐지되었거나 원래 KRW 페어가
+    /// 없는 코인이 사용자 잔고에 섞여 있으면 전체 시세가 날아가므로,
+    /// 배치 실패 시 심볼별 병렬 호출로 폴백해 유효한 티커만 모은다.
+    ///
     /// - Parameter symbols: 심볼 목록 (예: ["BTC", "ETH"])
-    /// - Throws: `BithumbServiceError`
-    /// - Returns: 공통 Ticker 모델 배열
+    /// - Returns: 성공한 심볼의 Ticker 배열 (빈 배열 허용).
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
         guard !symbols.isEmpty else { return [] }
 
+        // 1) 배치 호출 시도 (happy path).
+        if let batch = try? await fetchTickersBatch(symbols: symbols) {
+            return batch
+        }
+
+        // 2) Fallback: 심볼별 병렬 호출. 개별 심볼의 404는 조용히 드롭한다.
+        return await fetchTickersIndividually(symbols: symbols)
+    }
+
+    /// 빗썸 배치 ticker 엔드포인트를 한 번의 HTTP 호출로 쏜다.
+    /// 하나라도 존재하지 않는 마켓이 섞이면 `.decodingFailed`로 throw한다.
+    private func fetchTickersBatch(symbols: [String]) async throws -> [Ticker] {
         // 심볼을 빗썸 마켓 코드로 변환: "BTC" → "KRW-BTC"
         let markets = symbols.map { "KRW-\($0)" }.joined(separator: ",")
 
@@ -99,11 +117,35 @@ final class BithumbService: ExchangeService, Sendable {
             throw BithumbServiceError.networkError(error)
         }
 
+        // 빗썸은 상장폐지/미상장 심볼이 섞이면 HTTP 200 + `{"error":{...}}`를
+        // 돌려준다. 배열 디코딩이 실패하면 throw해서 fallback 경로로 넘긴다.
         do {
             let tickers = try JSONDecoder().decode([BithumbTicker].self, from: data)
             return tickers.map { $0.toTicker() }
         } catch {
             throw BithumbServiceError.decodingFailed(error)
+        }
+    }
+
+    /// 심볼을 한 개씩 병렬로 조회한다. 개별 호출 실패는 nil로 처리하고,
+    /// 성공한 티커만 모아 반환한다. 절대 throw하지 않는다.
+    private func fetchTickersIndividually(symbols: [String]) async -> [Ticker] {
+        await withTaskGroup(of: Ticker?.self) { group in
+            for symbol in symbols {
+                group.addTask {
+                    do {
+                        let batch = try await self.fetchTickersBatch(symbols: [symbol])
+                        return batch.first
+                    } catch {
+                        return nil
+                    }
+                }
+            }
+            var collected: [Ticker] = []
+            for await ticker in group {
+                if let ticker { collected.append(ticker) }
+            }
+            return collected
         }
     }
 
