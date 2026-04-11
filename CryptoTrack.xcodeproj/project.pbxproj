@@ -26,6 +26,7 @@
 		1F202936D8949DC369511FE7 /* BithumbModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C550256480F6C8FA520961F8 /* BithumbModels.swift */; };
 		1F445143D4A9761684A31625 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */; };
 		1F8985F711BE22D21DF6BB35 /* Kline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5FC9E6BBCB4B1A6BF02829 /* Kline.swift */; };
+		219760210EEE89B876B049D4 /* ExchangeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDB7112A2E3301111993033 /* ExchangeBadge.swift */; };
 		24E0B07711370F457D6276F7 /* ChartDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4953FA9EE5EF8533299807D /* ChartDataManager.swift */; };
 		2578F560529BF09A07970277 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11AB07926A32E57D69BA2FB /* Theme.swift */; };
 		25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
@@ -180,6 +181,7 @@
 		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
 		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
+		F7E75034C4557BBB844C605F /* ExchangeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDB7112A2E3301111993033 /* ExchangeBadge.swift */; };
 		F928C2FADC69D692E0689036 /* DashboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081CC708757CD62D33B5547B /* DashboardToolbar.swift */; };
 		FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */; };
 		FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
@@ -235,6 +237,7 @@
 		4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionHistoryViewModel.swift; sourceTree = "<group>"; };
 		4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		4EDAEBAF23818CADBF19CE59 /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
+		4EDB7112A2E3301111993033 /* ExchangeBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeBadge.swift; sourceTree = "<group>"; };
 		4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitService.swift; sourceTree = "<group>"; };
 		586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeManagerTests.swift; sourceTree = "<group>"; };
 		5B4E704CC6687341E956BDC9 /* Order.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Order.swift; sourceTree = "<group>"; };
@@ -357,6 +360,7 @@
 		1C9BAD4C75547705E328F1FC /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				4EDB7112A2E3301111993033 /* ExchangeBadge.swift */,
 				352B5F56FB575782DAFC6D5D /* PriceColor.swift */,
 				E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */,
 				E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */,
@@ -803,6 +807,7 @@
 				707285F0E5DA545CCFA6B7D0 /* DrawingToolbarView.swift in Sources */,
 				F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */,
 				D04F6A17DACC43A1A29A9463 /* Exchange+Brand.swift in Sources */,
+				219760210EEE89B876B049D4 /* ExchangeBadge.swift in Sources */,
 				AF9817B1819304DF74D5F7C1 /* ExchangeFilter.swift in Sources */,
 				54765F0F5CA662C0CEEC67F8 /* ExchangeGuide.swift in Sources */,
 				7AC8C21F964A0AEBC4757585 /* ExchangeManager.swift in Sources */,
@@ -919,6 +924,7 @@
 				CCAEA9D0D34B8ABD6C3059CF /* DrawingToolbarView.swift in Sources */,
 				02EE5B557E66DEDEDB7AE247 /* DrawingViewModel.swift in Sources */,
 				C8E6EC32B401821053B05E62 /* Exchange+Brand.swift in Sources */,
+				F7E75034C4557BBB844C605F /* ExchangeBadge.swift in Sources */,
 				EC1F619197D6D154A4E83429 /* ExchangeFilter.swift in Sources */,
 				FC1476EF3CE1BF44ED449C81 /* ExchangeGuide.swift in Sources */,
 				6AFD99701C9764E7A493AECB /* ExchangeManager.swift in Sources */,
