@@ -84,14 +84,16 @@ struct DashboardView: View {
                 krwSortOrder: $viewModel.krwSortOrder,
                 usdSortOrder: $viewModel.usdSortOrder,
                 showHeaders: viewModel.selectedFilter == .all,
-                colorMode: settingsManager.priceColorMode
+                colorMode: settingsManager.priceColorMode,
+                sparkline: { viewModel.sparkline(for: $0) }
             )
             .padding(.horizontal, 16)
             #else
             AssetCardList(
                 sections: viewModel.displayedSections,
                 showSectionHeaders: viewModel.selectedFilter == .all,
-                colorMode: settingsManager.priceColorMode
+                colorMode: settingsManager.priceColorMode,
+                sparkline: { viewModel.sparkline(for: $0) }
             )
             #endif
         }

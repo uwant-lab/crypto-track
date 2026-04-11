@@ -11,6 +11,7 @@ struct AssetCardList: View {
     let sections: [RowSection]
     let showSectionHeaders: Bool
     let colorMode: PriceColorMode
+    let sparkline: (PortfolioRow) -> [Double]?
 
     var body: some View {
         List {
@@ -20,7 +21,8 @@ struct AssetCardList: View {
                         AssetCardRow(
                             row: row,
                             showBadges: showSectionHeaders,
-                            colorMode: colorMode
+                            colorMode: colorMode,
+                            sparklinePrices: sparkline(row) ?? []
                         )
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
@@ -43,10 +45,13 @@ private struct AssetCardRow: View {
     let row: PortfolioRow
     let showBadges: Bool
     let colorMode: PriceColorMode
+    let sparklinePrices: [Double]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
+            Sparkline(prices: sparklinePrices, colorMode: colorMode)
+                .frame(height: 22)
             Divider()
             metricsGrid
             if row.hasPartialCostBasis {

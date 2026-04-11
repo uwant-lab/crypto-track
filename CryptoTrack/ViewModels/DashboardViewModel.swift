@@ -85,8 +85,16 @@ final class DashboardViewModel {
 
     private let exchangeManager: ExchangeManager
 
-    init(exchangeManager: ExchangeManager = .shared) {
+    /// 대시보드 행에 표시되는 7일 미니 스파크라인의 데이터 소스.
+    /// `refresh()` 이후 fire-and-forget Task로 `hydrate`되며, 1시간 TTL.
+    let sparklineProvider: SparklineProvider
+
+    init(
+        exchangeManager: ExchangeManager = .shared,
+        sparklineProvider: SparklineProvider? = nil
+    ) {
         self.exchangeManager = exchangeManager
+        self.sparklineProvider = sparklineProvider ?? SparklineProvider(exchangeManager: exchangeManager)
     }
 
     // MARK: - Ticker Matching (fallback 제거 — 정확 매치만)
@@ -273,6 +281,31 @@ final class DashboardViewModel {
         if newAssets.isEmpty && !statuses.isEmpty && statuses.allSatisfy({ $0.status == .failed }) {
             errorMessage = "모든 거래소에서 데이터를 불러오지 못했습니다."
         }
+
+        // 스파크라인은 tick rate limit 부담이 크므로 refresh 루프를 블록하지
+        // 않고 fire-and-forget으로 hydrate한다. 1시간 TTL 덕분에 대부분의
+        // 30초 refresh 사이클에서는 실제 네트워크 호출이 발생하지 않는다.
+        let pairs = Self.sparklinePairs(from: newAssets)
+        if !pairs.isEmpty {
+            Task { [sparklineProvider] in
+                await sparklineProvider.hydrate(pairs: pairs)
+            }
+        }
+    }
+
+    /// 표시 대상 (exchange, symbol) 페어를 Asset 목록에서 추출한다.
+    /// 같은 심볼이 여러 거래소에 있으면 각각 하나의 pair로 간주한다 — 행
+    /// 수준에서는 `row.exchanges.first`만 그리더라도, 사용자가 거래소를
+    /// 전환할 때 캐시 히트를 유지하기 위해 전부 데워둔다.
+    private static func sparklinePairs(from assets: [Asset]) -> Set<SparklineProvider.Key> {
+        Set(assets.map { SparklineProvider.Key(exchange: $0.exchange, symbol: $0.symbol) })
+    }
+
+    /// 행이 표시할 스파크라인 데이터를 반환한다. 집계 행의 경우 첫 번째
+    /// 기여 거래소(`row.exchanges.first`)의 7일 종가 배열을 사용한다.
+    func sparkline(for row: PortfolioRow) -> [Double]? {
+        guard let exchange = row.exchanges.first else { return nil }
+        return sparklineProvider.sparkline(exchange: exchange, symbol: row.symbol)
     }
 
     // MARK: - Sample Data (preview용)
