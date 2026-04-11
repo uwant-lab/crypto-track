@@ -129,33 +129,18 @@ final class TransactionHistoryViewModel {
 
     // MARK: - Private
 
+    /// 현재 필터에 해당하는 서비스 목록. `ExchangeManager.shared.services`에서
+    /// 꺼내 쓴다 — 매번 `UpbitService()` 같은 fresh 인스턴스를 만들면 앱
+    /// 시작 시 preload해 둔 Keychain 캐시를 재사용하지 못해 조회마다 로그인
+    /// 프롬프트가 반복 뜬다.
     private func targetServices() -> [any ExchangeService] {
-        let exchanges: [Exchange]
+        let manager = ExchangeManager.shared
+        let candidates: [Exchange]
         if let selected = selectedExchange {
-            exchanges = [selected]
+            candidates = manager.registeredExchanges.contains(selected) ? [selected] : []
         } else {
-            exchanges = Array(ExchangeManager.shared.registeredExchanges)
+            candidates = manager.registeredExchanges
         }
-        return exchanges.map { makeService(for: $0) }
-    }
-
-    /// 거래소에 맞는 ExchangeService 인스턴스를 생성합니다.
-    private func makeService(for exchange: Exchange) -> any ExchangeService {
-        switch exchange {
-        case .upbit:
-            return UpbitService()
-        case .binance:
-            return BinanceService()
-        case .bithumb:
-            return BithumbService()
-        case .bybit:
-            return BybitService()
-        case .coinone:
-            return CoinoneService()
-        case .korbit:
-            return KorbitService()
-        case .okx:
-            return OKXService()
-        }
+        return candidates.compactMap { manager.services[$0] }
     }
 }

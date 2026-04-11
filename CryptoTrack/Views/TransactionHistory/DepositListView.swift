@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// 입금 내역 리스트. 일자별 `Section` 그룹핑, 대시보드와 동일한
+/// `PriceFormatter` + `ExchangeBadge` 사용.
 struct DepositListView: View {
     let groupedDeposits: [(Date, [Deposit])]
     let isLoading: Bool
@@ -9,7 +11,14 @@ struct DepositListView: View {
 
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy.MM.dd"
+        f.dateFormat = "yyyy.MM.dd (E)"
+        f.locale = Locale(identifier: "ko_KR")
+        return f
+    }()
+
+    private let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
         return f
     }()
 
@@ -34,62 +43,88 @@ struct DepositListView: View {
     private var depositList: some View {
         List {
             ForEach(groupedDeposits, id: \.0) { date, deposits in
-                Section(dateFormatter.string(from: date)) {
+                Section {
                     ForEach(deposits) { deposit in
                         depositRow(deposit)
                     }
+                } header: {
+                    Text(dateFormatter.string(from: date))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
                 }
             }
         }
+        .listStyle(.plain)
     }
 
     private func depositRow(_ deposit: Deposit) -> some View {
-        HStack {
+        HStack(alignment: .top, spacing: 12) {
+            ExchangeBadge(exchange: deposit.exchange, size: 28)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(deposit.symbol)
-                        .font(.body.bold())
-                    Text(deposit.type == .fiat ? "원화" : "코인")
-                        .font(.caption.bold())
-                        .foregroundStyle(.blue)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.1))
-                        .clipShape(Capsule())
+                        .font(.body.weight(.semibold))
+                    typeBadge(deposit.type)
                     Spacer()
-                    Text(deposit.exchange.rawValue)
-                        .font(.caption)
+                    Text(timeFormatter.string(from: deposit.completedAt))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
-                HStack {
-                    if deposit.type == .fiat {
-                        Text("\(deposit.amount, specifier: "%.0f")원")
-                            .font(.subheadline)
-                    } else {
-                        Text("\(deposit.amount, specifier: "%.8g") \(deposit.symbol)")
-                            .font(.subheadline)
-                    }
+                HStack(alignment: .firstTextBaseline) {
+                    amountText(for: deposit)
+                        .font(.subheadline.weight(.medium))
+                        .monospacedDigit()
                     Spacer()
                     statusBadge(deposit.status)
                 }
+                if let txId = deposit.txId, !txId.isEmpty {
+                    Text(txId)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
-            .padding(.vertical, 2)
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func amountText(for deposit: Deposit) -> some View {
+        if deposit.type == .fiat {
+            Text(PriceFormatter.formatAmount(deposit.amount, currency: deposit.exchange.quoteCurrency))
+        } else {
+            Text("\(PriceFormatter.formatBalance(deposit.amount)) \(deposit.symbol)")
         }
     }
 
-    // MARK: - Status Badge
+    private func typeBadge(_ type: DepositType) -> some View {
+        let text = type == .fiat ? "원화" : "코인"
+        let tint: Color = type == .fiat ? .blue : .purple
+        return Text(text)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(tint.opacity(0.12)))
+    }
 
     private func statusBadge(_ status: DepositStatus) -> some View {
         let (text, color): (String, Color) = {
             switch status {
             case .completed: return ("완료", .green)
-            case .pending: return ("처리중", .orange)
+            case .pending:   return ("처리중", .orange)
             case .cancelled: return ("취소", .red)
             }
         }()
         return Text(text)
-            .font(.caption)
+            .font(.caption2.weight(.semibold))
             .foregroundStyle(color)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(color.opacity(0.12)))
     }
 
     // MARK: - Empty State
@@ -114,6 +149,7 @@ struct DepositListView: View {
             Text("\(Int(progress * 100))% (\(loadedCount)건 로드됨)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .monospacedDigit()
         }
         .padding()
     }
@@ -123,14 +159,15 @@ struct DepositListView: View {
     private func errorBanner(_ message: String) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(.orange)
             Text(message)
                 .font(.caption)
-                .foregroundStyle(.red)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
             Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color.red.opacity(0.1))
+        .background(Color.orange.opacity(0.12))
     }
 }
