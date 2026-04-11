@@ -64,7 +64,10 @@ struct DashboardView: View {
                 hideDust: $viewModel.hideDust,
                 lastRefresh: viewModel.lastRefreshDate,
                 isRefreshing: viewModel.isLoading,
-                onRefresh: { Task { await viewModel.refresh() } }
+                onRefresh: { Task { await viewModel.refresh() } },
+                needsCostBasisSync: !viewModel.foreignCostBasisPairs.isEmpty,
+                isCostBasisSyncing: viewModel.costBasisProvider.isComputing,
+                onCostBasisSync: { Task { await viewModel.syncForeignCostBasis() } }
             )
             .padding(.horizontal, 16)
 

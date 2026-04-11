@@ -27,6 +27,7 @@
 		1F445143D4A9761684A31625 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */; };
 		1F8985F711BE22D21DF6BB35 /* Kline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5FC9E6BBCB4B1A6BF02829 /* Kline.swift */; };
 		219760210EEE89B876B049D4 /* ExchangeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDB7112A2E3301111993033 /* ExchangeBadge.swift */; };
+		2319376D8DC936EBDC2298CC /* ForeignCostBasisProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D52FAEFC658A02D84516F7 /* ForeignCostBasisProvider.swift */; };
 		24E0B07711370F457D6276F7 /* ChartDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4953FA9EE5EF8533299807D /* ChartDataManager.swift */; };
 		2578F560529BF09A07970277 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11AB07926A32E57D69BA2FB /* Theme.swift */; };
 		25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
@@ -140,6 +141,7 @@
 		C649C0AEAB9F8F36BFCEFE81 /* SparklineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */; };
 		C6F9685CE0B73E5C4C931B40 /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
 		C822FB5F4E23F7ADAFF7DE32 /* CoinoneService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */; };
+		C87C9DD157FC11E5528CE97F /* ForeignCostBasisProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D52FAEFC658A02D84516F7 /* ForeignCostBasisProvider.swift */; };
 		C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */; };
 		C8E6EC32B401821053B05E62 /* Exchange+Brand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C7F59FFC67615DFD0DACDC /* Exchange+Brand.swift */; };
 		CA387125A6EF1EFA67449A26 /* Order.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4E704CC6687341E956BDC9 /* Order.swift */; };
@@ -291,6 +293,7 @@
 		C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSummaryCard.swift; sourceTree = "<group>"; };
 		C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeframePickerView.swift; sourceTree = "<group>"; };
 		C4953FA9EE5EF8533299807D /* ChartDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartDataManager.swift; sourceTree = "<group>"; };
+		C4D52FAEFC658A02D84516F7 /* ForeignCostBasisProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForeignCostBasisProvider.swift; sourceTree = "<group>"; };
 		C550256480F6C8FA520961F8 /* BithumbModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbModels.swift; sourceTree = "<group>"; };
 		C6AFD933DEFFE11FD71FF26D /* BinanceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinanceModels.swift; sourceTree = "<group>"; };
 		CA4769E89A5F115B6254A2A5 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -552,6 +555,7 @@
 				3092225FF81F8060019A4DD9 /* ChartViewModel.swift */,
 				6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */,
 				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
+				C4D52FAEFC658A02D84516F7 /* ForeignCostBasisProvider.swift */,
 				CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */,
 				B28524CE93529E37B8945240 /* SettingsViewModel.swift */,
 				465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */,
@@ -828,6 +832,7 @@
 				E772E9453227699A6FF285AA /* ExchangeService.swift in Sources */,
 				46D0931E743893778DE89C8E /* ExchangeSetupView.swift in Sources */,
 				32FC30B6DEE7977722E92716 /* ExchangeStatusBanner.swift in Sources */,
+				C87C9DD157FC11E5528CE97F /* ForeignCostBasisProvider.swift in Sources */,
 				051A81CB3C4B40C6C5379B00 /* Indicator.swift in Sources */,
 				FE17C2C2A43616236A8EBA0E /* IndicatorCalculator.swift in Sources */,
 				0B5E04C7439ACE7E89B5B8BB /* IndicatorOverlayCanvas.swift in Sources */,
@@ -947,6 +952,7 @@
 				C5D5D87BFFBE42F86268DCCC /* ExchangeService.swift in Sources */,
 				6E0010687169DF56F915E388 /* ExchangeSetupView.swift in Sources */,
 				5AAAFD3935C2FF3152F79BDC /* ExchangeStatusBanner.swift in Sources */,
+				2319376D8DC936EBDC2298CC /* ForeignCostBasisProvider.swift in Sources */,
 				8E8C9B34E942D0D5D68254BF /* Indicator.swift in Sources */,
 				79B82F4C460AF7BCEE3E2B34 /* IndicatorCalculator.swift in Sources */,
 				16899562332A724069A6E2EA /* IndicatorOverlayCanvas.swift in Sources */,
