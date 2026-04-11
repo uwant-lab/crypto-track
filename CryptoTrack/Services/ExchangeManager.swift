@@ -215,22 +215,48 @@ final class ExchangeManager {
         if Set(merged) != Set(fromUserDefaults) {
             saveRegisteredExchanges()
         }
+
+        // 모든 등록된 거래소의 API 키를 캐시에 일괄 로드한다.
+        // 이후 대시보드 refresh 시점에 키체인 프롬프트가 흩어지지 않고,
+        // 앱 시작 시점에 한 번에 처리된다.
+        if hydrateFromKeychain {
+            preloadKeychainCache()
+        }
+    }
+
+    /// 등록된 모든 거래소의 Keychain 아이템을 한 번에 읽어 캐시에 적재합니다.
+    /// `AppLockManager.unlock()` 성공 이후에도 호출해 잠금 해제 후 첫 refresh가
+    /// 프롬프트 없이 돌아가도록 합니다.
+    func preloadKeychainCache() {
+        for exchange in registeredExchanges {
+            KeychainService.shared.preloadCache(
+                account: exchange.rawValue.lowercased(),
+                keys: Self.keychainKeyNames(for: exchange)
+            )
+        }
     }
 
     /// Keychain에 해당 거래소의 API 키가 저장되어 있는지 확인합니다.
     /// 거래소별 primary key 이름이 다르므로 switch로 분기합니다.
     private static func hasAPIKeysInKeychain(for exchange: Exchange) -> Bool {
         let account = exchange.rawValue.lowercased()
-        let primaryKey: String
+        let primaryKey: String = keychainKeyNames(for: exchange).first ?? "accessKey"
+        return (try? KeychainService.shared.read(key: primaryKey, account: account)) != nil
+    }
+
+    /// 거래소별로 Keychain에 저장되는 key 이름 목록.
+    /// 첫 번째가 "primary" (존재 여부 판정용), 나머지는 함께 preload된다.
+    static func keychainKeyNames(for exchange: Exchange) -> [String] {
         switch exchange {
         case .korbit:
-            primaryKey = "clientId"
+            // clientId/clientSecret가 primary. 토큰 캐시도 함께 preload해
+            // 재발급 로직이 프롬프트 없이 진행되도록 한다.
+            return ["clientId", "clientSecret", "accessToken", "refreshToken", "tokenExpiry"]
         case .okx:
-            primaryKey = "apiKey"
+            return ["apiKey", "secretKey", "passphrase"]
         default:
-            primaryKey = "accessKey"
+            return ["accessKey", "secretKey"]
         }
-        return (try? KeychainService.shared.read(key: primaryKey, account: account)) != nil
     }
 
     // MARK: - Factory
