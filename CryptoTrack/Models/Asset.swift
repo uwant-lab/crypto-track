@@ -19,3 +19,12 @@ struct Asset: Identifiable, Sendable {
         balance * averageBuyPrice
     }
 }
+
+extension Asset {
+    /// 평단가가 0 초과면 cost basis 제공으로 간주. 해외 거래소처럼 API가 평단가를
+    /// 안 주는 경우 0이 들어오므로 false가 된다.
+    var hasCostBasis: Bool { averageBuyPrice > 0 }
+
+    /// 이 자산이 속한 통화 (거래소에서 도출).
+    var quoteCurrency: QuoteCurrency { exchange.quoteCurrency }
+}
