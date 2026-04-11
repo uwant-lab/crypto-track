@@ -24,13 +24,14 @@ final class PortfolioAggregatorTests: XCTestCase {
     private func ticker(
         _ symbol: String,
         price: Double,
-        exchange: Exchange
+        exchange: Exchange,
+        changeRate: Double = 0
     ) -> Ticker {
         Ticker(
             id: "\(exchange.rawValue)-\(symbol)",
             symbol: symbol,
             currentPrice: price,
-            changeRate24h: 0,
+            changeRate24h: changeRate,
             volume24h: 0,
             exchange: exchange,
             timestamp: Date()
@@ -200,5 +201,61 @@ final class PortfolioAggregatorTests: XCTestCase {
         XCTAssertEqual(btc.id, "upbit-BTC")
         XCTAssertEqual(btc.currentValue, 31_000_000, accuracy: 0.5)
         XCTAssertEqual(btc.averageBuyPrice, 55_000_000, accuracy: 0.5)
+    }
+
+    // MARK: - totalCost / changeRate24h
+
+    /// totalCost == Σ(balance × averageBuyPrice) limited to the known-cost subset.
+    /// partial holdings: upbit known (0.5 @ 55M = 27.5M), bithumb unknown (contributes 0).
+    func testAggregateTotalCostKnownOnly() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("BTC", balance: 0.3, avgPrice: 0,          exchange: .bithumb),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit),
+            ticker("BTC", price: 62_000_000, exchange: .bithumb),
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 1)
+        let row = rows[0]
+        XCTAssertEqual(row.totalCost, 27_500_000, accuracy: 0.5)
+        XCTAssertTrue(row.hasPartialCostBasis)
+        // Sanity: known-only subset profit matches value-cost.
+        XCTAssertEqual(row.profit, 31_000_000 - 27_500_000, accuracy: 0.5)
+    }
+
+    /// Value-weighted 24h change: Upbit 0.5 BTC × 62M = 31M weight, Bithumb 0.3 BTC
+    /// × 62M = 18.6M weight. rate = (5 * 31 + 10 * 18.6) / 49.6 ≈ 6.875%.
+    /// Note: the weighting is by currentValue, not by balance — verify by using
+    /// identical tickers so the check isolates the weighting calculation.
+    func testChangeRate24hIsValueWeighted() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("BTC", balance: 0.3, avgPrice: 60_000_000, exchange: .bithumb),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit,   changeRate: 5),
+            ticker("BTC", price: 62_000_000, exchange: .bithumb, changeRate: 10),
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 1)
+        let row = rows[0]
+
+        let expected = (5.0 * 31_000_000 + 10.0 * 18_600_000) / 49_600_000
+        XCTAssertNotNil(row.changeRate24h)
+        XCTAssertEqual(row.changeRate24h ?? 0, expected, accuracy: 1e-6)
+    }
+
+    /// changeRate24h == nil when no contributing asset has a matching ticker.
+    func testChangeRate24hNilWhenNoTickers() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+        ]
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: [])
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertNil(rows[0].changeRate24h)
     }
 }

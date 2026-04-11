@@ -76,6 +76,12 @@ enum PortfolioAggregator {
         var hasAnyTicker = false
         var contributingExchanges: Set<Exchange> = []
 
+        // Value-weighted 24h change rate accumulators.
+        // numerator = Σ(rate_i × valueWeight_i), denominator = Σvalue_i (restricted
+        // to assets with a matching ticker). Final rate = num / denom.
+        var changeRateNumerator: Double = 0
+        var changeRateWeight: Double = 0
+
         for asset in groupAssets {
             contributingExchanges.insert(asset.exchange)
             totalBalance += asset.balance
@@ -85,6 +91,11 @@ enum PortfolioAggregator {
             if ticker != nil { hasAnyTicker = true }
             let assetValue = asset.balance * price
             totalValue += assetValue
+
+            if let ticker, assetValue > 0 {
+                changeRateNumerator += ticker.changeRate24h * assetValue
+                changeRateWeight += assetValue
+            }
 
             if asset.hasCostBasis {
                 knownBalance += asset.balance
@@ -97,6 +108,9 @@ enum PortfolioAggregator {
         let currentPrice = totalBalance > 0 ? totalValue / totalBalance : 0
         let profit = knownValue - knownCost
         let profitRate = knownCost > 0 ? (profit / knownCost) * 100 : 0
+        let changeRate24h: Double? = changeRateWeight > 0
+            ? changeRateNumerator / changeRateWeight
+            : nil
 
         return PortfolioRow(
             id: id,
@@ -107,8 +121,10 @@ enum PortfolioAggregator {
             averageBuyPrice: averageBuyPrice,
             currentPrice: currentPrice,
             currentValue: totalValue,
+            totalCost: knownCost,
             profit: profit,
             profitRate: profitRate,
+            changeRate24h: changeRate24h,
             hasCostBasis: knownBalance > 0,
             hasPartialCostBasis: knownBalance > 0 && knownBalance < totalBalance,
             hasTicker: hasAnyTicker

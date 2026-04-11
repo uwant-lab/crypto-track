@@ -32,10 +32,19 @@ struct PortfolioRow: Identifiable, Sendable {
     /// Σ(balance_i × ticker_i.currentPrice) across contributing assets. Assets with
     /// no matching ticker contribute 0.
     let currentValue: Double
+    /// Σ(balance_i × averageBuyPrice_i) restricted to the subset of holdings whose
+    /// cost basis is known. Matches the "매수금액" column in the dashboard.
+    /// Zero when `hasCostBasis == false`.
+    let totalCost: Double
     /// Unrealized profit restricted to the subset of holdings with a known cost basis.
     let profit: Double
     /// Profit rate (%) over the known-basis subset. Zero when `knownCost == 0`.
     let profitRate: Double
+    /// Value-weighted 24h change rate across the contributing exchanges' tickers.
+    /// `nil` when no contributing asset has a matching ticker. Weighting: each
+    /// ticker's changeRate24h is weighted by `balance × price`, so exchanges
+    /// with larger holdings dominate the aggregate.
+    let changeRate24h: Double?
 
     /// True when at least one contributing asset has a known cost basis.
     let hasCostBasis: Bool
