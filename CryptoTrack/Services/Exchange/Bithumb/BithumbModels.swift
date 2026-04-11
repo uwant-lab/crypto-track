@@ -1,245 +1,123 @@
 import Foundation
 
-// MARK: - Bithumb API Response Wrapper
+// MARK: - Bithumb v1 API Response Models
+// 빗썸 v1 API는 Upbit과 동일한 구조를 사용합니다.
 
-/// 빗썸 API 공통 응답 래퍼.
-/// 모든 응답은 {"status":"0000","data":{...}} 형식입니다.
-struct BithumbResponse<T: Decodable>: Decodable {
-    let status: String
-    let message: String?
-    let data: T?
-
-    /// 정상 응답 여부 (status == "0000")
-    var isSuccess: Bool {
-        status == "0000"
-    }
-}
-
-// MARK: - Balance (POST /info/balance)
-
-/// POST /info/balance 응답의 data 필드 모델
-struct BithumbBalanceData: Decodable, Sendable {
-    let availableKrw: String?
-    let totalKrw: String?
-
-    /// 코인별 보유량 및 평균 매수가 (동적 키)
-    let currencies: [String: BithumbCurrencyBalance]
-
-    enum CodingKeys: String, CodingKey {
-        case availableKrw = "available_krw"
-        case totalKrw = "total_krw"
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        availableKrw = try container.decodeIfPresent(String.self, forKey: .availableKrw)
-        totalKrw = try container.decodeIfPresent(String.self, forKey: .totalKrw)
-
-        // 동적 키에서 available_<symbol>, total_<symbol>, xcoin_last_<symbol> 파싱
-        let dynamicContainer = try decoder.container(keyedBy: DynamicCodingKey.self)
-        var parsed: [String: BithumbCurrencyBalance] = [:]
-
-        for key in dynamicContainer.allKeys {
-            if key.stringValue.hasPrefix("available_") {
-                let symbol = String(key.stringValue.dropFirst("available_".count)).uppercased()
-                guard symbol != "KRW" else { continue }
-                let available = try dynamicContainer.decodeIfPresent(String.self, forKey: key) ?? "0"
-                let totalKey = DynamicCodingKey(stringValue: "total_\(symbol.lowercased())")!
-                let xcoinKey = DynamicCodingKey(stringValue: "xcoin_last_\(symbol.lowercased())")!
-                let total = (try? dynamicContainer.decodeIfPresent(String.self, forKey: totalKey)) ?? available
-                let avgBuyPrice = (try? dynamicContainer.decodeIfPresent(String.self, forKey: xcoinKey)) ?? "0"
-                parsed[symbol] = BithumbCurrencyBalance(
-                    available: available,
-                    total: total,
-                    avgBuyPrice: avgBuyPrice
-                )
-            }
-        }
-        currencies = parsed
-    }
-}
-
-struct BithumbCurrencyBalance: Sendable {
-    let available: String
-    let total: String
+/// GET /v1/accounts 응답 모델 (Upbit과 동일)
+struct BithumbAccount: Decodable, Sendable {
+    let currency: String
+    let balance: String
+    let locked: String
     let avgBuyPrice: String
-}
-
-// MARK: - Ticker (GET /public/ticker/{symbol}_KRW)
-
-/// GET /public/ticker/{symbol}_KRW 응답의 data 필드 모델
-struct BithumbTickerData: Decodable, Sendable {
-    let closingPrice: String
-    let fluctateRate24H: String
-    let unitsTraded24H: String
-    let date: String?
+    let avgBuyPriceModified: Bool
+    let unitCurrency: String
 
     enum CodingKeys: String, CodingKey {
-        case closingPrice = "closing_price"
-        case fluctateRate24H = "fluctate_rate_24H"
-        case unitsTraded24H = "units_traded_24H"
-        case date
-    }
-}
-
-// MARK: - Kline (GET /public/candlestick/{symbol}_KRW/{timeframe})
-
-/// 빗썸 캔들스틱 응답 래퍼
-struct BithumbCandlestickResponse: Decodable, Sendable {
-    let status: String
-    let data: [[BithumbCandleValue]]
-
-    var isSuccess: Bool { status == "0000" }
-}
-
-/// 빗썸 캔들 배열 내 개별 값 (문자열 또는 숫자 혼합)
-enum BithumbCandleValue: Decodable, Sendable {
-    case string(String)
-    case int(Int64)
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        if let v = try? container.decode(Int64.self) {
-            self = .int(v)
-        } else if let v = try? container.decode(String.self) {
-            self = .string(v)
-        } else {
-            self = .string("")
-        }
-    }
-
-    var doubleValue: Double {
-        switch self {
-        case .string(let s): return Double(s) ?? 0
-        case .int(let i): return Double(i)
-        }
-    }
-
-    var int64Value: Int64 {
-        switch self {
-        case .int(let i): return i
-        case .string(let s): return Int64(s) ?? 0
-        }
-    }
-}
-
-// MARK: - Order (POST /info/orders)
-
-/// POST /info/orders 응답의 data 필드 모델
-struct BithumbOrderData: Decodable, Sendable {
-    let orderId: String
-    let orderCurrency: String
-    let type: String
-    let price: String
-    let units: String
-    let fee: String
-    let orderDate: String
-
-    enum CodingKeys: String, CodingKey {
-        case orderId = "order_id"
-        case orderCurrency = "order_currency"
-        case type
-        case price
-        case units
-        case fee
-        case orderDate = "order_date"
-    }
-}
-
-// MARK: - Transaction (POST /info/user_transactions)
-
-/// POST /info/user_transactions 응답의 data 필드 모델
-struct BithumbTransaction: Decodable, Sendable {
-    let transferDate: String
-    let units: String
-    let currency: String?
-    let fee: String
-
-    enum CodingKeys: String, CodingKey {
-        case transferDate = "transfer_date"
-        case units
         case currency
+        case balance
+        case locked
+        case avgBuyPrice = "avg_buy_price"
+        case avgBuyPriceModified = "avg_buy_price_modified"
+        case unitCurrency = "unit_currency"
+    }
+}
+
+/// GET /v1/ticker 응답 모델 (Upbit과 동일)
+struct BithumbTicker: Decodable, Sendable {
+    let market: String
+    let tradePrice: Double
+    let signedChangeRate: Double
+    let accTradeVolume24h: Double
+    let timestamp: Int64
+
+    enum CodingKeys: String, CodingKey {
+        case market
+        case tradePrice = "trade_price"
+        case signedChangeRate = "signed_change_rate"
+        case accTradeVolume24h = "acc_trade_volume_24h"
+        case timestamp
+    }
+}
+
+// MARK: - Kline (GET /v1/candles/...)
+
+/// 빗썸 캔들스틱 응답 모델 (Upbit과 동일)
+struct BithumbKline: Decodable, Sendable {
+    let candleDateTimeKst: String
+    let openingPrice: Double
+    let highPrice: Double
+    let lowPrice: Double
+    let tradePrice: Double
+    let candleAccTradeVolume: Double
+    let timestamp: Int64
+
+    enum CodingKeys: String, CodingKey {
+        case candleDateTimeKst = "candle_date_time_kst"
+        case openingPrice = "opening_price"
+        case highPrice = "high_price"
+        case lowPrice = "low_price"
+        case tradePrice = "trade_price"
+        case candleAccTradeVolume = "candle_acc_trade_volume"
+        case timestamp
+    }
+}
+
+// MARK: - Order (GET /v1/orders)
+
+/// 빗썸 체결 완료 주문 응답 모델 (Upbit과 동일)
+struct BithumbOrder: Decodable, Sendable {
+    let uuid: String
+    let side: String
+    let market: String
+    let avgPrice: String?
+    let executedVolume: String
+    let paidFee: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case side
+        case market
+        case avgPrice = "avg_price"
+        case executedVolume = "executed_volume"
+        case paidFee = "paid_fee"
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Deposit (GET /v1/deposits)
+
+/// 빗썸 입금 내역 응답 모델 (Upbit과 동일)
+struct BithumbDeposit: Decodable, Sendable {
+    let uuid: String
+    let currency: String
+    let txid: String?
+    let state: String
+    let amount: String
+    let fee: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case currency
+        case txid
+        case state
+        case amount
         case fee
-    }
-}
-
-// MARK: - Order / Transaction Mapping
-
-extension BithumbOrderData {
-    /// 빗썸 주문 응답을 공통 Order 모델로 변환합니다.
-    func toOrder() -> Order {
-        let orderSide: OrderSide = (type == "bid") ? .buy : .sell
-        let priceValue = Double(price) ?? 0
-        let unitsValue = Double(units) ?? 0
-        let feeValue = Double(fee) ?? 0
-
-        // orderDate는 마이크로초 타임스탬프입니다
-        let microseconds = Double(orderDate) ?? 0
-        let date = Date(timeIntervalSince1970: microseconds / 1_000_000)
-
-        return Order(
-            id: "bithumb-\(orderId)",
-            symbol: orderCurrency,
-            side: orderSide,
-            price: priceValue,
-            amount: unitsValue,
-            totalValue: priceValue * unitsValue,
-            fee: feeValue,
-            exchange: .bithumb,
-            executedAt: date
-        )
-    }
-}
-
-extension BithumbTransaction {
-    /// 빗썸 거래 내역을 공통 Deposit 모델로 변환합니다.
-    func toDeposit() -> Deposit {
-        let symbol = (currency ?? "KRW").uppercased()
-        let depositType: DepositType = (symbol == "KRW") ? .fiat : .crypto
-
-        // transferDate는 마이크로초 타임스탬프입니다
-        let microseconds = Double(transferDate) ?? 0
-        let date = Date(timeIntervalSince1970: microseconds / 1_000_000)
-
-        return Deposit(
-            id: "bithumb-\(transferDate)",
-            symbol: symbol,
-            amount: Double(units) ?? 0,
-            type: depositType,
-            status: .completed,
-            txId: nil,
-            exchange: .bithumb,
-            completedAt: date
-        )
-    }
-}
-
-// MARK: - Dynamic Coding Key Helper
-
-private struct DynamicCodingKey: CodingKey {
-    var stringValue: String
-    var intValue: Int?
-
-    init?(stringValue: String) {
-        self.stringValue = stringValue
-    }
-
-    init?(intValue: Int) {
-        self.intValue = intValue
-        self.stringValue = "\(intValue)"
+        case createdAt = "created_at"
     }
 }
 
 // MARK: - Mapping Extensions
 
-extension BithumbCurrencyBalance {
-    /// 빗썸 코인 잔고를 공통 Asset 모델로 변환합니다.
-    func toAsset(symbol: String) -> Asset {
-        let balanceValue = Double(available) ?? 0
+extension BithumbAccount {
+    /// 빗썸 계좌 응답을 공통 Asset 모델로 변환합니다.
+    func toAsset() -> Asset {
+        let balanceValue = Double(balance) ?? 0
         let avgPrice = Double(avgBuyPrice) ?? 0
         return Asset(
-            id: "bithumb-\(symbol)",
-            symbol: symbol,
+            id: "bithumb-\(currency)",
+            symbol: currency,
             balance: balanceValue,
             averageBuyPrice: avgPrice,
             exchange: .bithumb,
@@ -248,24 +126,36 @@ extension BithumbCurrencyBalance {
     }
 }
 
-extension BithumbCandleValue {
-    /// 빗썸 캔들 배열 [timestamp, open, close, high, low, volume]을 Kline으로 변환합니다.
-    static func toKline(from row: [BithumbCandleValue], symbol: String, timeframe: ChartTimeframe) -> Kline? {
-        guard row.count >= 6 else { return nil }
-        let ts = row[0].int64Value
-        let open = row[1].doubleValue
-        let close = row[2].doubleValue
-        let high = row[3].doubleValue
-        let low = row[4].doubleValue
-        let volume = row[5].doubleValue
+extension BithumbTicker {
+    /// 빗썸 시세 응답을 공통 Ticker 모델로 변환합니다.
+    func toTicker() -> Ticker {
+        // market 형식: "KRW-BTC" → symbol: "BTC"
+        let symbol = market.split(separator: "-").last.map(String.init) ?? market
+        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
+        return Ticker(
+            id: "bithumb-\(market)",
+            symbol: symbol,
+            currentPrice: tradePrice,
+            changeRate24h: signedChangeRate * 100,
+            volume24h: accTradeVolume24h,
+            exchange: .bithumb,
+            timestamp: date
+        )
+    }
+}
+
+extension BithumbKline {
+    /// 빗썸 캔들 응답을 공통 Kline 모델로 변환합니다.
+    func toKline(symbol: String, timeframe: ChartTimeframe) -> Kline {
+        let date = Date(timeIntervalSince1970: Double(timestamp) / 1000)
         return Kline(
-            id: "bithumb-\(symbol)-\(ts)",
-            timestamp: Date(timeIntervalSince1970: Double(ts) / 1000),
-            open: open,
-            high: high,
-            low: low,
-            close: close,
-            volume: volume,
+            id: "bithumb-\(symbol)-\(timestamp)",
+            timestamp: date,
+            open: openingPrice,
+            high: highPrice,
+            low: lowPrice,
+            close: tradePrice,
+            volume: candleAccTradeVolume,
             timeframe: timeframe,
             exchange: .bithumb,
             symbol: symbol
@@ -273,26 +163,61 @@ extension BithumbCandleValue {
     }
 }
 
-extension BithumbTickerData {
-    /// 빗썸 시세 응답을 공통 Ticker 모델로 변환합니다.
-    func toTicker(symbol: String) -> Ticker {
-        let price = Double(closingPrice) ?? 0
-        let changeRate = Double(fluctateRate24H) ?? 0
-        let volume = Double(unitsTraded24H) ?? 0
-        let timestamp: Date
-        if let dateStr = date, let ms = Double(dateStr) {
-            timestamp = Date(timeIntervalSince1970: ms / 1000)
-        } else {
-            timestamp = Date()
-        }
-        return Ticker(
-            id: "bithumb-\(symbol)",
+extension BithumbOrder {
+    /// 빗썸 주문 응답을 공통 Order 모델로 변환합니다.
+    func toOrder() -> Order {
+        // market 형식: "KRW-BTC" → symbol: "BTC"
+        let symbol = market.split(separator: "-").last.map(String.init) ?? market
+        let orderSide: OrderSide = (side == "bid") ? .buy : .sell
+        let price = Double(avgPrice ?? "0") ?? 0
+        let volume = Double(executedVolume) ?? 0
+        let fee = Double(paidFee) ?? 0
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = formatter.date(from: createdAt) ?? Date()
+
+        return Order(
+            id: "bithumb-\(uuid)",
             symbol: symbol,
-            currentPrice: price,
-            changeRate24h: changeRate,
-            volume24h: volume,
+            side: orderSide,
+            price: price,
+            amount: volume,
+            totalValue: price * volume,
+            fee: fee,
             exchange: .bithumb,
-            timestamp: timestamp
+            executedAt: date
+        )
+    }
+}
+
+extension BithumbDeposit {
+    /// 빗썸 입금 응답을 공통 Deposit 모델로 변환합니다.
+    func toDeposit() -> Deposit {
+        let depositType: DepositType = (currency == "KRW") ? .fiat : .crypto
+        let depositStatus: DepositStatus
+        switch state {
+        case "ACCEPTED":
+            depositStatus = .completed
+        case "CANCELLED", "REJECTED":
+            depositStatus = .cancelled
+        default:
+            depositStatus = .pending
+        }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = formatter.date(from: createdAt) ?? Date()
+
+        return Deposit(
+            id: "bithumb-\(uuid)",
+            symbol: currency,
+            amount: Double(amount) ?? 0,
+            type: depositType,
+            status: depositStatus,
+            txId: txid,
+            exchange: .bithumb,
+            completedAt: date
         )
     }
 }

@@ -1,16 +1,17 @@
 import Foundation
+import CryptoKit
 
 // MARK: - Bithumb Service
 
-/// 빗썸 거래소 API와 통신하는 서비스 구현체.
-/// `ExchangeService` 프로토콜을 채택하며, HMAC-SHA512 인증을 사용합니다.
+/// 빗썸 거래소 API 2.0 (v1 엔드포인트)와 통신하는 서비스 구현체.
+/// `ExchangeService` 프로토콜을 채택하며, JWT(HS256) 인증을 사용합니다.
 /// API 키는 KeychainService를 통해서만 접근합니다.
 final class BithumbService: ExchangeService, Sendable {
 
     // MARK: - ExchangeService Properties
 
     let exchange: Exchange = .bithumb
-    let authMethod: AuthMethod = .hmacSHA512
+    let authMethod: AuthMethod = .jwt
 
     // MARK: - Private Properties
 
@@ -30,31 +31,16 @@ final class BithumbService: ExchangeService, Sendable {
     /// - Throws: `BithumbServiceError` 또는 `KeychainError`
     /// - Returns: 공통 Asset 모델 배열
     func fetchAssets() async throws -> [Asset] {
-        guard let url = URL(string: "\(baseURL)/info/balance") else {
+        let authHeader = try authenticator.generateAuthorizationHeader()
+
+        guard let url = URL(string: "\(baseURL)/v1/accounts") else {
             throw BithumbServiceError.invalidURL
         }
 
-        let parameters = ["currency": "ALL"]
-        let authHeaders: [String: String]
-        do {
-            authHeaders = try authenticator.generateAuthHeaders(endpoint: "/info/balance", parameters: parameters)
-        } catch let error as KeychainError {
-            throw error
-        } catch {
-            throw BithumbServiceError.authenticationFailed(error)
-        }
-
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        for (field, value) in authHeaders {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
-
-        // POST body: application/x-www-form-urlencoded
-        let bodyString = parameters
-            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
-            .joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let data: Data
         do {
@@ -68,22 +54,11 @@ final class BithumbService: ExchangeService, Sendable {
         }
 
         do {
-            let decoded = try JSONDecoder().decode(BithumbResponse<BithumbBalanceData>.self, from: data)
-            guard decoded.isSuccess else {
-                throw BithumbServiceError.apiError(decoded.status, decoded.message)
-            }
-            guard let balanceData = decoded.data else {
-                return []
-            }
-            return balanceData.currencies
-                .compactMap { symbol, balance -> Asset? in
-                    let amount = Double(balance.available) ?? 0
-                    guard amount > 0 else { return nil }
-                    return balance.toAsset(symbol: symbol)
-                }
-                .sorted { $0.symbol < $1.symbol }
-        } catch let error as BithumbServiceError {
-            throw error
+            let accounts = try JSONDecoder().decode([BithumbAccount].self, from: data)
+            // KRW 원화 계좌는 자산 목록에서 제외
+            return accounts
+                .filter { $0.currency != "KRW" }
+                .map { $0.toAsset() }
         } catch {
             throw BithumbServiceError.decodingFailed(error)
         }
@@ -96,12 +71,40 @@ final class BithumbService: ExchangeService, Sendable {
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
         guard !symbols.isEmpty else { return [] }
 
-        var tickers: [Ticker] = []
-        for symbol in symbols {
-            let ticker = try await fetchSingleTicker(symbol: symbol)
-            tickers.append(ticker)
+        // 심볼을 빗썸 마켓 코드로 변환: "BTC" → "KRW-BTC"
+        let markets = symbols.map { "KRW-\($0)" }.joined(separator: ",")
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/ticker") else {
+            throw BithumbServiceError.invalidURL
         }
-        return tickers
+        components.queryItems = [URLQueryItem(name: "markets", value: markets)]
+
+        guard let url = components.url else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        // 시세 조회는 공개 API이므로 인증 불필요
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.networkError(error)
+        }
+
+        do {
+            let tickers = try JSONDecoder().decode([BithumbTicker].self, from: data)
+            return tickers.map { $0.toTicker() }
+        } catch {
+            throw BithumbServiceError.decodingFailed(error)
+        }
     }
 
     /// API 키의 유효성을 검증합니다.
@@ -117,9 +120,6 @@ final class BithumbService: ExchangeService, Sendable {
             switch error {
             case .httpError(let statusCode) where statusCode == 401:
                 return false
-            case .apiError(let status, _) where status == "5100":
-                // 빗썸 오류 코드 5100: Bad Request (인증 실패)
-                return false
             default:
                 throw error
             }
@@ -127,22 +127,37 @@ final class BithumbService: ExchangeService, Sendable {
     }
 
     /// 캔들스틱 데이터를 조회합니다. (공개 API)
-    /// Bithumb API: GET /public/candlestick/{symbol}_KRW/{timeframe}
+    /// 빗썸 API: GET /v1/candles/...
     func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline] {
-        let interval: String
+        let market = "KRW-\(symbol.uppercased())"
+        let path: String
         switch timeframe {
-        case .minute1: interval = "1m"
-        case .minute5: interval = "5m"
-        case .minute15: interval = "15m"
-        case .hour1: interval = "1h"
-        case .hour4: interval = "4h"
-        case .day1: interval = "24h"
-        case .week1: interval = "24h"  // 빗썸은 주봉 미지원, 일봉으로 대체
-        case .month1: interval = "24h" // 빗썸은 월봉 미지원, 일봉으로 대체
+        case .minute1:
+            path = "/v1/candles/minutes/1"
+        case .minute5:
+            path = "/v1/candles/minutes/5"
+        case .minute15:
+            path = "/v1/candles/minutes/15"
+        case .hour1:
+            path = "/v1/candles/minutes/60"
+        case .hour4:
+            path = "/v1/candles/minutes/240"
+        case .day1:
+            path = "/v1/candles/days"
+        case .week1:
+            path = "/v1/candles/weeks"
+        case .month1:
+            path = "/v1/candles/months"
         }
 
-        let uppercasedSymbol = symbol.uppercased()
-        guard let url = URL(string: "\(baseURL)/public/candlestick/\(uppercasedSymbol)_KRW/\(interval)") else {
+        guard var components = URLComponents(string: "\(baseURL)\(path)") else {
+            throw BithumbServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "market", value: market),
+            URLQueryItem(name: "count", value: "\(limit)")
+        ]
+        guard let url = components.url else {
             throw BithumbServiceError.invalidURL
         }
 
@@ -162,163 +177,47 @@ final class BithumbService: ExchangeService, Sendable {
         }
 
         do {
-            let decoded = try JSONDecoder().decode(BithumbCandlestickResponse.self, from: data)
-            guard decoded.isSuccess else {
-                throw BithumbServiceError.apiError(decoded.status, nil)
-            }
-            let klines = decoded.data
-                .compactMap { BithumbCandleValue.toKline(from: $0, symbol: uppercasedSymbol, timeframe: timeframe) }
-                .sorted { $0.timestamp < $1.timestamp }
-            // limit 제한 적용 (최신 N개)
-            if klines.count > limit {
-                return Array(klines.suffix(limit))
-            }
+            let klines = try JSONDecoder().decode([BithumbKline].self, from: data)
             return klines
-        } catch let error as BithumbServiceError {
-            throw error
+                .map { $0.toKline(symbol: symbol.uppercased(), timeframe: timeframe) }
+                .sorted { $0.timestamp < $1.timestamp }
         } catch {
             throw BithumbServiceError.decodingFailed(error)
         }
     }
 
     /// 체결 완료된 주문 내역을 조회합니다.
-    /// Bithumb API: POST /info/orders
+    /// 빗썸 API: GET /v1/orders (JWT 인증, 쿼리 해시 필요)
     func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
         let limit = 100
-        let offset = page * limit
 
-        guard let url = URL(string: "\(baseURL)/info/orders") else {
+        guard var components = URLComponents(string: "\(baseURL)/v1/orders") else {
             throw BithumbServiceError.invalidURL
         }
 
-        let parameters = [
-            "order_currency": "ALL",
-            "payment_currency": "KRW",
-            "count": "\(limit)",
-            "offset": "\(offset)"
+        let queryItems = [
+            URLQueryItem(name: "state", value: "done"),
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+            URLQueryItem(name: "order_by", value: "desc")
         ]
+        components.queryItems = queryItems
 
-        let authHeaders: [String: String]
-        do {
-            authHeaders = try authenticator.generateAuthHeaders(endpoint: "/info/orders", parameters: parameters)
-        } catch let error as KeychainError {
-            throw error
-        } catch {
-            throw BithumbServiceError.authenticationFailed(error)
-        }
+        // 쿼리 해시 생성 (SHA-512)
+        let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
+        let queryData = Data(queryString.utf8)
+        let hash = SHA512.hash(data: queryData)
+        let queryHash = hash.map { String(format: "%02x", $0) }.joined()
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        for (field, value) in authHeaders {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
+        let authHeader = try authenticator.generateAuthorizationHeader(queryHash: queryHash)
 
-        let bodyString = parameters
-            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
-            .joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
-
-        let data: Data
-        do {
-            let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
-            data = responseData
-        } catch let error as BithumbServiceError {
-            throw error
-        } catch {
-            throw BithumbServiceError.networkError(error)
-        }
-
-        do {
-            let decoded = try JSONDecoder().decode(BithumbResponse<[BithumbOrderData]>.self, from: data)
-            guard decoded.isSuccess else {
-                throw BithumbServiceError.apiError(decoded.status, decoded.message)
-            }
-            let orders = (decoded.data ?? [])
-                .map { $0.toOrder() }
-                .filter { $0.executedAt >= from && $0.executedAt <= to }
-            let hasMore = (decoded.data?.count ?? 0) == limit
-            return PagedResult(items: orders, hasMore: hasMore, progress: nil)
-        } catch let error as BithumbServiceError {
-            throw error
-        } catch {
-            throw BithumbServiceError.decodingFailed(error)
-        }
-    }
-
-    /// 입금 내역을 조회합니다.
-    /// Bithumb API: POST /info/user_transactions (searchGb=4: 입금)
-    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
-        let limit = 100
-        let offset = page * limit
-
-        guard let url = URL(string: "\(baseURL)/info/user_transactions") else {
-            throw BithumbServiceError.invalidURL
-        }
-
-        let parameters = [
-            "searchGb": "4",
-            "count": "\(limit)",
-            "offset": "\(offset)"
-        ]
-
-        let authHeaders: [String: String]
-        do {
-            authHeaders = try authenticator.generateAuthHeaders(endpoint: "/info/user_transactions", parameters: parameters)
-        } catch let error as KeychainError {
-            throw error
-        } catch {
-            throw BithumbServiceError.authenticationFailed(error)
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        for (field, value) in authHeaders {
-            request.setValue(value, forHTTPHeaderField: field)
-        }
-
-        let bodyString = parameters
-            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
-            .joined(separator: "&")
-        request.httpBody = bodyString.data(using: .utf8)
-
-        let data: Data
-        do {
-            let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
-            data = responseData
-        } catch let error as BithumbServiceError {
-            throw error
-        } catch {
-            throw BithumbServiceError.networkError(error)
-        }
-
-        do {
-            let decoded = try JSONDecoder().decode(BithumbResponse<[BithumbTransaction]>.self, from: data)
-            guard decoded.isSuccess else {
-                throw BithumbServiceError.apiError(decoded.status, decoded.message)
-            }
-            let deposits = (decoded.data ?? [])
-                .map { $0.toDeposit() }
-                .filter { $0.completedAt >= from && $0.completedAt <= to }
-            let hasMore = (decoded.data?.count ?? 0) == limit
-            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
-        } catch let error as BithumbServiceError {
-            throw error
-        } catch {
-            throw BithumbServiceError.decodingFailed(error)
-        }
-    }
-
-    // MARK: - Private Helpers
-
-    private func fetchSingleTicker(symbol: String) async throws -> Ticker {
-        guard let url = URL(string: "\(baseURL)/public/ticker/\(symbol)_KRW") else {
+        guard let url = components.url else {
             throw BithumbServiceError.invalidURL
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let data: Data
@@ -333,20 +232,80 @@ final class BithumbService: ExchangeService, Sendable {
         }
 
         do {
-            let decoded = try JSONDecoder().decode(BithumbResponse<BithumbTickerData>.self, from: data)
-            guard decoded.isSuccess else {
-                throw BithumbServiceError.apiError(decoded.status, decoded.message)
+            let orders = try JSONDecoder().decode([BithumbOrder].self, from: data)
+            // 기간 필터링
+            let filtered = orders.compactMap { order -> Order? in
+                let mapped = order.toOrder()
+                guard mapped.executedAt >= from && mapped.executedAt <= to else { return nil }
+                return mapped
             }
-            guard let tickerData = decoded.data else {
-                throw BithumbServiceError.emptyResponse
-            }
-            return tickerData.toTicker(symbol: symbol)
-        } catch let error as BithumbServiceError {
-            throw error
+            let hasMore = orders.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw BithumbServiceError.decodingFailed(error)
         }
     }
+
+    /// 입금 내역을 조회합니다.
+    /// 빗썸 API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 100
+
+        guard var components = URLComponents(string: "\(baseURL)/v1/deposits") else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        let queryItems = [
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+            URLQueryItem(name: "order_by", value: "desc")
+        ]
+        components.queryItems = queryItems
+
+        // 쿼리 해시 생성 (SHA-512)
+        let queryString = queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
+        let queryData = Data(queryString.utf8)
+        let hash = SHA512.hash(data: queryData)
+        let queryHash = hash.map { String(format: "%02x", $0) }.joined()
+
+        let authHeader = try authenticator.generateAuthorizationHeader(queryHash: queryHash)
+
+        guard let url = components.url else {
+            throw BithumbServiceError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as BithumbServiceError {
+            throw error
+        } catch {
+            throw BithumbServiceError.networkError(error)
+        }
+
+        do {
+            let deposits = try JSONDecoder().decode([BithumbDeposit].self, from: data)
+            // 기간 필터링
+            let filtered = deposits.compactMap { deposit -> Deposit? in
+                let mapped = deposit.toDeposit()
+                guard mapped.completedAt >= from && mapped.completedAt <= to else { return nil }
+                return mapped
+            }
+            let hasMore = deposits.count == limit
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+        } catch {
+            throw BithumbServiceError.decodingFailed(error)
+        }
+    }
+
+    // MARK: - Private Helpers
 
     private func validateHTTPResponse(_ response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -366,9 +325,6 @@ enum BithumbServiceError: LocalizedError {
     case httpError(Int)
     case networkError(Error)
     case decodingFailed(Error)
-    case authenticationFailed(Error)
-    case apiError(String, String?)
-    case emptyResponse
 
     var errorDescription: String? {
         switch self {
@@ -382,12 +338,6 @@ enum BithumbServiceError: LocalizedError {
             return "네트워크 오류: \(error.localizedDescription)"
         case .decodingFailed(let error):
             return "데이터 파싱에 실패했습니다: \(error.localizedDescription)"
-        case .authenticationFailed(let error):
-            return "인증 처리 중 오류가 발생했습니다: \(error.localizedDescription)"
-        case .apiError(let status, let message):
-            return "빗썸 API 오류 (코드: \(status))\(message.map { ": \($0)" } ?? "")"
-        case .emptyResponse:
-            return "서버로부터 빈 응답을 받았습니다."
         }
     }
 }
