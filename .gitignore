@@ -20,3 +20,6 @@ Packages/
 
 # Secrets
 *.env
+
+# Local backup files
+*.bak
