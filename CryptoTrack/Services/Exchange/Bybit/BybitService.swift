@@ -48,8 +48,12 @@ final class BybitService: ExchangeService {
             return []
         }
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // 포함 시 fetchTickers 루프에서 "USDTUSDT" 거래쌍을 요청하게 되고
+        // 해당 호출이 실패하면 throw로 루프 전체가 중단된다.
         return result.list
             .flatMap { $0.coin }
+            .filter { $0.coin != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
@@ -58,9 +62,13 @@ final class BybitService: ExchangeService {
     /// Bybit API: GET /v5/market/tickers?category=spot&symbol=BTCUSDT
     /// - Parameter symbols: 조회할 코인 심볼 목록 (예: ["BTC", "ETH"])
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
+        // Defensive: USDT는 quote currency이므로 "USDTUSDT" 거래쌍이 없고,
+        // 포함되면 루프 한 번의 실패가 전체 호출을 중단시킨다.
+        let filtered = symbols.filter { $0.uppercased() != "USDT" }
+
         var tickers: [Ticker] = []
 
-        for symbol in symbols {
+        for symbol in filtered {
             let tradingPair = symbol.uppercased() + "USDT"
             let queryString = "category=spot&symbol=\(tradingPair)"
             let request = try buildRequest(

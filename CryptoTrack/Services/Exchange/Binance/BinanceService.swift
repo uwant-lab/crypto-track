@@ -40,7 +40,12 @@ final class BinanceService: ExchangeService {
 
         let accountResponse = try JSONDecoder().decode(BinanceAccountResponse.self, from: data)
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // (Upbit/Bithumb가 KRW를 걸러내는 것과 대칭)
+        // 포함 시 fetchTickers 배치 호출에 "USDTUSDT"라는 존재하지 않는
+        // 거래쌍이 섞여 Binance API가 400을 반환하며 전체 배치가 실패한다.
         return accountResponse.balances
+            .filter { $0.asset != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
@@ -49,14 +54,21 @@ final class BinanceService: ExchangeService {
     /// Binance API: GET /api/v3/ticker/24hr
     /// - Parameter symbols: 조회할 코인 심볼 목록 (예: ["BTC", "ETH"])
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
+        // Defensive: USDT는 quote currency이므로 "USDTUSDT" 거래쌍이 없고,
+        // 포함되면 Binance API가 400을 반환해 배치 전체가 실패한다.
+        // 호출자(DashboardViewModel)가 이미 걸러내지만 서비스 레이어에서도
+        // 방어한다.
+        let filtered = symbols.filter { $0.uppercased() != "USDT" }
+        guard !filtered.isEmpty else { return [] }
+
         // Binance 거래 쌍 형식으로 변환 (예: "BTC" → "BTCUSDT")
-        let tradingPairs = symbols.map { $0.uppercased() + "USDT" }
+        let tradingPairs = filtered.map { $0.uppercased() + "USDT" }
 
         // 단일 심볼이면 단건 조회, 복수면 배열 조회
         if tradingPairs.count == 1, let pair = tradingPairs.first {
-            return try await fetchSingleTicker(symbol: pair, baseSymbol: symbols[0].uppercased())
+            return try await fetchSingleTicker(symbol: pair, baseSymbol: filtered[0].uppercased())
         } else {
-            return try await fetchMultipleTickers(pairs: tradingPairs, baseSymbols: symbols.map { $0.uppercased() })
+            return try await fetchMultipleTickers(pairs: tradingPairs, baseSymbols: filtered.map { $0.uppercased() })
         }
     }
 

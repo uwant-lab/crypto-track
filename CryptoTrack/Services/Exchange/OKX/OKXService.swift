@@ -44,8 +44,13 @@ final class OKXService: ExchangeService {
             throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
         }
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // (OKX의 fetchTickers는 전체 spot 풀 후 필터라 기술적으로는
+        //  배치 실패를 일으키지 않지만, Binance/Bybit와 일관성을 맞추고
+        //  대시보드에 USDT가 0원 평가액으로 나타나는 것을 막는다.)
         return decoded.data
             .flatMap { $0.details }
+            .filter { $0.ccy != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
