@@ -89,12 +89,19 @@ final class DashboardViewModel {
     /// `refresh()` 이후 fire-and-forget Task로 `hydrate`되며, 1시간 TTL.
     let sparklineProvider: SparklineProvider
 
+    /// 해외 거래소(Binance/Bybit/OKX)처럼 `averageBuyPrice`를 반환하지 않는
+    /// 거래소의 평단가를 `fetchOrders` 이력으로 자체 계산해 채워 넣는다.
+    /// 사용자 트리거 방식이며, 24시간 TTL + UserDefaults 영속화.
+    let costBasisProvider: ForeignCostBasisProvider
+
     init(
         exchangeManager: ExchangeManager = .shared,
-        sparklineProvider: SparklineProvider? = nil
+        sparklineProvider: SparklineProvider? = nil,
+        costBasisProvider: ForeignCostBasisProvider? = nil
     ) {
         self.exchangeManager = exchangeManager
         self.sparklineProvider = sparklineProvider ?? SparklineProvider(exchangeManager: exchangeManager)
+        self.costBasisProvider = costBasisProvider ?? ForeignCostBasisProvider(exchangeManager: exchangeManager)
     }
 
     // MARK: - Ticker Matching (fallback 제거 — 정확 매치만)
@@ -272,7 +279,24 @@ final class DashboardViewModel {
             }
         }
 
-        self.assets = newAssets
+        // 해외 거래소(averageBuyPrice == 0)는 `ForeignCostBasisProvider`가
+        // 계산해 둔 평단가로 덮어 써서 Aggregator가 정상 cost basis로 인식
+        // 하도록 한다. 캐시 미스면 그대로 0 → "—" 표시.
+        let enrichedAssets = newAssets.map { asset -> Asset in
+            guard asset.averageBuyPrice == 0,
+                  let override = costBasisProvider.averageBuyPrice(exchange: asset.exchange, symbol: asset.symbol)
+            else { return asset }
+            return Asset(
+                id: asset.id,
+                symbol: asset.symbol,
+                balance: asset.balance,
+                averageBuyPrice: override,
+                exchange: asset.exchange,
+                lastUpdated: asset.lastUpdated
+            )
+        }
+
+        self.assets = enrichedAssets
         self.tickers = newTickers
         self.exchangeStatuses = statuses
         self.lastRefreshDate = Date()
@@ -306,6 +330,26 @@ final class DashboardViewModel {
     func sparkline(for row: PortfolioRow) -> [Double]? {
         guard let exchange = row.exchanges.first else { return nil }
         return sparklineProvider.sparkline(exchange: exchange, symbol: row.symbol)
+    }
+
+    // MARK: - Foreign cost basis
+
+    /// 현재 보유 자산 중 `averageBuyPrice == 0`인 (exchange, symbol) 페어.
+    /// 평단가를 자체 계산해야 하는 대상 — 주로 해외 거래소 잔고이다.
+    var foreignCostBasisPairs: [ForeignCostBasisProvider.Pair] {
+        assets
+            .filter { $0.averageBuyPrice == 0 }
+            .map { ForeignCostBasisProvider.Pair(exchange: $0.exchange, symbol: $0.symbol) }
+    }
+
+    /// `ForeignCostBasisProvider.hydrate`를 트리거하고, 완료되면 대시보드를
+    /// 재새로고침해 새 평단가가 UI에 반영되도록 한다. 사용자 버튼 액션에서
+    /// 호출.
+    func syncForeignCostBasis() async {
+        let pairs = foreignCostBasisPairs
+        guard !pairs.isEmpty else { return }
+        await costBasisProvider.hydrate(pairs: pairs)
+        await refresh()
     }
 
     // MARK: - Sample Data (preview용)
