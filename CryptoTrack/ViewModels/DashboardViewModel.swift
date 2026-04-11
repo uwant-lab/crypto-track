@@ -204,8 +204,17 @@ final class DashboardViewModel {
             }
         }
 
-        let symbols = Array(Set(newAssets.map(\.symbol)))
-        let tickerResults = await exchangeManager.fetchTickersPerExchange(symbols: symbols)
+        // Scope symbols per-exchange: each exchange only fetches tickers for
+        // symbols it actually holds. Previously the callsite passed the union of
+        // all symbols to every exchange, which caused batch ticker requests to
+        // fail entirely when any symbol wasn't listed.
+        let symbolsByExchange: [Exchange: [String]] = Dictionary(
+            grouping: newAssets, by: \.exchange
+        ).mapValues { Array(Set($0.map(\.symbol))) }
+
+        let tickerResults = await exchangeManager.fetchTickersPerExchange(
+            symbolsByExchange: symbolsByExchange
+        )
 
         var newTickers: [Ticker] = []
         for (_, result) in tickerResults {

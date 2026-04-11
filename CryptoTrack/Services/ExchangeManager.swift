@@ -138,14 +138,24 @@ final class ExchangeManager {
         }
     }
 
-    /// 등록된 모든 거래소에서 시세를 병렬 조회하되, 거래소별 성공/실패를 그대로 반환합니다.
-    func fetchTickersPerExchange(symbols: [String]) async -> [(Exchange, Result<[Ticker], Error>)] {
+    /// Per-exchange ticker fetch scoped to each exchange's own holdings. Each
+    /// exchange task only receives the symbols it was asked to fetch — previously
+    /// the callsite passed the union of all symbols, which caused single-batch
+    /// APIs (Binance/Upbit/Bithumb) to fail entire requests whenever any symbol
+    /// wasn't listed on that exchange.
+    func fetchTickersPerExchange(
+        symbolsByExchange: [Exchange: [String]]
+    ) async -> [(Exchange, Result<[Ticker], Error>)] {
         guard !registeredExchanges.isEmpty else { return [] }
 
         return await withTaskGroup(of: (Exchange, Result<[Ticker], Error>).self) { group in
             for exchange in registeredExchanges {
                 guard let service = services[exchange] else { continue }
+                let symbols = symbolsByExchange[exchange] ?? []
                 group.addTask {
+                    guard !symbols.isEmpty else {
+                        return (exchange, .success([]))
+                    }
                     do {
                         let list = try await service.fetchTickers(symbols: symbols)
                         return (exchange, .success(list))
