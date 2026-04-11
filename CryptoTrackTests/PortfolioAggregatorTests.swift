@@ -151,4 +151,27 @@ final class PortfolioAggregatorTests: XCTestCase {
         XCTAssertEqual(usdRow!.totalBalance, 0.2, accuracy: 1e-9)
         XCTAssertEqual(usdRow?.exchanges, [.binance])
     }
+
+    /// Upbit 0.5 BTC with ticker @62M + Bithumb 0.3 BTC with NO ticker.
+    /// - currentValue reflects only the holding whose ticker is known: 0.5 * 62M
+    /// - the row is still shown (hasTicker == true because at least one asset matched)
+    /// - currentPrice is value-weighted: 31M / 0.8 = 38.75M
+    func testAggregateTickerMissingOnOneHolder() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("BTC", balance: 0.3, avgPrice: 60_000_000, exchange: .bithumb),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit),
+            // no Bithumb ticker
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 1)
+
+        let row = rows[0]
+        XCTAssertEqual(row.currentValue, 31_000_000, accuracy: 0.5)
+        XCTAssertEqual(row.currentPrice, 31_000_000 / 0.8, accuracy: 0.5)
+        XCTAssertTrue(row.hasTicker)
+    }
 }
