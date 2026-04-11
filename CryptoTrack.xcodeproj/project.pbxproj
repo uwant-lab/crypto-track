@@ -59,6 +59,7 @@
 		5B55CD0CFC63A1DFA13EA416 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E04BB936E923BFB58D3FD86 /* ViewModifiers.swift */; };
 		5C231CEF3B2189B62F536F27 /* DepositListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B5495164F5590597C3310F /* DepositListView.swift */; };
 		5C2A87F45A99E2F89ADB7F0D /* ExchangeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */; };
+		5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
 		5F64DA9FDCB3B76AEAF0709A /* PagedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BABB719E01BF5DA65121818 /* PagedResult.swift */; };
 		604B9C6EF09BA0275919DFD5 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BA4095AD1BC21CEB823783 /* OrderListView.swift */; };
 		631ECD27BD26DF740F384567 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
@@ -80,12 +81,14 @@
 		7D96A76F917033C4C25F594A /* TransactionHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */; };
 		813DF19805F5CA0D00287738 /* BybitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8D4118909D5194348EB00 /* BybitAuthenticator.swift */; };
 		81C0D4C538C81B420987AAAD /* CryptoTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */; };
+		821EFAEF24BAD7F434C4E5BC /* PriceFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */; };
 		8223A42ABDACB908D27E11A7 /* VolumeBarCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB7273BA1A3124D3EEF4A21 /* VolumeBarCanvas.swift */; };
 		82444F479BFD12E9C8AD6046 /* ChartViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3092225FF81F8060019A4DD9 /* ChartViewModel.swift */; };
 		83073A2A9407495B55EE3B7D /* IndicatorPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68A615985E2DDAF424352324 /* IndicatorPickerView.swift */; };
 		84422F0DB21BD117C4EF0919 /* AppSettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 671FDB96D591C570D0B4A222 /* AppSettingsManager.swift */; };
 		85EC2C97085BF668654A70EC /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		861F85EA05EC1695DE051E9F /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809FB31723C5AD62E650CB0 /* AppLockManager.swift */; };
+		8BD9CD92C03A1127AFF007BA /* PriceFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */; };
 		8C986F7E571D170C2BD4E345 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
 		8E8C9B34E942D0D5D68254BF /* Indicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4856176E66B8312A1BCA7F8 /* Indicator.swift */; };
 		8F1C462AA011D9B6D252DFEE /* CoinoneModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06868FAC22000898FF2EAD94 /* CoinoneModels.swift */; };
@@ -159,6 +162,7 @@
 		EFD355061F259F180EF2A2CE /* TimeframePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */; };
 		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
 		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
+		F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
 		FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
 		FB3945064DDE64C709C6B414 /* TransactionHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */; };
@@ -199,6 +203,7 @@
 		2AD631E0111F8EB380D2A416 /* OKXModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OKXModels.swift; sourceTree = "<group>"; };
 		3092225FF81F8060019A4DD9 /* ChartViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartViewModel.swift; sourceTree = "<group>"; };
 		347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainServiceTests.swift; sourceTree = "<group>"; };
+		352B5F56FB575782DAFC6D5D /* PriceColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceColor.swift; sourceTree = "<group>"; };
 		35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingToolbarView.swift; sourceTree = "<group>"; };
 		36D1A276D14EC9BBCFFA2888 /* CryptoTrackTests_iOS.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CryptoTrackTests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		44BF77678F8F9CD0D05864F6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
@@ -259,6 +264,7 @@
 		DAD125E46CB3EB8D808C0451 /* Asset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Asset.swift; sourceTree = "<group>"; };
 		E1B5495164F5590597C3310F /* DepositListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepositListView.swift; sourceTree = "<group>"; };
 		E39E8518D3D082761DAC5B1C /* KorbitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitModels.swift; sourceTree = "<group>"; };
+		E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceFormatter.swift; sourceTree = "<group>"; };
 		E4856176E66B8312A1BCA7F8 /* Indicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Indicator.swift; sourceTree = "<group>"; };
 		E90302837D216377EE23F496 /* BithumbService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbService.swift; sourceTree = "<group>"; };
 		E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneService.swift; sourceTree = "<group>"; };
@@ -317,6 +323,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		1C9BAD4C75547705E328F1FC /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				352B5F56FB575782DAFC6D5D /* PriceColor.swift */,
+				E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		213BAA27C08F0C9B06027EBB /* CryptoTrack */ = {
 			isa = PBXGroup;
 			children = (
@@ -349,6 +364,7 @@
 				829E5D79CAA13AF24C902797 /* AssetRowView.swift */,
 				CA4769E89A5F115B6254A2A5 /* DashboardView.swift */,
 				8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */,
+				1C9BAD4C75547705E328F1FC /* Components */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -767,7 +783,9 @@
 				5F64DA9FDCB3B76AEAF0709A /* PagedResult.swift in Sources */,
 				C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */,
 				1C308663E6FEB4F1FCD5395A /* PortfolioSummaryView.swift in Sources */,
+				F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */,
 				56297328F5D62918B0B61E64 /* PriceColorMode.swift in Sources */,
+				8BD9CD92C03A1127AFF007BA /* PriceFormatter.swift in Sources */,
 				E7BAC3B7460072442D5C3818 /* QuoteCurrency.swift in Sources */,
 				0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */,
 				FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */,
@@ -869,7 +887,9 @@
 				4F852D6F0C37CC2CD23393C4 /* PagedResult.swift in Sources */,
 				3B6AC4E1A4FD352FF24637FD /* PlatformAdaptiveLayout.swift in Sources */,
 				EF0FFB3E3AEB7ABB72CF2458 /* PortfolioSummaryView.swift in Sources */,
+				5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */,
 				C3D251CC911C45F3C80EDB04 /* PriceColorMode.swift in Sources */,
+				821EFAEF24BAD7F434C4E5BC /* PriceFormatter.swift in Sources */,
 				FE0C60CE83A9FA02C886A49B /* QuoteCurrency.swift in Sources */,
 				1F445143D4A9761684A31625 /* SettingsView.swift in Sources */,
 				25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */,
