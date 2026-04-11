@@ -167,6 +167,7 @@
 		DFFF1464876305AA8244E9CF /* BithumbModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C550256480F6C8FA520961F8 /* BithumbModels.swift */; };
 		E1A1CBBC85E30C37E9297CB4 /* PortfolioAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDD0401607BBB70624C4C581 /* PortfolioAggregator.swift */; };
 		E1E072307C92DD67D053808C /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */; };
+		E31490413E8B948AEA522381 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E7CAEBBB008E449C9DF31927 /* Assets.xcassets */; };
 		E3846FD217ABE3F877BE0DB5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2928C4D84F8D9FC746C47F57 /* ContentView.swift */; };
 		E5004DEA4B1F7A557F13C005 /* Kline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E5FC9E6BBCB4B1A6BF02829 /* Kline.swift */; };
 		E62D0CA074F92B94E7ECA454 /* KorbitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A49290D5E895F8DC2517969 /* KorbitAuthenticator.swift */; };
@@ -181,6 +182,7 @@
 		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
 		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
+		F7DB56166401B604BC806B28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E7CAEBBB008E449C9DF31927 /* Assets.xcassets */; };
 		F7E75034C4557BBB844C605F /* ExchangeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDB7112A2E3301111993033 /* ExchangeBadge.swift */; };
 		F928C2FADC69D692E0689036 /* DashboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081CC708757CD62D33B5547B /* DashboardToolbar.swift */; };
 		FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */; };
@@ -298,6 +300,7 @@
 		E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceFormatter.swift; sourceTree = "<group>"; };
 		E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfitBadge.swift; sourceTree = "<group>"; };
 		E4856176E66B8312A1BCA7F8 /* Indicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Indicator.swift; sourceTree = "<group>"; };
+		E7CAEBBB008E449C9DF31927 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E90302837D216377EE23F496 /* BithumbService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbService.swift; sourceTree = "<group>"; };
 		E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneService.swift; sourceTree = "<group>"; };
 		E9C8256951226340D3F519D7 /* KorbitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KorbitService.swift; sourceTree = "<group>"; };
@@ -371,6 +374,7 @@
 		213BAA27C08F0C9B06027EBB /* CryptoTrack */ = {
 			isa = PBXGroup;
 			children = (
+				E7CAEBBB008E449C9DF31927 /* Assets.xcassets */,
 				DAB06F1E9384104FA000779B /* CryptoTrack.entitlements.bak */,
 				F98F45CBD97B4F6832A36342 /* App */,
 				83459A11D7D7B5200B617E9F /* DesignSystem */,
@@ -747,6 +751,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7DB56166401B604BC806B28 /* Assets.xcassets in Resources */,
 				D17B0299F6DC4CBB02133486 /* CryptoTrack.entitlements.bak in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -755,6 +760,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E31490413E8B948AEA522381 /* Assets.xcassets in Resources */,
 				CA80EF27A683E13BFF089A68 /* CryptoTrack.entitlements.bak in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
