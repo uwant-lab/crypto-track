@@ -51,9 +51,8 @@ private struct AssetCardRow: View {
                     HStack(spacing: 8) {
                         Text(row.symbol)
                             .font(.headline)
-                        // Badge slot — filled in Task 17.
                         if showBadges {
-                            EmptyView()
+                            ExchangeBadgeRow(exchanges: row.exchanges, size: 16)
                         }
                     }
                     Text("\(PriceFormatter.formatBalance(row.totalBalance)) \(row.symbol)")

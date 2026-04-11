@@ -50,9 +50,8 @@ struct AssetTableSections: View {
             TableColumn("코인") { row in
                 HStack(spacing: 8) {
                     Text(row.symbol).font(.body.weight(.semibold))
-                    // Badge slot — filled in Task 17.
                     if showHeaders {
-                        EmptyView()
+                        ExchangeBadgeRow(exchanges: row.exchanges, size: 14)
                     }
                 }
             }
