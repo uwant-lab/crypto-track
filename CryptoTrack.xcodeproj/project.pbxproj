@@ -37,6 +37,7 @@
 		3334B8AF5CEE0CD88A9E0529 /* BinanceAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817492FE8F1013795D10D037 /* BinanceAuthenticator.swift */; };
 		3545122DD543B52CE0C4060E /* KeychainServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */; };
 		3819CC63F4D072B7E88EE4AD /* ChartDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4953FA9EE5EF8533299807D /* ChartDataManager.swift */; };
+		38E7794795E77BDB484F04E9 /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6497A5768F71538A5551CBEB /* DashboardViewModelTests.swift */; };
 		39F36A2E9D39D832AE69E586 /* DrawingSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CAAD7C95E09068B05660A2 /* DrawingSyncService.swift */; };
 		3A450B9D8ED2029C82DE44C8 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BA4095AD1BC21CEB823783 /* OrderListView.swift */; };
 		3B6AC4E1A4FD352FF24637FD /* PlatformAdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */; };
@@ -107,6 +108,7 @@
 		A8B83B1C68CBC677554B956C /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
 		A9CDD485BC0B104FD906A05D /* UpbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */; };
 		ABCFBB0E82361CD5292D66A1 /* CrosshairOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2121620E53A1B48E7F42840B /* CrosshairOverlayView.swift */; };
+		AD07FE80FC810E4B5BC6B1D0 /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6497A5768F71538A5551CBEB /* DashboardViewModelTests.swift */; };
 		AD99B2610935A92FF8ED44F7 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		AF9817B1819304DF74D5F7C1 /* ExchangeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C5650608A5ED6B12C917E3 /* ExchangeFilter.swift */; };
 		B18330A0C01C2B3D441F9638 /* AssetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */; };
@@ -219,6 +221,7 @@
 		586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeManagerTests.swift; sourceTree = "<group>"; };
 		5B4E704CC6687341E956BDC9 /* Order.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Order.swift; sourceTree = "<group>"; };
 		5BABB719E01BF5DA65121818 /* PagedResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagedResult.swift; sourceTree = "<group>"; };
+		6497A5768F71538A5551CBEB /* DashboardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModelTests.swift; sourceTree = "<group>"; };
 		66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandlestickChartView.swift; sourceTree = "<group>"; };
 		671FDB96D591C570D0B4A222 /* AppSettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsManager.swift; sourceTree = "<group>"; };
 		68A615985E2DDAF424352324 /* IndicatorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorPickerView.swift; sourceTree = "<group>"; };
@@ -542,6 +545,7 @@
 		F73B82B8AAA400F25A880A55 /* CryptoTrackTests */ = {
 			isa = PBXGroup;
 			children = (
+				6497A5768F71538A5551CBEB /* DashboardViewModelTests.swift */,
 				586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */,
 				347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */,
 				4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */,
@@ -811,6 +815,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				38E7794795E77BDB484F04E9 /* DashboardViewModelTests.swift in Sources */,
 				6E2D2188DE723F7D6F4C20B8 /* ExchangeManagerTests.swift in Sources */,
 				3545122DD543B52CE0C4060E /* KeychainServiceTests.swift in Sources */,
 				E1E072307C92DD67D053808C /* ModelTests.swift in Sources */,
@@ -821,6 +826,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AD07FE80FC810E4B5BC6B1D0 /* DashboardViewModelTests.swift in Sources */,
 				5C2A87F45A99E2F89ADB7F0D /* ExchangeManagerTests.swift in Sources */,
 				D9A485C2F2B2E7F23EBD8EE1 /* KeychainServiceTests.swift in Sources */,
 				C571460A82C1A8A8559A4FD7 /* ModelTests.swift in Sources */,
