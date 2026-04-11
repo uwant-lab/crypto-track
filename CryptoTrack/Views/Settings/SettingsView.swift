@@ -38,6 +38,9 @@ struct SettingsView: View {
             .onAppear {
                 viewModel.refreshSavedExchanges()
             }
+            .task {
+                await viewModel.refreshConnectionStatuses()
+            }
         }
     }
 }
@@ -81,7 +84,7 @@ private struct ExchangeRowView: View {
                     .foregroundStyle(.orange)
             case .testing:
                 ProgressView()
-                    .scaleEffect(0.8)
+                    .controlSize(.small)
             case .success:
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -219,7 +222,7 @@ private struct iCloudSyncSectionView: View {
                 HStack {
                     if isSyncing {
                         ProgressView()
-                            .scaleEffect(0.8)
+                            .controlSize(.small)
                     } else {
                         Image(systemName: "arrow.triangle.2.circlepath.icloud")
                     }

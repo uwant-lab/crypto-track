@@ -56,6 +56,12 @@ struct ExchangeSetupView: View {
     var body: some View {
         platformContent
             .navigationTitle(exchange.rawValue)
+            .task {
+                // 앱 재시작 시 메모리에서 사라진 연결 상태를 복원합니다.
+                if isSaved, case .untested = connectionStatus {
+                    await settingsViewModel.testConnection(exchange: exchange)
+                }
+            }
             .sheet(isPresented: $showGuide) {
                 if let guide = ExchangeGuide.all[exchange] {
                     APIKeyGuideView(guide: guide)
@@ -162,7 +168,7 @@ struct ExchangeSetupView: View {
                 .overlay(
                     HStack(spacing: 4) {
                         ProgressView()
-                            .scaleEffect(0.5)
+                            .controlSize(.small)
                         Text("테스트 중")
                     }
                     .font(.caption)
@@ -261,7 +267,7 @@ struct ExchangeSetupView: View {
                     .foregroundStyle(.secondary)
             case .testing:
                 ProgressView()
-                    .scaleEffect(0.7)
+                    .controlSize(.small)
                 Text("연결 확인 중…")
                     .foregroundStyle(.secondary)
             case .success:
@@ -405,7 +411,7 @@ struct ExchangeSetupView: View {
                 HStack {
                     if isTestingConnection {
                         ProgressView()
-                            .scaleEffect(0.85)
+                            .controlSize(.small)
                             .padding(.trailing, 4)
                     }
                     Text("연결 테스트")
@@ -462,7 +468,7 @@ struct ExchangeSetupView: View {
                     .foregroundStyle(.secondary)
             case .testing:
                 ProgressView()
-                    .scaleEffect(0.8)
+                    .controlSize(.small)
                 Text("연결 확인 중…")
                     .foregroundStyle(.secondary)
             case .success:
@@ -516,6 +522,7 @@ struct ExchangeSetupView: View {
     private func confirmSave() {
         guard isConnectionSuccess else { return }
         settingsViewModel.savedExchanges.insert(exchange)
+        ExchangeManager.shared.register(exchange: exchange)
         alertMessage = "API 키가 저장되었습니다."
         showAlert = true
         accessKey = ""
@@ -526,6 +533,7 @@ struct ExchangeSetupView: View {
     private func deleteKeys() {
         do {
             try settingsViewModel.deleteAPIKeys(exchange: exchange)
+            ExchangeManager.shared.unregister(exchange: exchange)
             settingsViewModel.connectionStatus[exchange] = .untested
         } catch {
             alertMessage = "삭제 실패: \(error.localizedDescription)"
