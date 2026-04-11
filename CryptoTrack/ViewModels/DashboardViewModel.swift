@@ -88,8 +88,6 @@ final class DashboardViewModel {
 
             if assets.isEmpty && !exchangeManager.registeredExchanges.isEmpty {
                 errorMessage = "자산 데이터를 불러오지 못했습니다."
-            } else if exchangeManager.registeredExchanges.isEmpty {
-                errorMessage = "설정에서 거래소를 등록해주세요."
             }
         } catch {
             errorMessage = error.localizedDescription

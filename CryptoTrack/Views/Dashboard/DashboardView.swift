@@ -15,15 +15,36 @@ struct DashboardView: View {
 
     // MARK: - Content States
 
+    private var hasNoExchanges: Bool {
+        ExchangeManager.shared.registeredExchanges.isEmpty
+    }
+
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.assets.isEmpty {
             loadingView
+        } else if hasNoExchanges {
+            emptyStateView
         } else if let errorMessage = viewModel.errorMessage, viewModel.assets.isEmpty {
             errorView(message: errorMessage)
         } else {
             portfolioList
         }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "chart.line.uptrend.xyaxis.circle")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
+            Text("연결된 거래소가 없습니다")
+                .font(.title3.bold())
+            Text("설정 탭에서 거래소 API를 등록하면\n자산 현황을 확인할 수 있습니다.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Subviews
