@@ -22,6 +22,15 @@ struct ExchangeFetchStatus: Identifiable, Hashable, Sendable {
     }
 }
 
+/// A contiguous group of `PortfolioRow`s in the dashboard list, bounded by a
+/// single `QuoteCurrency`. When the filter is `.all`, the view model emits
+/// one section per currency present in the portfolio. When a single exchange
+/// is selected, exactly one section is emitted (for that exchange's currency).
+struct RowSection: Identifiable, Sendable {
+    var id: QuoteCurrency
+    var rows: [PortfolioRow]
+}
+
 /// 대시보드 화면의 상태와 비즈니스 로직을 관리합니다.
 @Observable
 @MainActor
@@ -43,6 +52,17 @@ final class DashboardViewModel {
     /// macOS Table에 양방향 바인딩되는 정렬 상태. iOS는 기본값(평가금액 내림차순)만 사용.
     var tableSortOrder: [KeyPathComparator<AssetRow>] = [
         KeyPathComparator(\AssetRow.currentValue, order: .reverse)
+    ]
+
+    /// Sort state for the KRW section in the new `AssetTableSections` view.
+    /// The default order mirrors the pre-refactor behaviour.
+    var krwSortOrder: [KeyPathComparator<PortfolioRow>] = [
+        KeyPathComparator(\PortfolioRow.currentValue, order: .reverse)
+    ]
+
+    /// Sort state for the USDT section in the new `AssetTableSections` view.
+    var usdSortOrder: [KeyPathComparator<PortfolioRow>] = [
+        KeyPathComparator(\PortfolioRow.currentValue, order: .reverse)
     ]
 
     var lastRefreshDate: Date?
@@ -130,6 +150,49 @@ final class DashboardViewModel {
 
     /// ticker를 모르면 가치를 모르므로 dust로 분류하지 않는다.
     private func isDust(_ row: AssetRow) -> Bool {
+        guard row.hasTicker else { return false }
+        let threshold: Double = row.quoteCurrency == .krw
+            ? Self.dustThresholdKRW
+            : Self.dustThresholdUSD
+        return row.currentValue < threshold
+    }
+
+    // MARK: - Display Sections (new sectioned API)
+
+    /// Filtered + aggregated + dust-filtered rows, grouped by quoteCurrency and
+    /// sorted per section. Returns zero, one, or two sections depending on
+    /// which currencies are present under the current filter.
+    var displayedSections: [RowSection] {
+        let filteredAssets = assets.filter { matchesFilter($0) }
+
+        let rawRows: [PortfolioRow]
+        switch selectedFilter {
+        case .all:
+            rawRows = PortfolioAggregator.aggregate(assets: filteredAssets, tickers: tickers)
+        case .exchange:
+            rawRows = PortfolioAggregator.singleExchangeRows(assets: filteredAssets, tickers: tickers)
+        }
+
+        let kept = rawRows.filter { !hideDust || !isDustRow($0) }
+
+        let krwRows = kept
+            .filter { $0.quoteCurrency == .krw }
+            .sorted(using: krwSortOrder)
+        let usdRows = kept
+            .filter { $0.quoteCurrency == .usdt }
+            .sorted(using: usdSortOrder)
+
+        var sections: [RowSection] = []
+        if !krwRows.isEmpty { sections.append(RowSection(id: .krw, rows: krwRows)) }
+        if !usdRows.isEmpty { sections.append(RowSection(id: .usdt, rows: usdRows)) }
+        return sections
+    }
+
+    /// Post-aggregation dust filter. A row is dust when its aggregated
+    /// `currentValue` is below the per-currency threshold AND at least one
+    /// contributing asset has a ticker (we can judge the value). Rows with no
+    /// ticker anywhere are never hidden.
+    private func isDustRow(_ row: PortfolioRow) -> Bool {
         guard row.hasTicker else { return false }
         let threshold: Double = row.quoteCurrency == .krw
             ? Self.dustThresholdKRW
