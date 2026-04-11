@@ -48,6 +48,7 @@
 		45DED8CE4C279202AE79DCF1 /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809FB31723C5AD62E650CB0 /* AppLockManager.swift */; };
 		46D0931E743893778DE89C8E /* ExchangeSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB11900502BD1E82CF55967D /* ExchangeSetupView.swift */; };
 		4727A59A686EFBF178B75134 /* BinanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE37BB3FB354C45B96CB492 /* BinanceService.swift */; };
+		4735B6A7FC479256CDBF10F1 /* PortfolioRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */; };
 		47C9B8D8810B513559FDD24E /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11AB07926A32E57D69BA2FB /* Theme.swift */; };
 		4936C7EA8C2813D9508AB69B /* OKXAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D3D7E225CDFAF04292D563 /* OKXAuthenticator.swift */; };
 		4F852D6F0C37CC2CD23393C4 /* PagedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BABB719E01BF5DA65121818 /* PagedResult.swift */; };
@@ -63,6 +64,7 @@
 		5C231CEF3B2189B62F536F27 /* DepositListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B5495164F5590597C3310F /* DepositListView.swift */; };
 		5C2A87F45A99E2F89ADB7F0D /* ExchangeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586BAF46C0B370D4BDCF6053 /* ExchangeManagerTests.swift */; };
 		5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
+		5DF61DD995B14F10C4E06C57 /* PortfolioRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */; };
 		5F64DA9FDCB3B76AEAF0709A /* PagedResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BABB719E01BF5DA65121818 /* PagedResult.swift */; };
 		604B9C6EF09BA0275919DFD5 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BA4095AD1BC21CEB823783 /* OrderListView.swift */; };
 		631ECD27BD26DF740F384567 /* CoinoneAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0398A8B3F551B99EAA4881 /* CoinoneAuthenticator.swift */; };
@@ -278,6 +280,7 @@
 		CA4769E89A5F115B6254A2A5 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		CB11900502BD1E82CF55967D /* ExchangeSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeSetupView.swift; sourceTree = "<group>"; };
 		CC97ED7469C6C4333F23604A /* BithumbAuthenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbAuthenticator.swift; sourceTree = "<group>"; };
+		CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioRow.swift; sourceTree = "<group>"; };
 		D08F08CE8E23852FF7F31ED1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D11AB07926A32E57D69BA2FB /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		DAB06F1E9384104FA000779B /* CryptoTrack.entitlements.bak */ = {isa = PBXFileReference; path = CryptoTrack.entitlements.bak; sourceTree = "<group>"; };
@@ -527,6 +530,7 @@
 				3092225FF81F8060019A4DD9 /* ChartViewModel.swift */,
 				6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */,
 				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
+				CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */,
 				B28524CE93529E37B8945240 /* SettingsViewModel.swift */,
 				4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */,
 			);
@@ -815,6 +819,7 @@
 				604B9C6EF09BA0275919DFD5 /* OrderListView.swift in Sources */,
 				5F64DA9FDCB3B76AEAF0709A /* PagedResult.swift in Sources */,
 				C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */,
+				4735B6A7FC479256CDBF10F1 /* PortfolioRow.swift in Sources */,
 				D562BA34C6584B275A7EE2E8 /* PortfolioSummaryCard.swift in Sources */,
 				F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */,
 				56297328F5D62918B0B61E64 /* PriceColorMode.swift in Sources */,
@@ -927,6 +932,7 @@
 				3A450B9D8ED2029C82DE44C8 /* OrderListView.swift in Sources */,
 				4F852D6F0C37CC2CD23393C4 /* PagedResult.swift in Sources */,
 				3B6AC4E1A4FD352FF24637FD /* PlatformAdaptiveLayout.swift in Sources */,
+				5DF61DD995B14F10C4E06C57 /* PortfolioRow.swift in Sources */,
 				FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */,
 				5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */,
 				C3D251CC911C45F3C80EDB04 /* PriceColorMode.swift in Sources */,
