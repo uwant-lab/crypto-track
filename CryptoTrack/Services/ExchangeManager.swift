@@ -107,6 +107,59 @@ final class ExchangeManager {
         }
     }
 
+    // MARK: - Per-Exchange Fetch (with status tracking)
+
+    /// 등록된 모든 거래소에서 자산을 병렬 조회하되, 거래소별 성공/실패를 그대로 반환합니다.
+    /// `fetchAllAssets()`와 달리 일부 실패를 사용자에게 보여주고 싶을 때 사용합니다.
+    func fetchAssetsPerExchange() async -> [(Exchange, Result<[Asset], Error>)] {
+        guard !registeredExchanges.isEmpty else { return [] }
+
+        return await withTaskGroup(of: (Exchange, Result<[Asset], Error>).self) { group in
+            for exchange in registeredExchanges {
+                guard let service = services[exchange] else { continue }
+                group.addTask {
+                    do {
+                        let list = try await service.fetchAssets()
+                        return (exchange, .success(list))
+                    } catch {
+                        return (exchange, .failure(error))
+                    }
+                }
+            }
+
+            var results: [(Exchange, Result<[Asset], Error>)] = []
+            for await item in group {
+                results.append(item)
+            }
+            return results
+        }
+    }
+
+    /// 등록된 모든 거래소에서 시세를 병렬 조회하되, 거래소별 성공/실패를 그대로 반환합니다.
+    func fetchTickersPerExchange(symbols: [String]) async -> [(Exchange, Result<[Ticker], Error>)] {
+        guard !registeredExchanges.isEmpty else { return [] }
+
+        return await withTaskGroup(of: (Exchange, Result<[Ticker], Error>).self) { group in
+            for exchange in registeredExchanges {
+                guard let service = services[exchange] else { continue }
+                group.addTask {
+                    do {
+                        let list = try await service.fetchTickers(symbols: symbols)
+                        return (exchange, .success(list))
+                    } catch {
+                        return (exchange, .failure(error))
+                    }
+                }
+            }
+
+            var results: [(Exchange, Result<[Ticker], Error>)] = []
+            for await item in group {
+                results.append(item)
+            }
+            return results
+        }
+    }
+
     /// 특정 거래소의 API 연결을 검증합니다.
     func validateConnection(for exchange: Exchange) async throws -> Bool {
         guard let service = services[exchange] else { return false }
