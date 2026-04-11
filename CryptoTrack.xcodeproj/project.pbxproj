@@ -115,6 +115,7 @@
 		AD99B2610935A92FF8ED44F7 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		AF9817B1819304DF74D5F7C1 /* ExchangeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C5650608A5ED6B12C917E3 /* ExchangeFilter.swift */; };
 		B18330A0C01C2B3D441F9638 /* AssetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */; };
+		B1862C4D9F82DC743DFD9BEA /* DashboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081CC708757CD62D33B5547B /* DashboardToolbar.swift */; };
 		B30708FD724C5D21D82E38EB /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F46D8D08900D7EC7BB034A2 /* DashboardViewModel.swift */; };
 		B5A74FB2AD7AC94A06A5E186 /* APIKeyGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F6B042528DF0314FF01546 /* APIKeyGuideView.swift */; };
 		B619BBDF81714BD338E0CBB4 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9977012669192991B4724869 /* AppSettings.swift */; };
@@ -172,6 +173,7 @@
 		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
 		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
+		F928C2FADC69D692E0689036 /* DashboardToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081CC708757CD62D33B5547B /* DashboardToolbar.swift */; };
 		FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */; };
 		FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
@@ -202,6 +204,7 @@
 		015ED9DDEE372FB7BBF4E431 /* AssetRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetRow.swift; sourceTree = "<group>"; };
 		039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorCalculator.swift; sourceTree = "<group>"; };
 		06868FAC22000898FF2EAD94 /* CoinoneModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoinoneModels.swift; sourceTree = "<group>"; };
+		081CC708757CD62D33B5547B /* DashboardToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardToolbar.swift; sourceTree = "<group>"; };
 		0A380BE2B8D5C0AAC816B247 /* Ticker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticker.swift; sourceTree = "<group>"; };
 		0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpbitService.swift; sourceTree = "<group>"; };
 		1809FB31723C5AD62E650CB0 /* AppLockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockManager.swift; sourceTree = "<group>"; };
@@ -379,6 +382,7 @@
 			children = (
 				9026111C62DB0FE77DDF9441 /* AssetFilterTabBar.swift */,
 				829E5D79CAA13AF24C902797 /* AssetRowView.swift */,
+				081CC708757CD62D33B5547B /* DashboardToolbar.swift */,
 				CA4769E89A5F115B6254A2A5 /* DashboardView.swift */,
 				C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */,
 				8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */,
@@ -772,6 +776,7 @@
 				A5291BCFC5C18B38807D2C98 /* ContentView.swift in Sources */,
 				5482FDC423059B01418614ED /* CrosshairOverlayView.swift in Sources */,
 				0BC504FBC24C21A41E373C8C /* CryptoTrackApp.swift in Sources */,
+				B1862C4D9F82DC743DFD9BEA /* DashboardToolbar.swift in Sources */,
 				70A58A3309621338DE228847 /* DashboardView.swift in Sources */,
 				9802CCA484054E0D792585DE /* DashboardViewModel.swift in Sources */,
 				00DFECF5401AE90285BE83D6 /* Deposit.swift in Sources */,
@@ -882,6 +887,7 @@
 				E3846FD217ABE3F877BE0DB5 /* ContentView.swift in Sources */,
 				ABCFBB0E82361CD5292D66A1 /* CrosshairOverlayView.swift in Sources */,
 				81C0D4C538C81B420987AAAD /* CryptoTrackApp.swift in Sources */,
+				F928C2FADC69D692E0689036 /* DashboardToolbar.swift in Sources */,
 				91034B5796142A177D3CD5A3 /* DashboardView.swift in Sources */,
 				B30708FD724C5D21D82E38EB /* DashboardViewModel.swift in Sources */,
 				9DD6AF5497B9673B9335BD82 /* Deposit.swift in Sources */,
