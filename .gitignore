@@ -4,6 +4,9 @@
 # OMC plugin state
 .omc/
 
+# Superpowers brainstorm session files
+.superpowers/
+
 # Xcode
 build/
 DerivedData/
