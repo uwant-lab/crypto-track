@@ -75,22 +75,28 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var assetsList: some View {
+        #if os(macOS)
+        // macOS path unchanged in this task — still uses the old AssetTable.
         if viewModel.displayedRows.isEmpty {
             emptyFilterView
         } else {
-            #if os(macOS)
             AssetTable(
                 rows: viewModel.displayedRows,
                 sortOrder: $viewModel.tableSortOrder,
                 colorMode: settingsManager.priceColorMode
             )
-            #else
+        }
+        #else
+        if viewModel.displayedSections.isEmpty {
+            emptyFilterView
+        } else {
             AssetCardList(
-                rows: viewModel.displayedRows,
+                sections: viewModel.displayedSections,
+                showSectionHeaders: viewModel.selectedFilter == .all,
                 colorMode: settingsManager.priceColorMode
             )
-            #endif
         }
+        #endif
     }
 
     // MARK: - Empty/Loading/Error states

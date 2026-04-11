@@ -2,32 +2,61 @@
 #if !os(macOS)
 import SwiftUI
 
-/// iOS 전용: 카드형 행으로 자산 목록을 표시.
+/// iOS-only section-aware card list. Renders one `Section` per
+/// quoteCurrency with a header when `showSectionHeaders == true`
+/// (i.e. the "전체" filter). When a specific exchange is selected we
+/// pass `showSectionHeaders: false` so the list renders without header
+/// decoration.
 struct AssetCardList: View {
-    let rows: [AssetRow]
+    let sections: [RowSection]
+    let showSectionHeaders: Bool
     let colorMode: PriceColorMode
 
     var body: some View {
-        List(rows) { row in
-            AssetCardRow(row: row, colorMode: colorMode)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+        List {
+            ForEach(sections) { section in
+                Section {
+                    ForEach(section.rows) { row in
+                        AssetCardRow(
+                            row: row,
+                            showBadges: showSectionHeaders,
+                            colorMode: colorMode
+                        )
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                    }
+                } header: {
+                    if showSectionHeaders {
+                        Text(section.id.sectionTitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .textCase(nil)
+                    }
+                }
+            }
         }
         .listStyle(.plain)
     }
 }
 
 private struct AssetCardRow: View {
-    let row: AssetRow
+    let row: PortfolioRow
+    let showBadges: Bool
     let colorMode: PriceColorMode
 
     var body: some View {
         VStack(spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(row.symbol)
-                        .font(.headline)
-                    Text("\(row.exchange.rawValue) · \(PriceFormatter.formatBalance(row.balance)) \(row.symbol)")
+                    HStack(spacing: 8) {
+                        Text(row.symbol)
+                            .font(.headline)
+                        // Badge slot — filled in Task 17.
+                        if showBadges {
+                            EmptyView()
+                        }
+                    }
+                    Text("\(PriceFormatter.formatBalance(row.totalBalance)) \(row.symbol)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -62,6 +91,14 @@ private struct AssetCardRow: View {
                         ? PriceFormatter.formatPrice(row.currentPrice, currency: row.quoteCurrency)
                         : "—"
                 )
+                if row.hasPartialCostBasis {
+                    Text("일부 미제공")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.secondary.opacity(0.15)))
+                }
                 Spacer()
             }
         }
@@ -82,10 +119,5 @@ private struct AssetCardRow: View {
                 .monospacedDigit()
         }
     }
-}
-
-#Preview {
-    let sample = DashboardViewModel.preview.displayedRows
-    return AssetCardList(rows: sample, colorMode: .korean)
 }
 #endif
