@@ -12,11 +12,11 @@ final class ExchangeManagerTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
-        manager = ExchangeManager()
+        manager = ExchangeManager(hydrateFromKeychain: false)
         // Clear any UserDefaults state that might have been loaded from shared storage
         UserDefaults.standard.removeObject(forKey: "registeredExchanges")
         // Re-create a clean manager after clearing defaults
-        manager = ExchangeManager()
+        manager = ExchangeManager(hydrateFromKeychain: false)
     }
 
     override func tearDown() async throws {

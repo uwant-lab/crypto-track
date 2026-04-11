@@ -97,6 +97,113 @@ extension UpbitTicker {
     }
 }
 
+// MARK: - Order (GET /v1/orders/closed)
+
+/// Upbit 체결 완료 주문 응답 모델
+struct UpbitOrder: Decodable, Sendable {
+    let uuid: String
+    let side: String
+    let market: String
+    let avgPrice: String?
+    let executedVolume: String
+    let paidFee: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case side
+        case market
+        case avgPrice = "avg_price"
+        case executedVolume = "executed_volume"
+        case paidFee = "paid_fee"
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Deposit (GET /v1/deposits)
+
+/// Upbit 입금 내역 응답 모델
+struct UpbitDeposit: Decodable, Sendable {
+    let uuid: String
+    let currency: String
+    let txid: String?
+    let state: String
+    let amount: String
+    let fee: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case currency
+        case txid
+        case state
+        case amount
+        case fee
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Order / Deposit Mapping
+
+extension UpbitOrder {
+    /// Upbit 주문 응답을 공통 Order 모델로 변환합니다.
+    func toOrder() -> Order {
+        // market 형식: "KRW-BTC" → symbol: "BTC"
+        let symbol = market.split(separator: "-").last.map(String.init) ?? market
+        let orderSide: OrderSide = (side == "bid") ? .buy : .sell
+        let price = Double(avgPrice ?? "0") ?? 0
+        let volume = Double(executedVolume) ?? 0
+        let fee = Double(paidFee) ?? 0
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = formatter.date(from: createdAt) ?? Date()
+
+        return Order(
+            id: "upbit-\(uuid)",
+            symbol: symbol,
+            side: orderSide,
+            price: price,
+            amount: volume,
+            totalValue: price * volume,
+            fee: fee,
+            exchange: .upbit,
+            executedAt: date
+        )
+    }
+}
+
+extension UpbitDeposit {
+    /// Upbit 입금 응답을 공통 Deposit 모델로 변환합니다.
+    func toDeposit() -> Deposit {
+        let depositType: DepositType = (currency == "KRW") ? .fiat : .crypto
+        let depositStatus: DepositStatus
+        switch state {
+        case "ACCEPTED":
+            depositStatus = .completed
+        case "CANCELLED", "REJECTED":
+            depositStatus = .cancelled
+        default:
+            depositStatus = .pending
+        }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = formatter.date(from: createdAt) ?? Date()
+
+        return Deposit(
+            id: "upbit-\(uuid)",
+            symbol: currency,
+            amount: Double(amount) ?? 0,
+            type: depositType,
+            status: depositStatus,
+            txId: txid,
+            exchange: .upbit,
+            completedAt: date
+        )
+    }
+}
+
 extension UpbitKline {
     /// Upbit 캔들 응답을 공통 Kline 모델로 변환합니다.
     func toKline(symbol: String, timeframe: ChartTimeframe) -> Kline {

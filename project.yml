@@ -61,3 +61,25 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cryptotrack.tests
         GENERATE_INFOPLIST_FILE: true
+
+schemes:
+  CryptoTrack_macOS:
+    build:
+      targets:
+        CryptoTrack_macOS: all
+        CryptoTrackTests_macOS: [test]
+    test:
+      targets:
+        - CryptoTrackTests_macOS
+    run:
+      config: Debug
+  CryptoTrack_iOS:
+    build:
+      targets:
+        CryptoTrack_iOS: all
+        CryptoTrackTests_iOS: [test]
+    test:
+      targets:
+        - CryptoTrackTests_iOS
+    run:
+      config: Debug

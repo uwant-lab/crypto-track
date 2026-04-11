@@ -143,6 +143,43 @@ final class SettingsViewModel {
         }
     }
 
+    /// 저장된 모든 거래소의 연결 상태를 병렬로 재검증합니다.
+    /// 앱 재시작 시 메모리에서 사라진 `connectionStatus`를 복원하기 위해 사용합니다.
+    /// 이미 테스트 중이거나 성공 상태인 거래소는 건너뜁니다.
+    func refreshConnectionStatuses() async {
+        let targets = savedExchanges.filter { exchange in
+            switch connectionStatus[exchange] {
+            case .testing, .success:
+                return false
+            default:
+                return true
+            }
+        }
+        guard !targets.isEmpty else { return }
+
+        for exchange in targets {
+            connectionStatus[exchange] = .testing
+        }
+
+        await withTaskGroup(of: (Exchange, ConnectionStatus).self) { group in
+            for exchange in targets {
+                group.addTask { [weak self] in
+                    guard let self else { return (exchange, .failed("취소됨")) }
+                    let service = await self.makeService(for: exchange)
+                    do {
+                        let isValid = try await service.validateConnection()
+                        return (exchange, isValid ? .success : .failed("인증 실패"))
+                    } catch {
+                        return (exchange, .failed(error.localizedDescription))
+                    }
+                }
+            }
+            for await (exchange, status) in group {
+                connectionStatus[exchange] = status
+            }
+        }
+    }
+
     // MARK: - Private Factory
 
     /// 거래소에 맞는 ExchangeService 인스턴스를 생성합니다.

@@ -15,6 +15,10 @@ final class OKXService: ExchangeService {
     private let authenticator: OKXAuthenticator
     private let session: URLSession
 
+    /// 커서 기반 페이지네이션 상태
+    private nonisolated(unsafe) var ordersCursor: String?
+    private nonisolated(unsafe) var depositsCursor: String?
+
     // MARK: - Init
 
     init(authenticator: OKXAuthenticator = OKXAuthenticator(),
@@ -40,8 +44,13 @@ final class OKXService: ExchangeService {
             throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
         }
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // (OKX의 fetchTickers는 전체 spot 풀 후 필터라 기술적으로는
+        //  배치 실패를 일으키지 않지만, Binance/Bybit와 일관성을 맞추고
+        //  대시보드에 USDT가 0원 평가액으로 나타나는 것을 막는다.)
         return decoded.data
             .flatMap { $0.details }
+            .filter { $0.ccy != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
@@ -126,6 +135,95 @@ final class OKXService: ExchangeService {
         } catch {
             throw error
         }
+    }
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// OKX API: GET /api/v5/trade/fills-history (커서 기반 페이지네이션)
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let path: String
+        // 3개월 이내면 최근 API, 이전이면 아카이브 API
+        let threeMonthsAgo = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+        if from >= threeMonthsAgo {
+            path = "/api/v5/trade/fills-history"
+        } else {
+            path = "/api/v5/trade/fills-history-archive"
+        }
+
+        var queryItems = [
+            URLQueryItem(name: "instType", value: "SPOT"),
+            URLQueryItem(name: "begin", value: "\(Int64(from.timeIntervalSince1970 * 1000))"),
+            URLQueryItem(name: "end", value: "\(Int64(to.timeIntervalSince1970 * 1000))"),
+            URLQueryItem(name: "limit", value: "100")
+        ]
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = ordersCursor, !cursor.isEmpty {
+            queryItems.append(URLQueryItem(name: "after", value: cursor))
+        } else if page == 0 {
+            ordersCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            method: "GET",
+            path: path,
+            queryItems: queryItems
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(OKXResponse<OKXFill>.self, from: data)
+        guard decoded.isSuccess else {
+            throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+        }
+
+        let orders = decoded.data.map { $0.toOrder() }
+
+        // 마지막 항목의 tradeId를 다음 커서로 저장
+        ordersCursor = decoded.data.last?.tradeId
+        let hasMore = decoded.data.count == 100
+
+        return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// OKX API: GET /api/v5/asset/deposit-history (커서 기반 페이지네이션)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        var queryItems = [
+            URLQueryItem(name: "limit", value: "100")
+        ]
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = depositsCursor, !cursor.isEmpty {
+            queryItems.append(URLQueryItem(name: "after", value: cursor))
+        } else if page == 0 {
+            depositsCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            method: "GET",
+            path: "/api/v5/asset/deposit-history",
+            queryItems: queryItems
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(OKXResponse<OKXDepositRecord>.self, from: data)
+        guard decoded.isSuccess else {
+            throw OKXServiceError.apiError(code: decoded.code, message: decoded.msg)
+        }
+
+        // 기간 필터링
+        let deposits = decoded.data
+            .map { $0.toDeposit() }
+            .filter { $0.completedAt >= from && $0.completedAt <= to }
+
+        // 마지막 항목의 depId를 다음 커서로 저장
+        depositsCursor = decoded.data.last?.depId
+        let hasMore = decoded.data.count == 100
+
+        return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
     }
 
     // MARK: - Private Helpers

@@ -78,6 +78,85 @@ extension BinanceKline {
     }
 }
 
+// MARK: - Trade Response (GET /api/v3/myTrades)
+
+/// Binance 체결 내역 응답 모델
+struct BinanceTrade: Decodable, Sendable {
+    let id: Int64
+    let symbol: String
+    let price: String
+    let qty: String
+    let quoteQty: String
+    let commission: String
+    let isBuyer: Bool
+    let time: Int64
+}
+
+// MARK: - Deposit Response (GET /sapi/v1/capital/deposit/hisrec)
+
+/// Binance 입금 내역 응답 모델
+struct BinanceDeposit: Decodable, Sendable {
+    let id: String
+    let coin: String
+    let amount: String
+    let status: Int
+    let txId: String?
+    let insertTime: Int64
+}
+
+// MARK: - Trade / Deposit Mapping
+
+extension BinanceTrade {
+    /// BinanceTrade → 공통 Order 모델로 변환
+    func toOrder() -> Order {
+        // BTCUSDT → BTC
+        let baseSymbol = symbol.replacingOccurrences(of: "USDT", with: "")
+        let priceValue = Double(price) ?? 0
+        let qtyValue = Double(qty) ?? 0
+        let quoteQtyValue = Double(quoteQty) ?? 0
+        let commissionValue = Double(commission) ?? 0
+        let side: OrderSide = isBuyer ? .buy : .sell
+
+        return Order(
+            id: "binance-\(id)",
+            symbol: baseSymbol,
+            side: side,
+            price: priceValue,
+            amount: qtyValue,
+            totalValue: quoteQtyValue,
+            fee: commissionValue,
+            exchange: .binance,
+            executedAt: Date(timeIntervalSince1970: Double(time) / 1000)
+        )
+    }
+}
+
+extension BinanceDeposit {
+    /// BinanceDeposit → 공통 Deposit 모델로 변환
+    func toDeposit() -> Deposit {
+        let depositStatus: DepositStatus
+        switch status {
+        case 1:
+            depositStatus = .completed
+        case 0:
+            depositStatus = .pending
+        default:
+            depositStatus = .cancelled
+        }
+
+        return Deposit(
+            id: "binance-\(id)",
+            symbol: coin,
+            amount: Double(amount) ?? 0,
+            type: .crypto,
+            status: depositStatus,
+            txId: txId,
+            exchange: .binance,
+            completedAt: Date(timeIntervalSince1970: Double(insertTime) / 1000)
+        )
+    }
+}
+
 /// JSON 값 파싱을 위한 헬퍼 열거형
 enum JSONValue: Decodable {
     case string(String)

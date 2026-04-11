@@ -48,6 +48,10 @@ final class AppLockManager {
             let success = try await authService.authenticate()
             if success {
                 isLocked = false
+                // 잠금 해제 후 등록된 거래소의 API 키를 일괄 preload한다.
+                // 이후 대시보드 refresh는 캐시에서 바로 응답돼 키체인 프롬프트가
+                // 발생하지 않는다.
+                ExchangeManager.shared.preloadKeychainCache()
             }
         } catch {
             // Authentication failed or was cancelled — remain locked
@@ -57,6 +61,9 @@ final class AppLockManager {
     func lock() {
         guard isAppLockEnabled else { return }
         isLocked = true
+        // 앱이 잠기면 메모리 캐시도 비워 민감 정보가 RAM에 머무르지 않게 한다.
+        // Keychain 자체는 그대로 유지된다.
+        KeychainService.shared.invalidateCache()
     }
 
     func toggleAppLock() {

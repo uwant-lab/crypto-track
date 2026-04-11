@@ -15,6 +15,10 @@ final class BybitService: ExchangeService {
     private let authenticator: BybitAuthenticator
     private let session: URLSession
 
+    /// 커서 기반 페이지네이션 상태
+    private nonisolated(unsafe) var ordersCursor: String?
+    private nonisolated(unsafe) var depositsCursor: String?
+
     // MARK: - Init
 
     init(authenticator: BybitAuthenticator = BybitAuthenticator(),
@@ -44,8 +48,12 @@ final class BybitService: ExchangeService {
             return []
         }
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // 포함 시 fetchTickers 루프에서 "USDTUSDT" 거래쌍을 요청하게 되고
+        // 해당 호출이 실패하면 throw로 루프 전체가 중단된다.
         return result.list
             .flatMap { $0.coin }
+            .filter { $0.coin != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
@@ -54,9 +62,13 @@ final class BybitService: ExchangeService {
     /// Bybit API: GET /v5/market/tickers?category=spot&symbol=BTCUSDT
     /// - Parameter symbols: 조회할 코인 심볼 목록 (예: ["BTC", "ETH"])
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
+        // Defensive: USDT는 quote currency이므로 "USDTUSDT" 거래쌍이 없고,
+        // 포함되면 루프 한 번의 실패가 전체 호출을 중단시킨다.
+        let filtered = symbols.filter { $0.uppercased() != "USDT" }
+
         var tickers: [Ticker] = []
 
-        for symbol in symbols {
+        for symbol in filtered {
             let tradingPair = symbol.uppercased() + "USDT"
             let queryString = "category=spot&symbol=\(tradingPair)"
             let request = try buildRequest(
@@ -126,6 +138,84 @@ final class BybitService: ExchangeService {
         try validateRetCode(decoded.retCode, message: decoded.retMsg)
 
         return true
+    }
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Bybit API: GET /v5/execution/list (커서 기반 페이지네이션)
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        var queryString = "category=spot&startTime=\(startTime)&endTime=\(endTime)&limit=100"
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = ordersCursor, !cursor.isEmpty {
+            queryString += "&cursor=\(cursor)"
+        } else if page == 0 {
+            ordersCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            path: "/v5/execution/list",
+            queryString: queryString
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(BybitResponse<BybitExecutionResult>.self, from: data)
+        try validateRetCode(decoded.retCode, message: decoded.retMsg)
+
+        guard let result = decoded.result else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // 다음 페이지 커서 저장
+        ordersCursor = result.nextPageCursor
+
+        let orders = result.list.map { $0.toOrder() }
+        let hasMore = result.nextPageCursor != nil && !(result.nextPageCursor?.isEmpty ?? true)
+
+        return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Bybit API: GET /v5/asset/deposit/query-record (커서 기반 페이지네이션)
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        var queryString = "startTime=\(startTime)&endTime=\(endTime)&limit=50"
+
+        // 첫 페이지가 아니면 커서 사용
+        if page > 0, let cursor = depositsCursor, !cursor.isEmpty {
+            queryString += "&cursor=\(cursor)"
+        } else if page == 0 {
+            depositsCursor = nil
+        }
+
+        let request = try buildAuthenticatedRequest(
+            path: "/v5/asset/deposit/query-record",
+            queryString: queryString
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let decoded = try JSONDecoder().decode(BybitResponse<BybitDepositResult>.self, from: data)
+        try validateRetCode(decoded.retCode, message: decoded.retMsg)
+
+        guard let result = decoded.result else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // 다음 페이지 커서 저장
+        depositsCursor = result.nextPageCursor
+
+        let deposits = result.rows.map { $0.toDeposit() }
+        let hasMore = result.nextPageCursor != nil && !(result.nextPageCursor?.isEmpty ?? true)
+
+        return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
     }
 
     // MARK: - Private Helpers

@@ -40,7 +40,12 @@ final class BinanceService: ExchangeService {
 
         let accountResponse = try JSONDecoder().decode(BinanceAccountResponse.self, from: data)
 
+        // USDT 자체는 quote currency이므로 자산 목록에서 제외한다.
+        // (Upbit/Bithumb가 KRW를 걸러내는 것과 대칭)
+        // 포함 시 fetchTickers 배치 호출에 "USDTUSDT"라는 존재하지 않는
+        // 거래쌍이 섞여 Binance API가 400을 반환하며 전체 배치가 실패한다.
         return accountResponse.balances
+            .filter { $0.asset != "USDT" }
             .filter { $0.totalBalance > 0 }
             .map { $0.toAsset() }
     }
@@ -49,14 +54,21 @@ final class BinanceService: ExchangeService {
     /// Binance API: GET /api/v3/ticker/24hr
     /// - Parameter symbols: 조회할 코인 심볼 목록 (예: ["BTC", "ETH"])
     func fetchTickers(symbols: [String]) async throws -> [Ticker] {
+        // Defensive: USDT는 quote currency이므로 "USDTUSDT" 거래쌍이 없고,
+        // 포함되면 Binance API가 400을 반환해 배치 전체가 실패한다.
+        // 호출자(DashboardViewModel)가 이미 걸러내지만 서비스 레이어에서도
+        // 방어한다.
+        let filtered = symbols.filter { $0.uppercased() != "USDT" }
+        guard !filtered.isEmpty else { return [] }
+
         // Binance 거래 쌍 형식으로 변환 (예: "BTC" → "BTCUSDT")
-        let tradingPairs = symbols.map { $0.uppercased() + "USDT" }
+        let tradingPairs = filtered.map { $0.uppercased() + "USDT" }
 
         // 단일 심볼이면 단건 조회, 복수면 배열 조회
         if tradingPairs.count == 1, let pair = tradingPairs.first {
-            return try await fetchSingleTicker(symbol: pair, baseSymbol: symbols[0].uppercased())
+            return try await fetchSingleTicker(symbol: pair, baseSymbol: filtered[0].uppercased())
         } else {
-            return try await fetchMultipleTickers(pairs: tradingPairs, baseSymbols: symbols.map { $0.uppercased() })
+            return try await fetchMultipleTickers(pairs: tradingPairs, baseSymbols: filtered.map { $0.uppercased() })
         }
     }
 
@@ -110,6 +122,84 @@ final class BinanceService: ExchangeService {
         } catch {
             throw error
         }
+    }
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Binance API: GET /api/v3/myTrades (심볼별 조회 필요)
+    /// page는 현재 심볼 인덱스로 사용됩니다.
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        // 먼저 보유 자산 목록을 조회하여 심볼 목록을 가져옵니다
+        let assets = try await fetchAssets()
+        let symbols = assets.map { $0.symbol.uppercased() + "USDT" }
+
+        guard !symbols.isEmpty else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        // page는 심볼 인덱스 (0-based)
+        guard page < symbols.count else {
+            return PagedResult(items: [], hasMore: false, progress: nil)
+        }
+
+        let symbol = symbols[page]
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "symbol", value: symbol),
+            URLQueryItem(name: "startTime", value: "\(startTime)"),
+            URLQueryItem(name: "endTime", value: "\(endTime)"),
+            URLQueryItem(name: "limit", value: "1000")
+        ]
+
+        let signedItems = try authenticator.signedQueryItems(from: queryItems)
+        let request = try buildRequest(
+            path: "/api/v3/myTrades",
+            queryItems: signedItems,
+            requiresAPIKey: true
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let trades = try JSONDecoder().decode([BinanceTrade].self, from: data)
+        let orders = trades.map { $0.toOrder() }
+        let hasMore = (page + 1) < symbols.count
+        let progress = Double(page + 1) / Double(symbols.count)
+
+        return PagedResult(items: orders, hasMore: hasMore, progress: progress)
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Binance API: GET /sapi/v1/capital/deposit/hisrec
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 1000
+        let offset = page * limit
+        let startTime = Int64(from.timeIntervalSince1970 * 1000)
+        let endTime = Int64(to.timeIntervalSince1970 * 1000)
+
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "startTime", value: "\(startTime)"),
+            URLQueryItem(name: "endTime", value: "\(endTime)"),
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+
+        let signedItems = try authenticator.signedQueryItems(from: queryItems)
+        let request = try buildRequest(
+            path: "/sapi/v1/capital/deposit/hisrec",
+            queryItems: signedItems,
+            requiresAPIKey: true
+        )
+
+        let (data, response) = try await session.data(for: request)
+        try validateHTTPResponse(response, data: data)
+
+        let deposits = try JSONDecoder().decode([BinanceDeposit].self, from: data)
+        let mapped = deposits.map { $0.toDeposit() }
+        let hasMore = deposits.count == limit
+
+        return PagedResult(items: mapped, hasMore: hasMore, progress: nil)
     }
 
     // MARK: - Private Helpers

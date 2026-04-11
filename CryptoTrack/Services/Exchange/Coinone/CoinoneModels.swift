@@ -113,6 +113,132 @@ extension CoinoneCandle {
     }
 }
 
+// MARK: - Order Response (GET /v2.1/order/completed_orders)
+
+/// Coinone 체결 완료 주문 응답 모델
+struct CoinoneOrderResponse: Decodable, Sendable {
+    let result: String
+    let errorCode: String?
+    let completedOrders: [CoinoneOrder]?
+
+    enum CodingKeys: String, CodingKey {
+        case result
+        case errorCode = "error_code"
+        case completedOrders = "completed_orders"
+    }
+}
+
+/// Coinone 체결 주문 모델
+struct CoinoneOrder: Decodable, Sendable {
+    let orderId: String
+    let targetCurrency: String
+    let type: String
+    let price: String
+    let qty: String
+    let fee: String
+    let timestamp: String
+
+    enum CodingKeys: String, CodingKey {
+        case orderId = "order_id"
+        case targetCurrency = "target_currency"
+        case type
+        case price
+        case qty
+        case fee
+        case timestamp
+    }
+}
+
+// MARK: - Deposit Response (GET /v2.1/account/deposit)
+
+/// Coinone 입금 내역 응답 모델
+struct CoinoneDepositResponse: Decodable, Sendable {
+    let result: String
+    let errorCode: String?
+    let deposits: [CoinoneDeposit]?
+
+    enum CodingKeys: String, CodingKey {
+        case result
+        case errorCode = "error_code"
+        case deposits
+    }
+}
+
+/// Coinone 입금 내역 모델
+struct CoinoneDeposit: Decodable, Sendable {
+    let transactionId: String
+    let currency: String
+    let amount: String
+    let status: String
+    let txid: String?
+    let timestamp: String
+
+    enum CodingKeys: String, CodingKey {
+        case transactionId = "transaction_id"
+        case currency
+        case amount
+        case status
+        case txid
+        case timestamp
+    }
+}
+
+// MARK: - Order / Deposit Mapping
+
+extension CoinoneOrder {
+    /// Coinone 주문 응답을 공통 Order 모델로 변환합니다.
+    func toOrder() -> Order {
+        let orderSide: OrderSide = (type == "bid") ? .buy : .sell
+        let priceValue = Double(price) ?? 0
+        let qtyValue = Double(qty) ?? 0
+        let feeValue = Double(fee) ?? 0
+        let ts = Double(timestamp) ?? 0
+        let date = Date(timeIntervalSince1970: ts)
+
+        return Order(
+            id: "coinone-\(orderId)",
+            symbol: targetCurrency.uppercased(),
+            side: orderSide,
+            price: priceValue,
+            amount: qtyValue,
+            totalValue: priceValue * qtyValue,
+            fee: feeValue,
+            exchange: .coinone,
+            executedAt: date
+        )
+    }
+}
+
+extension CoinoneDeposit {
+    /// Coinone 입금 응답을 공통 Deposit 모델로 변환합니다.
+    func toDeposit() -> Deposit {
+        let symbol = currency.uppercased()
+        let depositType: DepositType = (symbol == "KRW") ? .fiat : .crypto
+        let depositStatus: DepositStatus
+        switch status {
+        case "completed":
+            depositStatus = .completed
+        case "cancelled":
+            depositStatus = .cancelled
+        default:
+            depositStatus = .pending
+        }
+        let ts = Double(timestamp) ?? 0
+        let date = Date(timeIntervalSince1970: ts)
+
+        return Deposit(
+            id: "coinone-\(transactionId)",
+            symbol: symbol,
+            amount: Double(amount) ?? 0,
+            type: depositType,
+            status: depositStatus,
+            txId: txid,
+            exchange: .coinone,
+            completedAt: date
+        )
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension CoinoneBalance {

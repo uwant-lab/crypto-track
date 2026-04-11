@@ -71,3 +71,15 @@ TradingView 수준의 인터랙티브 차트를 앱 내에서 제공합니다.
 1. `develop` 브랜치에서 새로운 기능 브랜치를 생성합니다.
 2. 기능 구현 후 테스트를 완료합니다.
 3. `develop` 브랜치로 Pull Request를 생성합니다.
+
+## Third-Party Trademarks
+
+Exchange logos displayed in this app (Upbit, Binance, Bithumb, Bybit,
+Coinone, Korbit, OKX) are trademarks of their respective owners and are
+used solely for nominative identification — to help users see which
+exchange a given asset resides in. No affiliation with or endorsement
+by any listed exchange is implied.
+
+Logos can be removed at any time by deleting the corresponding imageset
+under `CryptoTrack/Assets.xcassets/Logo/`. The UI automatically falls
+back to a brand-colored monogram circle in that case.

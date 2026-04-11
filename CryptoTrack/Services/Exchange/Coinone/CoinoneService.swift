@@ -178,6 +178,144 @@ final class CoinoneService: ExchangeService, Sendable {
         }
     }
 
+    /// 체결 완료된 주문 내역을 조회합니다.
+    /// Coinone API: GET /v2.1/order/completed_orders
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
+        let limit = 100
+        let offset = page * limit
+
+        guard var components = URLComponents(string: "\(baseURL)/v2.1/order/completed_orders") else {
+            throw CoinoneServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw CoinoneServiceError.invalidURL
+        }
+
+        let nonce = "\(Int(Date().timeIntervalSince1970 * 1000))"
+        let auth: CoinoneAuthenticator.AuthResult
+        do {
+            auth = try authenticator.generateAuth(payload: [
+                "nonce": nonce,
+                "offset": offset,
+                "limit": limit
+            ])
+        } catch let error as KeychainError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.authenticationFailed(error)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (key, value) in auth.headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = auth.bodyData
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.networkError(error)
+        }
+
+        do {
+            let response = try JSONDecoder().decode(CoinoneOrderResponse.self, from: data)
+            guard response.result == "success" else {
+                let code = response.errorCode ?? "알 수 없음"
+                throw CoinoneServiceError.apiError(code)
+            }
+            let orders = (response.completedOrders ?? [])
+                .map { $0.toOrder() }
+                .filter { $0.executedAt >= from && $0.executedAt <= to }
+            let hasMore = (response.completedOrders?.count ?? 0) == limit
+            return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.decodingFailed(error)
+        }
+    }
+
+    /// 입금 내역을 조회합니다.
+    /// Coinone API: GET /v2.1/account/deposit
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        let limit = 100
+        let offset = page * limit
+
+        guard var components = URLComponents(string: "\(baseURL)/v2.1/account/deposit") else {
+            throw CoinoneServiceError.invalidURL
+        }
+        components.queryItems = [
+            URLQueryItem(name: "offset", value: "\(offset)"),
+            URLQueryItem(name: "limit", value: "\(limit)")
+        ]
+        guard let url = components.url else {
+            throw CoinoneServiceError.invalidURL
+        }
+
+        let nonce = "\(Int(Date().timeIntervalSince1970 * 1000))"
+        let auth: CoinoneAuthenticator.AuthResult
+        do {
+            auth = try authenticator.generateAuth(payload: [
+                "nonce": nonce,
+                "offset": offset,
+                "limit": limit
+            ])
+        } catch let error as KeychainError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.authenticationFailed(error)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (key, value) in auth.headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = auth.bodyData
+
+        let data: Data
+        do {
+            let (responseData, response) = try await session.data(for: request)
+            try validateHTTPResponse(response)
+            data = responseData
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.networkError(error)
+        }
+
+        do {
+            let response = try JSONDecoder().decode(CoinoneDepositResponse.self, from: data)
+            guard response.result == "success" else {
+                let code = response.errorCode ?? "알 수 없음"
+                throw CoinoneServiceError.apiError(code)
+            }
+            let deposits = (response.deposits ?? [])
+                .map { $0.toDeposit() }
+                .filter { $0.completedAt >= from && $0.completedAt <= to }
+            let hasMore = (response.deposits?.count ?? 0) == limit
+            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
+        } catch let error as CoinoneServiceError {
+            throw error
+        } catch {
+            throw CoinoneServiceError.decodingFailed(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func fetchSingleTicker(symbol: String) async throws -> Ticker? {

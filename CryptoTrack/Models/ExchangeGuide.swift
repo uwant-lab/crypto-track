@@ -103,7 +103,7 @@ extension ExchangeGuide {
             "거래(주문) 및 출금 권한은 절대 부여하지 마세요.",
             "API Key는 최대 3개까지 발급 가능합니다."
         ],
-        guideURL: URL(string: "https://www.bithumb.com/mypage/api")
+        guideURL: URL(string: "https://apidocs.bithumb.com/")
     )
 
     // MARK: - 바이빗

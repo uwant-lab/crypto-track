@@ -30,6 +30,8 @@ struct SettingsView: View {
                     Text("API 키는 기기의 Keychain에 안전하게 저장됩니다.")
                 }
 
+                DisplaySettingsSectionView()
+
                 SecuritySectionView(lockManager: lockManager)
 
                 iCloudSyncSectionView(syncService: syncService)
@@ -37,6 +39,9 @@ struct SettingsView: View {
             .navigationTitle("설정")
             .onAppear {
                 viewModel.refreshSavedExchanges()
+            }
+            .task {
+                await viewModel.refreshConnectionStatuses()
             }
         }
     }
@@ -81,7 +86,7 @@ private struct ExchangeRowView: View {
                     .foregroundStyle(.orange)
             case .testing:
                 ProgressView()
-                    .scaleEffect(0.8)
+                    .controlSize(.small)
             case .success:
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
@@ -219,7 +224,7 @@ private struct iCloudSyncSectionView: View {
                 HStack {
                     if isSyncing {
                         ProgressView()
-                            .scaleEffect(0.8)
+                            .controlSize(.small)
                     } else {
                         Image(systemName: "arrow.triangle.2.circlepath.icloud")
                     }
@@ -236,6 +241,40 @@ private struct iCloudSyncSectionView: View {
             } else {
                 Text("거래소 등록 정보와 앱 설정이 iCloud를 통해 동기화됩니다. API 키는 보안 정책상 동기화되지 않습니다.")
             }
+        }
+    }
+}
+
+// MARK: - Display Section
+
+private struct DisplaySettingsSectionView: View {
+    @State private var settings = AppSettingsManager.shared
+
+    var body: some View {
+        Section {
+            Picker(selection: Binding(
+                get: { settings.priceColorMode },
+                set: { settings.priceColorMode = $0 }
+            )) {
+                ForEach(PriceColorMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "paintpalette.fill")
+                        .foregroundStyle(.purple)
+                    Text("가격 변동 색상")
+                }
+            }
+            #if os(macOS)
+            .pickerStyle(.menu)
+            #else
+            .pickerStyle(.menu)
+            #endif
+        } header: {
+            Text("표시")
+        } footer: {
+            Text("한국 표준은 상승=빨강, 하락=파랑입니다. 글로벌 표준은 상승=초록, 하락=빨강입니다.")
         }
     }
 }
