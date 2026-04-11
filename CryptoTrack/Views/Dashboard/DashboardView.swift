@@ -3,13 +3,18 @@ import SwiftUI
 /// 포트폴리오 대시보드 메인 화면입니다.
 struct DashboardView: View {
     @State private var viewModel = DashboardViewModel()
+    @State private var settingsManager = AppSettingsManager.shared
 
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("대시보드")
-                .task { await viewModel.refresh() }
-                .refreshable { await viewModel.refresh() }
+                .task {
+                    await viewModel.runAutoRefreshLoop()
+                }
+                .refreshable {
+                    await viewModel.refresh()
+                }
         }
     }
 
@@ -19,18 +24,76 @@ struct DashboardView: View {
         ExchangeManager.shared.registeredExchanges.isEmpty
     }
 
+    private var registeredExchanges: [Exchange] {
+        ExchangeManager.shared.registeredExchanges
+    }
+
     @ViewBuilder
     private var content: some View {
         if viewModel.isLoading && viewModel.assets.isEmpty {
             loadingView
         } else if hasNoExchanges {
             emptyStateView
-        } else if let errorMessage = viewModel.errorMessage, viewModel.assets.isEmpty {
-            errorView(message: errorMessage)
+        } else if let error = viewModel.errorMessage, viewModel.assets.isEmpty {
+            errorView(message: error)
         } else {
-            portfolioList
+            mainContent
         }
     }
+
+    private var mainContent: some View {
+        VStack(spacing: 12) {
+            AssetFilterTabBar(
+                selected: $viewModel.selectedFilter,
+                available: registeredExchanges
+            )
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+
+            PortfolioSummaryCard(
+                krw: viewModel.krwSummary,
+                usd: viewModel.usdSummary,
+                colorMode: settingsManager.priceColorMode
+            )
+            .padding(.horizontal, 16)
+
+            ExchangeStatusBanner(statuses: viewModel.exchangeStatuses)
+                .padding(.horizontal, 16)
+
+            DashboardToolbar(
+                hideDust: $viewModel.hideDust,
+                lastRefresh: viewModel.lastRefreshDate,
+                isRefreshing: viewModel.isLoading,
+                onRefresh: { Task { await viewModel.refresh() } }
+            )
+            .padding(.horizontal, 16)
+
+            assetsList
+                .frame(maxHeight: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var assetsList: some View {
+        if viewModel.displayedRows.isEmpty {
+            emptyFilterView
+        } else {
+            #if os(macOS)
+            AssetTable(
+                rows: viewModel.displayedRows,
+                sortOrder: $viewModel.tableSortOrder,
+                colorMode: settingsManager.priceColorMode
+            )
+            #else
+            AssetCardList(
+                rows: viewModel.displayedRows,
+                colorMode: settingsManager.priceColorMode
+            )
+            #endif
+        }
+    }
+
+    // MARK: - Empty/Loading/Error states
 
     private var emptyStateView: some View {
         VStack(spacing: 20) {
@@ -47,51 +110,47 @@ struct DashboardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Subviews
-
-    private var portfolioList: some View {
-        List {
-            Section {
-                PortfolioSummaryView(
-                    totalValue: viewModel.totalValue,
-                    totalProfit: viewModel.totalProfit,
-                    totalProfitRate: viewModel.totalProfitRate
-                )
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                .listRowBackground(Color.clear)
-            }
-
-            Section("보유 자산") {
-                if viewModel.assets.isEmpty {
-                    Text("보유 자산이 없습니다.")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
-                } else {
-                    ForEach(viewModel.assets) { asset in
-                        NavigationLink {
-                            CandlestickChartView(
-                                symbol: asset.symbol,
-                                exchange: asset.exchange
-                            )
-                        } label: {
-                            AssetRowView(
-                                asset: asset,
-                                currentValue: viewModel.currentValue(for: asset),
-                                profit: viewModel.profit(for: asset),
-                                profitRate: viewModel.profitRate(for: asset)
-                            )
-                        }
-                    }
+    private var emptyFilterView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.title)
+                .foregroundStyle(.secondary)
+            if viewModel.hideDust && hasOnlyDust {
+                Text("표시할 자산이 없습니다")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Button("소액 숨김 해제") {
+                    viewModel.hideDust = false
                 }
+                .buttonStyle(.borderless)
+            } else {
+                Text("선택한 거래소에 보유 자산이 없습니다")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// 필터 결과는 비었지만 dust를 켜면 자산이 보일지 판단.
+    private var hasOnlyDust: Bool {
+        let unfilteredCount = viewModel.assets.filter { asset in
+            switch viewModel.selectedFilter {
+            case .all: return true
+            case .exchange(let ex): return asset.exchange == ex
+            }
+        }.count
+        return unfilteredCount > 0 && viewModel.displayedRows.isEmpty
     }
 
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
+                #if os(macOS)
+                .controlSize(.large)
+                #else
                 .scaleEffect(1.5)
+                #endif
             Text("불러오는 중…")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -124,40 +183,4 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
-}
-
-#Preview("샘플 데이터") {
-    // Inject pre-populated viewModel via a wrapper
-    _DashboardPreviewWrapper()
-}
-
-private struct _DashboardPreviewWrapper: View {
-    @State private var viewModel = DashboardViewModel.preview
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    PortfolioSummaryView(
-                        totalValue: viewModel.totalValue,
-                        totalProfit: viewModel.totalProfit,
-                        totalProfitRate: viewModel.totalProfitRate
-                    )
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color.clear)
-                }
-                Section("보유 자산") {
-                    ForEach(viewModel.assets) { asset in
-                        AssetRowView(
-                            asset: asset,
-                            currentValue: viewModel.currentValue(for: asset),
-                            profit: viewModel.profit(for: asset),
-                            profitRate: viewModel.profitRate(for: asset)
-                        )
-                    }
-                }
-            }
-            .navigationTitle("대시보드")
-        }
-    }
 }

@@ -248,26 +248,4 @@ final class DashboardViewModel {
         vm.hideDust = false
         return vm
     }
-
-    // MARK: - Deprecated (Task 16에서 DashboardView 재구성 시 제거)
-
-    /// @deprecated `krwSummary`/`usdSummary` 사용
-    var totalValue: Double {
-        (krwSummary?.totalValue ?? 0) + (usdSummary?.totalValue ?? 0)
-    }
-    var totalCost: Double {
-        (krwSummary?.totalCost ?? 0) + (usdSummary?.totalCost ?? 0)
-    }
-    var totalProfit: Double { totalValue - totalCost }
-    var totalProfitRate: Double {
-        guard totalCost > 0 else { return 0 }
-        return (totalProfit / totalCost) * 100
-    }
-    func profit(for asset: Asset) -> Double {
-        currentValue(for: asset) - asset.totalCost
-    }
-    func profitRate(for asset: Asset) -> Double {
-        guard asset.totalCost > 0 else { return 0 }
-        return (profit(for: asset) / asset.totalCost) * 100
-    }
 }
