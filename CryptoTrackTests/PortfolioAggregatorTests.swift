@@ -126,4 +126,29 @@ final class PortfolioAggregatorTests: XCTestCase {
         // Exchange.allCases: binance < okx.
         XCTAssertEqual(row.exchanges, [.binance, .okx])
     }
+
+    /// Upbit 0.5 BTC (KRW) + Binance 0.2 BTC (USDT) must produce TWO rows —
+    /// one per quoteCurrency. They are never merged because we don't do FX.
+    func testAggregateMixedCurrencyStaysSeparate() {
+        let assets = [
+            asset("BTC", balance: 0.5, avgPrice: 55_000_000, exchange: .upbit),
+            asset("BTC", balance: 0.2, avgPrice: 0, exchange: .binance),
+        ]
+        let tickers = [
+            ticker("BTC", price: 62_000_000, exchange: .upbit),
+            ticker("BTC", price: 47_500, exchange: .binance),
+        ]
+
+        let rows = PortfolioAggregator.aggregate(assets: assets, tickers: tickers)
+        XCTAssertEqual(rows.count, 2)
+
+        let krwRow = rows.first { $0.quoteCurrency == .krw }
+        let usdRow = rows.first { $0.quoteCurrency == .usdt }
+        XCTAssertNotNil(krwRow)
+        XCTAssertNotNil(usdRow)
+        XCTAssertEqual(krwRow!.totalBalance, 0.5, accuracy: 1e-9)
+        XCTAssertEqual(krwRow?.exchanges, [.upbit])
+        XCTAssertEqual(usdRow!.totalBalance, 0.2, accuracy: 1e-9)
+        XCTAssertEqual(usdRow?.exchanges, [.binance])
+    }
 }
