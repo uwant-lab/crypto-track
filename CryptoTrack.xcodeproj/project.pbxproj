@@ -146,6 +146,7 @@
 		D3394F200ED85662DB62EB7B /* CloudSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFF3F8BC7E7861AD9C18D /* CloudSyncService.swift */; };
 		D40533D3897A66C7B98BE3BD /* OKXAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D3D7E225CDFAF04292D563 /* OKXAuthenticator.swift */; };
 		D47961C7D97EB4EF64626B04 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44BF77678F8F9CD0D05864F6 /* KeychainService.swift */; };
+		D562BA34C6584B275A7EE2E8 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */; };
 		D6FCDCD9E74BF568FD35BA35 /* IndicatorSubPanelCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2BA39F701B53799B9312EB /* IndicatorSubPanelCanvas.swift */; };
 		D7A965E1F529172FFE19A552 /* DrawingStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8A0AD438E938DEFC4EACB8 /* DrawingStorageService.swift */; };
 		D836B238BD3C25EC0E2E3538 /* CandlestickChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */; };
@@ -171,6 +172,7 @@
 		F1AC694A679F459927652449 /* DrawingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */; };
 		F5003537F432F980A1FACEA6 /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A650B28FB5B4E8FC6B1492DE /* DrawingCanvas.swift */; };
 		F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352B5F56FB575782DAFC6D5D /* PriceColor.swift */; };
+		FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */; };
 		FA826ECCDED02816ADB3E955 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
 		FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28524CE93529E37B8945240 /* SettingsViewModel.swift */; };
 		FB3945064DDE64C709C6B414 /* TransactionHistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */; };
@@ -262,6 +264,7 @@
 		B28524CE93529E37B8945240 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		B95E007430B82E724721AC49 /* CandlestickCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandlestickCanvas.swift; sourceTree = "<group>"; };
 		BA2CAA21B386C7436E45BEB9 /* CryptoTrackTests_macOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CryptoTrackTests_macOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioSummaryCard.swift; sourceTree = "<group>"; };
 		C3B443A8C0579A1039CAAB87 /* TimeframePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeframePickerView.swift; sourceTree = "<group>"; };
 		C4953FA9EE5EF8533299807D /* ChartDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartDataManager.swift; sourceTree = "<group>"; };
 		C550256480F6C8FA520961F8 /* BithumbModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BithumbModels.swift; sourceTree = "<group>"; };
@@ -377,6 +380,7 @@
 				9026111C62DB0FE77DDF9441 /* AssetFilterTabBar.swift */,
 				829E5D79CAA13AF24C902797 /* AssetRowView.swift */,
 				CA4769E89A5F115B6254A2A5 /* DashboardView.swift */,
+				C22623F76EE4F64E406D3D01 /* PortfolioSummaryCard.swift */,
 				8344C7737156A71CF574CA44 /* PortfolioSummaryView.swift */,
 				1C9BAD4C75547705E328F1FC /* Components */,
 			);
@@ -800,6 +804,7 @@
 				604B9C6EF09BA0275919DFD5 /* OrderListView.swift in Sources */,
 				5F64DA9FDCB3B76AEAF0709A /* PagedResult.swift in Sources */,
 				C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */,
+				D562BA34C6584B275A7EE2E8 /* PortfolioSummaryCard.swift in Sources */,
 				1C308663E6FEB4F1FCD5395A /* PortfolioSummaryView.swift in Sources */,
 				F5AB55E91F6A5AD044C18B44 /* PriceColor.swift in Sources */,
 				56297328F5D62918B0B61E64 /* PriceColorMode.swift in Sources */,
@@ -909,6 +914,7 @@
 				3A450B9D8ED2029C82DE44C8 /* OrderListView.swift in Sources */,
 				4F852D6F0C37CC2CD23393C4 /* PagedResult.swift in Sources */,
 				3B6AC4E1A4FD352FF24637FD /* PlatformAdaptiveLayout.swift in Sources */,
+				FA25BA72F1E8CDF107547059 /* PortfolioSummaryCard.swift in Sources */,
 				EF0FFB3E3AEB7ABB72CF2458 /* PortfolioSummaryView.swift in Sources */,
 				5DCCB147E18CAD6242BFC343 /* PriceColor.swift in Sources */,
 				C3D251CC911C45F3C80EDB04 /* PriceColorMode.swift in Sources */,
