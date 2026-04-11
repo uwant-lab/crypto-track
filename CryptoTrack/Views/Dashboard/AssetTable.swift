@@ -55,13 +55,13 @@ struct AssetTableSections: View {
                     }
                 }
             }
-            .width(min: 120, ideal: 180)
+            .width(min: 110, ideal: 160)
 
             TableColumn("보유량", value: \.totalBalance) { row in
                 Text(PriceFormatter.formatBalance(row.totalBalance))
                     .monospacedDigit()
             }
-            .width(min: 80, ideal: 100)
+            .width(min: 90, ideal: 120)
 
             TableColumn("평단가", value: \.averageBuyPrice) { row in
                 if row.hasCostBasis {
@@ -80,6 +80,16 @@ struct AssetTableSections: View {
             }
             .width(min: 100, ideal: 140)
 
+            TableColumn("매수금액", value: \.totalCost) { row in
+                if row.hasCostBasis {
+                    Text(PriceFormatter.formatAmount(row.totalCost, currency: row.quoteCurrency))
+                        .monospacedDigit()
+                } else {
+                    Text("—").foregroundStyle(.secondary)
+                }
+            }
+            .width(min: 110, ideal: 150)
+
             TableColumn("현재가", value: \.currentPrice) { row in
                 if row.hasTicker {
                     Text(PriceFormatter.formatPrice(row.currentPrice, currency: row.quoteCurrency))
@@ -90,10 +100,32 @@ struct AssetTableSections: View {
             }
             .width(min: 100, ideal: 140)
 
+            TableColumn("24h") { row in
+                if let rate = row.changeRate24h {
+                    Text(PriceFormatter.formatRate(rate))
+                        .foregroundStyle(PriceColor.color(for: rate, mode: colorMode))
+                        .monospacedDigit()
+                } else {
+                    Text("—").foregroundStyle(.secondary)
+                }
+            }
+            .width(min: 70, ideal: 90)
+
             TableColumn("평가금액", value: \.currentValue) { row in
-                Text(PriceFormatter.formatPrice(row.currentValue, currency: row.quoteCurrency))
+                Text(PriceFormatter.formatAmount(row.currentValue, currency: row.quoteCurrency))
                     .monospacedDigit()
                     .fontWeight(.semibold)
+            }
+            .width(min: 110, ideal: 150)
+
+            TableColumn("수익", value: \.profit) { row in
+                if row.hasCostBasis {
+                    Text(PriceFormatter.formatSignedAmount(row.profit, currency: row.quoteCurrency))
+                        .foregroundStyle(PriceColor.color(for: row.profit, mode: colorMode))
+                        .monospacedDigit()
+                } else {
+                    Text("—").foregroundStyle(.secondary)
+                }
             }
             .width(min: 110, ideal: 150)
 

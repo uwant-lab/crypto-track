@@ -45,60 +45,14 @@ private struct AssetCardRow: View {
     let colorMode: PriceColorMode
 
     var body: some View {
-        VStack(spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text(row.symbol)
-                            .font(.headline)
-                        if showBadges {
-                            ExchangeBadgeRow(exchanges: row.exchanges, size: 16)
-                        }
-                    }
-                    Text("\(PriceFormatter.formatBalance(row.totalBalance)) \(row.symbol)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(PriceFormatter.formatPrice(row.currentValue, currency: row.quoteCurrency))
-                        .font(.headline)
-                        .monospacedDigit()
-                    if row.hasCostBasis {
-                        Text(PriceFormatter.formatRate(row.profitRate))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
-                            .monospacedDigit()
-                    } else {
-                        Text("—")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
+        VStack(alignment: .leading, spacing: 10) {
+            header
             Divider()
-            HStack(spacing: 16) {
-                infoPair(
-                    label: "평단",
-                    value: row.hasCostBasis
-                        ? PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency)
-                        : "—"
-                )
-                infoPair(
-                    label: "현재가",
-                    value: row.hasTicker
-                        ? PriceFormatter.formatPrice(row.currentPrice, currency: row.quoteCurrency)
-                        : "—"
-                )
-                if row.hasPartialCostBasis {
-                    Text("일부 미제공")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.secondary.opacity(0.15)))
-                }
-                Spacer()
+            metricsGrid
+            if row.hasPartialCostBasis {
+                Text("일부 자산 평단가 미제공")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)
@@ -108,13 +62,96 @@ private struct AssetCardRow: View {
         )
     }
 
-    private func infoPair(label: String, value: String) -> some View {
-        HStack(spacing: 4) {
+    // MARK: - Header (symbol + badges / value + profit rate)
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(row.symbol)
+                        .font(.headline)
+                    if showBadges {
+                        ExchangeBadgeRow(exchanges: row.exchanges, size: 16)
+                    }
+                }
+                HStack(spacing: 6) {
+                    Text(PriceFormatter.formatBalance(row.totalBalance))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                    if let rate = row.changeRate24h {
+                        Text(PriceFormatter.formatRate(rate))
+                            .font(.caption)
+                            .foregroundStyle(PriceColor.color(for: rate, mode: colorMode))
+                            .monospacedDigit()
+                    }
+                }
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(PriceFormatter.formatAmount(row.currentValue, currency: row.quoteCurrency))
+                    .font(.headline)
+                    .monospacedDigit()
+                if row.hasCostBasis {
+                    Text(PriceFormatter.formatRate(row.profitRate))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
+                        .monospacedDigit()
+                } else {
+                    Text("—")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Metric grid (평단 / 현재가 / 매수금액 / 수익)
+
+    private var metricsGrid: some View {
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+            GridRow {
+                metric(
+                    label: "평단",
+                    value: row.hasCostBasis
+                        ? PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency)
+                        : "—"
+                )
+                metric(
+                    label: "현재가",
+                    value: row.hasTicker
+                        ? PriceFormatter.formatPrice(row.currentPrice, currency: row.quoteCurrency)
+                        : "—"
+                )
+            }
+            GridRow {
+                metric(
+                    label: "매수금액",
+                    value: row.hasCostBasis
+                        ? PriceFormatter.formatAmount(row.totalCost, currency: row.quoteCurrency)
+                        : "—"
+                )
+                metric(
+                    label: "수익",
+                    value: row.hasCostBasis
+                        ? PriceFormatter.formatSignedAmount(row.profit, currency: row.quoteCurrency)
+                        : "—",
+                    tint: row.hasCostBasis
+                        ? PriceColor.color(for: row.profit, mode: colorMode)
+                        : nil
+                )
+            }
+        }
+    }
+
+    private func metric(label: String, value: String, tint: Color? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Text(value)
                 .font(.caption.weight(.medium))
+                .foregroundStyle(tint ?? .primary)
                 .monospacedDigit()
         }
     }
