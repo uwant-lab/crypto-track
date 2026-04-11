@@ -2,46 +2,84 @@
 #if os(macOS)
 import SwiftUI
 
-/// macOS 전용: SwiftUI Table로 자산 목록을 컴팩트하게 표시.
-/// 컬럼 헤더 클릭 시 정렬은 SwiftUI Table이 자동 처리한다 (KeyPathComparator 바인딩).
-struct AssetTable: View {
-    let rows: [AssetRow]
-    @Binding var sortOrder: [KeyPathComparator<AssetRow>]
+/// macOS-only section-aware table renderer.
+///
+/// SwiftUI `Table` does not support sections natively, so we stack two
+/// `Table`s vertically when showing both KRW and USD groups. Each section
+/// owns its own `KeyPathComparator` binding so column-click sorting is
+/// independent per section. When only one section is present (i.e. the
+/// `.exchange` filter is selected), we render a single `Table`.
+struct AssetTableSections: View {
+    let sections: [RowSection]
+    @Binding var krwSortOrder: [KeyPathComparator<PortfolioRow>]
+    @Binding var usdSortOrder: [KeyPathComparator<PortfolioRow>]
+    let showHeaders: Bool
     let colorMode: PriceColorMode
 
     var body: some View {
-        Table(rows, sortOrder: $sortOrder) {
-            TableColumn("코인") { row in
-                HStack(spacing: 8) {
-                    Text(row.symbol)
-                        .font(.body.weight(.semibold))
-                    Text(row.exchange.rawValue)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule().fill(Color.secondary.opacity(0.15))
-                        )
+        VStack(alignment: .leading, spacing: 16) {
+            ForEach(sections) { section in
+                VStack(alignment: .leading, spacing: 6) {
+                    if showHeaders {
+                        Text(section.id.sectionTitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 4)
+                    }
+                    sectionTable(for: section)
                 }
             }
-            .width(min: 120, ideal: 140)
+        }
+    }
 
-            TableColumn("보유량", value: \.balance) { row in
-                Text(PriceFormatter.formatBalance(row.balance))
+    @ViewBuilder
+    private func sectionTable(for section: RowSection) -> some View {
+        switch section.id {
+        case .krw:
+            table(rows: section.rows, sortOrder: $krwSortOrder)
+        case .usdt:
+            table(rows: section.rows, sortOrder: $usdSortOrder)
+        }
+    }
+
+    private func table(
+        rows: [PortfolioRow],
+        sortOrder: Binding<[KeyPathComparator<PortfolioRow>]>
+    ) -> some View {
+        Table(rows, sortOrder: sortOrder) {
+            TableColumn("코인") { row in
+                HStack(spacing: 8) {
+                    Text(row.symbol).font(.body.weight(.semibold))
+                    // Badge slot — filled in Task 17.
+                    if showHeaders {
+                        EmptyView()
+                    }
+                }
+            }
+            .width(min: 120, ideal: 180)
+
+            TableColumn("보유량", value: \.totalBalance) { row in
+                Text(PriceFormatter.formatBalance(row.totalBalance))
                     .monospacedDigit()
             }
             .width(min: 80, ideal: 100)
 
             TableColumn("평단가", value: \.averageBuyPrice) { row in
                 if row.hasCostBasis {
-                    Text(PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency))
-                        .monospacedDigit()
+                    HStack(spacing: 4) {
+                        Text(PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency))
+                            .monospacedDigit()
+                        if row.hasPartialCostBasis {
+                            Text("일부")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 } else {
                     Text("—").foregroundStyle(.secondary)
                 }
             }
-            .width(min: 100, ideal: 130)
+            .width(min: 100, ideal: 140)
 
             TableColumn("현재가", value: \.currentPrice) { row in
                 if row.hasTicker {
@@ -51,22 +89,20 @@ struct AssetTable: View {
                     Text("—").foregroundStyle(.secondary)
                 }
             }
-            .width(min: 100, ideal: 130)
+            .width(min: 100, ideal: 140)
 
             TableColumn("평가금액", value: \.currentValue) { row in
                 Text(PriceFormatter.formatPrice(row.currentValue, currency: row.quoteCurrency))
                     .monospacedDigit()
                     .fontWeight(.semibold)
             }
-            .width(min: 110, ideal: 140)
+            .width(min: 110, ideal: 150)
 
             TableColumn("수익률", value: \.profitRate) { row in
                 if row.hasCostBasis {
-                    HStack(spacing: 4) {
-                        Text(PriceFormatter.formatRate(row.profitRate))
-                            .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
-                            .monospacedDigit()
-                    }
+                    Text(PriceFormatter.formatRate(row.profitRate))
+                        .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
+                        .monospacedDigit()
                 } else {
                     Text("—").foregroundStyle(.secondary)
                 }
@@ -74,14 +110,5 @@ struct AssetTable: View {
             .width(min: 80, ideal: 100)
         }
     }
-}
-
-#Preview {
-    @Previewable @State var sortOrder: [KeyPathComparator<AssetRow>] = [
-        KeyPathComparator(\AssetRow.currentValue, order: .reverse)
-    ]
-    let sample = DashboardViewModel.preview.displayedRows
-    return AssetTable(rows: sample, sortOrder: $sortOrder, colorMode: .korean)
-        .frame(minWidth: 800, minHeight: 400)
 }
 #endif

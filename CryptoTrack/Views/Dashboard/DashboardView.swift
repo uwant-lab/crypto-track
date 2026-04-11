@@ -75,28 +75,26 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var assetsList: some View {
-        #if os(macOS)
-        // macOS path unchanged in this task — still uses the old AssetTable.
-        if viewModel.displayedRows.isEmpty {
-            emptyFilterView
-        } else {
-            AssetTable(
-                rows: viewModel.displayedRows,
-                sortOrder: $viewModel.tableSortOrder,
-                colorMode: settingsManager.priceColorMode
-            )
-        }
-        #else
         if viewModel.displayedSections.isEmpty {
             emptyFilterView
         } else {
+            #if os(macOS)
+            AssetTableSections(
+                sections: viewModel.displayedSections,
+                krwSortOrder: $viewModel.krwSortOrder,
+                usdSortOrder: $viewModel.usdSortOrder,
+                showHeaders: viewModel.selectedFilter == .all,
+                colorMode: settingsManager.priceColorMode
+            )
+            .padding(.horizontal, 16)
+            #else
             AssetCardList(
                 sections: viewModel.displayedSections,
                 showSectionHeaders: viewModel.selectedFilter == .all,
                 colorMode: settingsManager.priceColorMode
             )
+            #endif
         }
-        #endif
     }
 
     // MARK: - Empty/Loading/Error states
@@ -138,7 +136,8 @@ struct DashboardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    /// 필터 결과는 비었지만 dust를 켜면 자산이 보일지 판단.
+    /// Dust-only short-circuit: some rows were filtered, but flipping the dust
+    /// toggle would bring them back.
     private var hasOnlyDust: Bool {
         let unfilteredCount = viewModel.assets.filter { asset in
             switch viewModel.selectedFilter {
@@ -146,7 +145,7 @@ struct DashboardView: View {
             case .exchange(let ex): return asset.exchange == ex
             }
         }.count
-        return unfilteredCount > 0 && viewModel.displayedRows.isEmpty
+        return unfilteredCount > 0 && viewModel.displayedSections.allSatisfy(\.rows.isEmpty)
     }
 
     private var loadingView: some View {
