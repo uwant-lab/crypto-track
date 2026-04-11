@@ -15,6 +15,7 @@ struct AssetTableSections: View {
     @Binding var usdSortOrder: [KeyPathComparator<PortfolioRow>]
     let showHeaders: Bool
     let colorMode: PriceColorMode
+    let sparkline: (PortfolioRow) -> [Double]?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -110,6 +111,15 @@ struct AssetTableSections: View {
                 }
             }
             .width(min: 70, ideal: 90)
+
+            TableColumn("7일") { row in
+                Sparkline(
+                    prices: sparkline(row) ?? [],
+                    colorMode: colorMode
+                )
+                .frame(width: 60, height: 20)
+            }
+            .width(min: 70, ideal: 80)
 
             TableColumn("평가금액", value: \.currentValue) { row in
                 Text(PriceFormatter.formatAmount(row.currentValue, currency: row.quoteCurrency))

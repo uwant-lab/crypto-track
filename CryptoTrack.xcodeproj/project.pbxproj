@@ -42,6 +42,7 @@
 		39F36A2E9D39D832AE69E586 /* DrawingSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CAAD7C95E09068B05660A2 /* DrawingSyncService.swift */; };
 		3A450B9D8ED2029C82DE44C8 /* OrderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80BA4095AD1BC21CEB823783 /* OrderListView.swift */; };
 		3B6AC4E1A4FD352FF24637FD /* PlatformAdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */; };
+		3C6B00D9054D04986B69BF69 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA8CF277568F29650ACC7F /* Sparkline.swift */; };
 		3DD4706ED1DEE53EC9680019 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E04BB936E923BFB58D3FD86 /* ViewModifiers.swift */; };
 		40186E54D402D8996280A5F2 /* CandlestickChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66488A1082DE22A9D7049C02 /* CandlestickChartView.swift */; };
 		42DC072FDEB613594FE1DAB4 /* KorbitAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A49290D5E895F8DC2517969 /* KorbitAuthenticator.swift */; };
@@ -82,6 +83,7 @@
 		707285F0E5DA545CCFA6B7D0 /* DrawingToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35542DF87C4CA33970476EFE /* DrawingToolbarView.swift */; };
 		70A58A3309621338DE228847 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA4769E89A5F115B6254A2A5 /* DashboardView.swift */; };
 		71AF8BAC5174B283459D4715 /* PortfolioAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDD0401607BBB70624C4C581 /* PortfolioAggregator.swift */; };
+		7212BE614E8CDEDA5E1D4640 /* Sparkline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDA8CF277568F29650ACC7F /* Sparkline.swift */; };
 		78314D75E5843AD28F1C6301 /* OKXService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D5BEA612E533AD6B38D565 /* OKXService.swift */; };
 		797846C2A4C595B57C553CC9 /* BinanceAuthenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817492FE8F1013795D10D037 /* BinanceAuthenticator.swift */; };
 		79B82F4C460AF7BCEE3E2B34 /* IndicatorCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039EDF4A5C40C19012AE661D /* IndicatorCalculator.swift */; };
@@ -116,6 +118,7 @@
 		A5291BCFC5C18B38807D2C98 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2928C4D84F8D9FC746C47F57 /* ContentView.swift */; };
 		A8B83B1C68CBC677554B956C /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
 		A9CDD485BC0B104FD906A05D /* UpbitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */; };
+		AB5C5640ED8C8C1B02CAA38D /* SparklineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */; };
 		ABCFBB0E82361CD5292D66A1 /* CrosshairOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2121620E53A1B48E7F42840B /* CrosshairOverlayView.swift */; };
 		AD07FE80FC810E4B5BC6B1D0 /* DashboardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6497A5768F71538A5551CBEB /* DashboardViewModelTests.swift */; };
 		AD99B2610935A92FF8ED44F7 /* CandlestickCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95E007430B82E724721AC49 /* CandlestickCanvas.swift */; };
@@ -134,6 +137,7 @@
 		C3D251CC911C45F3C80EDB04 /* PriceColorMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18A990B8501A0DA0715C7326 /* PriceColorMode.swift */; };
 		C571460A82C1A8A8559A4FD7 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */; };
 		C5D5D87BFFBE42F86268DCCC /* ExchangeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91775BE24F4D7AC40D474E76 /* ExchangeService.swift */; };
+		C649C0AEAB9F8F36BFCEFE81 /* SparklineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */; };
 		C6F9685CE0B73E5C4C931B40 /* BybitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */; };
 		C822FB5F4E23F7ADAFF7DE32 /* CoinoneService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953C8E9015B7DE7ED8D823C /* CoinoneService.swift */; };
 		C8CD9550808FD21AEDF225ED /* PlatformAdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1ABA8638CC5B911F41AB46 /* PlatformAdaptiveLayout.swift */; };
@@ -218,6 +222,7 @@
 		081CC708757CD62D33B5547B /* DashboardToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardToolbar.swift; sourceTree = "<group>"; };
 		0A380BE2B8D5C0AAC816B247 /* Ticker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ticker.swift; sourceTree = "<group>"; };
 		0BE5E7B842C2A024DA08EE04 /* UpbitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpbitService.swift; sourceTree = "<group>"; };
+		0CDA8CF277568F29650ACC7F /* Sparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkline.swift; sourceTree = "<group>"; };
 		1809FB31723C5AD62E650CB0 /* AppLockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockManager.swift; sourceTree = "<group>"; };
 		18A990B8501A0DA0715C7326 /* PriceColorMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceColorMode.swift; sourceTree = "<group>"; };
 		19049C75B3807E418FB9EC8D /* BybitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitModels.swift; sourceTree = "<group>"; };
@@ -234,6 +239,7 @@
 		372EF40FCC9B29C896718109 /* AssetTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetTable.swift; sourceTree = "<group>"; };
 		3D5D4725DAE77C5C74256D12 /* ExchangeStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeStatusBanner.swift; sourceTree = "<group>"; };
 		44BF77678F8F9CD0D05864F6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineProvider.swift; sourceTree = "<group>"; };
 		478CFF3F8BC7E7861AD9C18D /* CloudSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncService.swift; sourceTree = "<group>"; };
 		4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingViewModel.swift; sourceTree = "<group>"; };
 		4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionHistoryViewModel.swift; sourceTree = "<group>"; };
@@ -367,6 +373,7 @@
 				352B5F56FB575782DAFC6D5D /* PriceColor.swift */,
 				E3D9A82AA73DEBBE32815E4E /* PriceFormatter.swift */,
 				E428DDB196F8EF8D3F6311E7 /* ProfitBadge.swift */,
+				0CDA8CF277568F29650ACC7F /* Sparkline.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -547,6 +554,7 @@
 				4852BA6DF2F5E2D2C909AC02 /* DrawingViewModel.swift */,
 				CCE12FF2F5FEC1DBAF0150E5 /* PortfolioRow.swift */,
 				B28524CE93529E37B8945240 /* SettingsViewModel.swift */,
+				465BEAE863D602CB1E61B3B1 /* SparklineProvider.swift */,
 				4CA346A3BC9E009128279C7F /* TransactionHistoryViewModel.swift */,
 			);
 			path = ViewModels;
@@ -848,6 +856,8 @@
 				E7BAC3B7460072442D5C3818 /* QuoteCurrency.swift in Sources */,
 				0274F4CD608F2A713F1AD1C6 /* SettingsView.swift in Sources */,
 				FB0BE85E7B159CB2BF233A68 /* SettingsViewModel.swift in Sources */,
+				3C6B00D9054D04986B69BF69 /* Sparkline.swift in Sources */,
+				C649C0AEAB9F8F36BFCEFE81 /* SparklineProvider.swift in Sources */,
 				47C9B8D8810B513559FDD24E /* Theme.swift in Sources */,
 				DCD03C9B9065B4E565482D37 /* Ticker.swift in Sources */,
 				DC1A382321BC37999D150D11 /* TimeframePickerView.swift in Sources */,
@@ -965,6 +975,8 @@
 				FE0C60CE83A9FA02C886A49B /* QuoteCurrency.swift in Sources */,
 				1F445143D4A9761684A31625 /* SettingsView.swift in Sources */,
 				25EC7D45B325380F2B1BCE24 /* SettingsViewModel.swift in Sources */,
+				7212BE614E8CDEDA5E1D4640 /* Sparkline.swift in Sources */,
+				AB5C5640ED8C8C1B02CAA38D /* SparklineProvider.swift in Sources */,
 				2578F560529BF09A07970277 /* Theme.swift in Sources */,
 				6CAB3C9B0D2E611F0DACB7BC /* Ticker.swift in Sources */,
 				EFD355061F259F180EF2A2CE /* TimeframePickerView.swift in Sources */,
