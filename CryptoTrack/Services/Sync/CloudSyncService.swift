@@ -142,6 +142,7 @@ final class CloudSyncService {
 
     /// 앱 바이너리에 iCloud KVS entitlement가 서명되어 있는지 확인합니다.
     private static func hasUbiquityKVSEntitlement() -> Bool {
+        #if os(macOS)
         guard let task = SecTaskCreateFromSelf(nil) else { return false }
         let entitlement = "com.apple.developer.ubiquity-kvstore-identifier" as CFString
         guard let value = SecTaskCopyValueForEntitlement(task, entitlement, nil) else {
@@ -151,6 +152,13 @@ final class CloudSyncService {
             return true
         }
         return false
+        #else
+        // iOS: SecTask* APIs are unavailable. Until the iCloud entitlement is
+        // shipped with the iOS build (project.yml currently has
+        // CODE_SIGN_ENTITLEMENTS commented out), treat iCloud KVS as
+        // unavailable to avoid the "BUG IN CLIENT OF KVS" warning.
+        return false
+        #endif
     }
 
     @objc nonisolated private func handleExternalChange(_ notification: Notification) {
