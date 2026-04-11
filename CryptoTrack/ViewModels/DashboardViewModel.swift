@@ -11,15 +11,28 @@ struct CurrencySummary: Equatable, Sendable {
     let hasUnknownCostBasis: Bool
 }
 
-/// 거래소별 fetch 결과 추적
+/// 거래소별 fetch 결과 추적.
+///
+/// `status` / `lastError`는 **자산(balance) 조회** 결과를 나타낸다 —
+/// 이 단계가 실패하면 해당 거래소의 어떤 코인도 대시보드에 뜨지 않는다.
+///
+/// `tickerError`는 **시세 조회** 실패 메시지를 별도로 담는다. 자산은
+/// 성공적으로 받았지만 시세(현재가/변동률)만 못 받은 경우 — 이때 UI는
+/// 행 자체는 표시하되 현재가/평가금액 칸을 "—"로 렌더한다. 시세 실패는
+/// 사용자 입장에서 "현재가가 왜 안 보이지?" 로 나타나므로 반드시 배너로
+/// 노출해야 한다.
 struct ExchangeFetchStatus: Identifiable, Hashable, Sendable {
     let id: Exchange
     var status: Status
     var lastError: String?
+    var tickerError: String?
 
     enum Status: Sendable, Hashable {
         case loading, success, failed
     }
+
+    /// 시세 조회 실패 여부 (자산 조회와 무관하게).
+    var hasTickerFailure: Bool { tickerError != nil }
 }
 
 /// A contiguous group of `PortfolioRow`s in the dashboard list, bounded by a
@@ -231,9 +244,23 @@ final class DashboardViewModel {
         )
 
         var newTickers: [Ticker] = []
-        for (_, result) in tickerResults {
-            if case .success(let list) = result {
+        // 거래소별 ticker 실패를 statuses에 기록. 자산은 받았는데 시세만
+        // 못 받으면 현재가/평가금액이 "—"로 표시되므로 사용자에게
+        // 알려야 한다 — 말없이 현재가만 "—"이면 원인을 짐작할 수 없다.
+        var tickerErrorsByExchange: [Exchange: String] = [:]
+        for (exchange, result) in tickerResults {
+            switch result {
+            case .success(let list):
                 newTickers.append(contentsOf: list)
+            case .failure(let error):
+                tickerErrorsByExchange[exchange] = error.localizedDescription
+            }
+        }
+        if !tickerErrorsByExchange.isEmpty {
+            for idx in statuses.indices {
+                if let err = tickerErrorsByExchange[statuses[idx].id] {
+                    statuses[idx].tickerError = err
+                }
             }
         }
 
