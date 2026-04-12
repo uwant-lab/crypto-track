@@ -53,4 +53,6 @@ struct PortfolioRow: Identifiable, Sendable {
     let hasPartialCostBasis: Bool
     /// True when at least one contributing asset has a matching ticker.
     let hasTicker: Bool
+    /// True when at least one contributing asset has a user-modified average buy price.
+    let hasModifiedCostBasis: Bool
 }

@@ -9,6 +9,8 @@ struct Asset: Identifiable, Sendable {
     let balance: Double
     /// 평균 매수 단가 (KRW 또는 USDT)
     let averageBuyPrice: Double
+    /// 사용자가 평균 매수가를 직접 수정했는지 여부 (업비트·빗썸 API `avg_buy_price_modified`)
+    var avgBuyPriceModified: Bool = false
     /// 자산이 속한 거래소
     let exchange: Exchange
     /// 마지막 동기화 시각
