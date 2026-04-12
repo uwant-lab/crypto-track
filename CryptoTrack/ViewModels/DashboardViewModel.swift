@@ -44,6 +44,14 @@ struct RowSection: Identifiable, Sendable {
     var rows: [PortfolioRow]
 }
 
+/// 도넛 차트의 한 조각 — 코인 심볼과 비중(%).
+struct AllocationSlice: Identifiable, Sendable {
+    var id: String { symbol }
+    let symbol: String
+    let percentage: Double
+    let value: Double
+}
+
 /// 대시보드 화면의 상태와 비즈니스 로직을 관리합니다.
 @Observable
 @MainActor
@@ -160,6 +168,31 @@ final class DashboardViewModel {
         return sections
     }
 
+    // MARK: - Allocation Slices (donut chart)
+
+    /// 지정 통화 그룹의 비중 데이터를 반환한다.
+    /// `displayedSections`의 dust 필터 및 거래소 필터가 반영된 행을 기준으로 계산.
+    /// currentValue가 0인 행은 제외한다.
+    func allocationSlices(for currency: QuoteCurrency) -> [AllocationSlice] {
+        let rows = displayedSections
+            .first { $0.id == currency }?
+            .rows ?? []
+
+        let nonZeroRows = rows.filter { $0.currentValue > 0 }
+        let total = nonZeroRows.reduce(0.0) { $0 + $1.currentValue }
+        guard total > 0 else { return [] }
+
+        return nonZeroRows
+            .sorted { $0.currentValue > $1.currentValue }
+            .map { row in
+                AllocationSlice(
+                    symbol: row.symbol,
+                    percentage: (row.currentValue / total) * 100,
+                    value: row.currentValue
+                )
+            }
+    }
+
     /// Flat view of all rows across all sections. Preserved so that existing
     /// `DashboardViewModelTests` cases can assert on row counts and ordering
     /// without having to walk section by section.
@@ -168,11 +201,9 @@ final class DashboardViewModel {
     }
 
     /// Post-aggregation dust filter. A row is dust when its aggregated
-    /// `currentValue` is below the per-currency threshold AND at least one
-    /// contributing asset has a ticker (we can judge the value). Rows with no
-    /// ticker anywhere are never hidden.
+    /// `currentValue` is below the per-currency threshold. Rows with no
+    /// ticker (currentValue == 0) are also treated as dust.
     private func isDustRow(_ row: PortfolioRow) -> Bool {
-        guard row.hasTicker else { return false }
         let threshold: Double = row.quoteCurrency == .krw
             ? Self.dustThresholdKRW
             : Self.dustThresholdUSD
@@ -291,6 +322,7 @@ final class DashboardViewModel {
                 symbol: asset.symbol,
                 balance: asset.balance,
                 averageBuyPrice: override,
+                avgBuyPriceModified: asset.avgBuyPriceModified,
                 exchange: asset.exchange,
                 lastUpdated: asset.lastUpdated
             )
