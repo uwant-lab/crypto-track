@@ -188,12 +188,12 @@ struct CandlestickCanvas: View {
             if span < 3600 * 24 {
                 f.dateFormat = "HH:mm"
             } else if span < 3600 * 24 * 60 {
-                f.dateFormat = "MM/dd"
+                f.dateFormat = "yyyy/MM/dd"
             } else {
-                f.dateFormat = "yy/MM"
+                f.dateFormat = "yyyy/MM"
             }
         } else {
-            f.dateFormat = "MM/dd"
+            f.dateFormat = "yyyy/MM/dd"
         }
         return f
     }

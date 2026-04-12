@@ -54,9 +54,20 @@ protocol ExchangeService: Sendable {
     ///   - limit: 최대 조회 개수
     /// - Returns: 공통 Kline 모델 배열 (시간순 정렬)
     func fetchKlines(symbol: String, timeframe: ChartTimeframe, limit: Int) async throws -> [Kline]
+
+    /// 체결 완료된 주문 내역을 조회합니다.
+    func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order>
+
+    /// 입금 내역을 조회합니다.
+    func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit>
+
+    /// API가 허용하는 최대 조회 기간(일). `nil`이면 제한 없음(클라이언트 사이드 필터링).
+    /// ViewModel이 이 값을 기준으로 날짜 범위를 분할하여 요청합니다.
+    var maxQueryRangeDays: Int? { get }
 }
 
 extension ExchangeService {
+    var maxQueryRangeDays: Int? { 179 }
     /// 단일 심볼의 시세를 조회하는 편의 메서드
     func fetchTicker(symbol: String) async throws -> Ticker? {
         let tickers = try await fetchTickers(symbols: [symbol])

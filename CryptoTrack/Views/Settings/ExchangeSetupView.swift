@@ -29,6 +29,15 @@ struct ExchangeSetupView: View {
         return false
     }
 
+    private var hasEnteredKeys: Bool {
+        !accessKey.isEmpty && !secretKey.isEmpty && (!showPassphraseField || !passphrase.isEmpty)
+    }
+
+    private var isConnectionSuccess: Bool {
+        if case .success = connectionStatus { return true }
+        return false
+    }
+
     /// Korbit은 Client ID / Client Secret 레이블 사용
     private var accessKeyLabel: String {
         exchange == .korbit ? "Client ID" : "Access Key"
@@ -45,37 +54,295 @@ struct ExchangeSetupView: View {
     // MARK: - Body
 
     var body: some View {
+        platformContent
+            .navigationTitle(exchange.rawValue)
+            .task {
+                // 앱 재시작 시 메모리에서 사라진 연결 상태를 복원합니다.
+                if isSaved, case .untested = connectionStatus {
+                    await settingsViewModel.testConnection(exchange: exchange)
+                }
+            }
+            .sheet(isPresented: $showGuide) {
+                if let guide = ExchangeGuide.all[exchange] {
+                    APIKeyGuideView(guide: guide)
+                }
+            }
+            .alert("알림", isPresented: $showAlert) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(alertMessage ?? "")
+            }
+            .confirmationDialog(
+                "\(exchange.rawValue) API 키를 삭제하시겠습니까?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("삭제", role: .destructive) {
+                    deleteKeys()
+                }
+                Button("취소", role: .cancel) {}
+            }
+    }
+
+    @ViewBuilder
+    private var platformContent: some View {
+        #if os(macOS)
+        ScrollView {
+            VStack(spacing: 20) {
+                macHeader
+                if isSaved {
+                    macSavedState
+                } else {
+                    macCredentialsBox
+                    macActionArea
+                }
+                macFooter
+            }
+            .padding(24)
+            .frame(maxWidth: 480)
+            .frame(maxWidth: .infinity)
+        }
+        #else
         Form {
-            guideSection
-            credentialsSection
-            actionSection
             if isSaved {
+                savedSection
                 deleteSection
+            } else {
+                guideSection
+                credentialsSection
+                actionSection
             }
         }
-        .sheet(isPresented: $showGuide) {
-            if let guide = ExchangeGuide.all[exchange] {
-                APIKeyGuideView(guide: guide)
-            }
-        }
-        .navigationTitle(exchange.rawValue)
         .inlineNavigationTitle()
-        .alert("알림", isPresented: $showAlert) {
-            Button("확인", role: .cancel) {}
-        } message: {
-            Text(alertMessage ?? "")
-        }
-        .confirmationDialog(
-            "\(exchange.rawValue) API 키를 삭제하시겠습니까?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("삭제", role: .destructive) {
-                deleteKeys()
+        #endif
+    }
+
+    // MARK: - macOS Components
+
+    #if os(macOS)
+    private var macHeader: some View {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(AppColor.exchange(exchange))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Text(String(exchange.rawValue.prefix(1)))
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exchange.rawValue)
+                    .font(.title2.bold())
+                Text("API 키 설정")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            Button("취소", role: .cancel) {}
+
+            Spacer()
+
+            if isSaved {
+                macStatusBadge
+            }
         }
     }
+
+    @ViewBuilder
+    private var macStatusBadge: some View {
+        switch connectionStatus {
+        case .untested:
+            Capsule()
+                .fill(.secondary.opacity(0.15))
+                .overlay(
+                    HStack(spacing: 4) {
+                        Image(systemName: "minus.circle")
+                        Text("테스트 전")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                )
+                .frame(width: 90, height: 24)
+        case .testing:
+            Capsule()
+                .fill(.blue.opacity(0.15))
+                .overlay(
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("테스트 중")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                )
+                .frame(width: 90, height: 24)
+        case .success:
+            Capsule()
+                .fill(.green.opacity(0.15))
+                .overlay(
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("연결됨")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                )
+                .frame(width: 90, height: 24)
+        case .failed:
+            Capsule()
+                .fill(.red.opacity(0.15))
+                .overlay(
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle.fill")
+                        Text("실패")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                )
+                .frame(width: 90, height: 24)
+        }
+    }
+
+    private var macCredentialsBox: some View {
+        GroupBox {
+            Grid(alignment: .trailing, horizontalSpacing: 12, verticalSpacing: 12) {
+                GridRow {
+                    Text(accessKeyLabel)
+                        .foregroundStyle(.secondary)
+                        .gridColumnAlignment(.trailing)
+                    SecureField("입력", text: $accessKey)
+                        .textFieldStyle(.roundedBorder)
+                        .gridColumnAlignment(.leading)
+                }
+                GridRow {
+                    Text(secretKeyLabel)
+                        .foregroundStyle(.secondary)
+                    SecureField("입력", text: $secretKey)
+                        .textFieldStyle(.roundedBorder)
+                }
+                if showPassphraseField {
+                    GridRow {
+                        Text("Passphrase")
+                            .foregroundStyle(.secondary)
+                        SecureField("입력", text: $passphrase)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                }
+            }
+            .padding(.top, 4)
+        } label: {
+            Label("API 키 정보", systemImage: "key.fill")
+        }
+    }
+
+    private var macActionArea: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Button {
+                    testConnectionWithoutSaving()
+                } label: {
+                    Text("연결 테스트")
+                }
+                .disabled(isTestingConnection || !hasEnteredKeys)
+
+                Button {
+                    confirmSave()
+                } label: {
+                    Text("저장")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!isConnectionSuccess)
+            }
+
+            macConnectionStatusArea
+        }
+    }
+
+    private var macConnectionStatusArea: some View {
+        HStack(spacing: 8) {
+            switch connectionStatus {
+            case .untested:
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.secondary)
+                Text("연결 테스트를 실행하세요")
+                    .foregroundStyle(.secondary)
+            case .testing:
+                ProgressView()
+                    .controlSize(.small)
+                Text("연결 확인 중…")
+                    .foregroundStyle(.secondary)
+            case .success:
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                Text("연결 성공")
+                    .foregroundStyle(.green)
+            case .failed(let message):
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.red)
+                Text(message)
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
+            }
+        }
+        .font(.subheadline)
+        .frame(maxWidth: .infinity, minHeight: 36)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(AppColor.secondaryBackground)
+        )
+    }
+
+    private var macSavedState: some View {
+        VStack(spacing: 16) {
+            connectionStatusRow
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(AppColor.secondaryBackground)
+                )
+            macDangerZone
+        }
+    }
+
+    private var macDangerZone: some View {
+        GroupBox {
+            HStack {
+                Text("저장된 API 키를 Keychain에서 완전히 삭제합니다.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Text("API 키 삭제")
+                }
+            }
+        } label: {
+            Label("위험 영역", systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+        }
+    }
+
+    private var macFooter: some View {
+        VStack(spacing: 8) {
+            Button {
+                showGuide = true
+            } label: {
+                Text("API 키 발급 방법 안내")
+                    .font(.subheadline)
+            }
+            .buttonStyle(.link)
+
+            HStack(spacing: 4) {
+                Image(systemName: "lock.shield")
+                    .font(.caption)
+                Text("API 키는 macOS Keychain에 안전하게 저장됩니다.")
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+    #endif
 
     // MARK: - Sections
 
@@ -139,28 +406,26 @@ struct ExchangeSetupView: View {
         Section {
             // 연결 테스트 버튼
             Button {
-                Task { await settingsViewModel.testConnection(exchange: exchange) }
+                testConnectionWithoutSaving()
             } label: {
                 HStack {
                     if isTestingConnection {
                         ProgressView()
-                            .scaleEffect(0.85)
+                            .controlSize(.small)
                             .padding(.trailing, 4)
                     }
                     Text("연결 테스트")
                         .frame(maxWidth: .infinity)
                 }
             }
-            .disabled(isTestingConnection || !isSaved)
+            .disabled(isTestingConnection || !hasEnteredKeys)
 
             // 연결 상태 표시
-            if isSaved {
-                connectionStatusRow
-            }
+            connectionStatusRow
 
             // 저장 버튼
             Button {
-                saveKeys()
+                confirmSave()
             } label: {
                 Text("저장")
                     .frame(maxWidth: .infinity)
@@ -169,7 +434,15 @@ struct ExchangeSetupView: View {
             .buttonStyle(.borderedProminent)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
-            .disabled(accessKey.isEmpty || secretKey.isEmpty)
+            .disabled(!isConnectionSuccess)
+        }
+    }
+
+    private var savedSection: some View {
+        Section {
+            connectionStatusRow
+        } header: {
+            Text("연결 상태")
         }
     }
 
@@ -195,7 +468,7 @@ struct ExchangeSetupView: View {
                     .foregroundStyle(.secondary)
             case .testing:
                 ProgressView()
-                    .scaleEffect(0.8)
+                    .controlSize(.small)
                 Text("연결 확인 중…")
                     .foregroundStyle(.secondary)
             case .success:
@@ -217,29 +490,51 @@ struct ExchangeSetupView: View {
 
     // MARK: - Actions
 
-    private func saveKeys() {
-        do {
-            try settingsViewModel.saveAPIKeys(
-                exchange: exchange,
-                accessKey: accessKey,
-                secretKey: secretKey,
-                passphrase: showPassphraseField ? passphrase : nil
-            )
-            alertMessage = "API 키가 저장되었습니다."
-            showAlert = true
-            accessKey = ""
-            secretKey = ""
-            passphrase = ""
-        } catch {
-            alertMessage = "저장 실패: \(error.localizedDescription)"
-            showAlert = true
+    /// 임시로 Keychain에 저장 → 연결 테스트 → savedExchanges에서 제거 (미확정 상태)
+    private func testConnectionWithoutSaving() {
+        settingsViewModel.connectionStatus[exchange] = .untested
+        Task {
+            do {
+                // Keychain에 임시 저장 (테스트에 필요)
+                try settingsViewModel.saveAPIKeys(
+                    exchange: exchange,
+                    accessKey: accessKey,
+                    secretKey: secretKey,
+                    passphrase: showPassphraseField ? passphrase : nil
+                )
+                // savedExchanges에서 제거 → isSaved = false 유지
+                settingsViewModel.savedExchanges.remove(exchange)
+
+                await settingsViewModel.testConnection(exchange: exchange)
+
+                // 테스트 실패 시 Keychain에서도 삭제
+                if !isConnectionSuccess {
+                    try? settingsViewModel.deleteAPIKeys(exchange: exchange)
+                }
+            } catch {
+                alertMessage = "키 저장 실패: \(error.localizedDescription)"
+                showAlert = true
+            }
         }
+    }
+
+    /// 사용자가 저장을 확정 — savedExchanges에 추가 (키는 이미 Keychain에 있음)
+    private func confirmSave() {
+        guard isConnectionSuccess else { return }
+        settingsViewModel.savedExchanges.insert(exchange)
+        ExchangeManager.shared.register(exchange: exchange)
+        alertMessage = "API 키가 저장되었습니다."
+        showAlert = true
+        accessKey = ""
+        secretKey = ""
+        passphrase = ""
     }
 
     private func deleteKeys() {
         do {
             try settingsViewModel.deleteAPIKeys(exchange: exchange)
-            dismiss()
+            ExchangeManager.shared.unregister(exchange: exchange)
+            settingsViewModel.connectionStatus[exchange] = .untested
         } catch {
             alertMessage = "삭제 실패: \(error.localizedDescription)"
             showAlert = true

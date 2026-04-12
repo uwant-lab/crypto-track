@@ -99,6 +99,87 @@ extension OKXKlineResponse {
     }
 }
 
+// MARK: - Fill Response (GET /api/v5/trade/fills-history)
+
+/// OKX 체결 내역 모델
+struct OKXFill: Decodable {
+    let tradeId: String
+    let instId: String
+    let side: String
+    let fillPx: String
+    let fillSz: String
+    let fee: String
+    let ts: String
+}
+
+// MARK: - Deposit Response (GET /api/v5/asset/deposit-history)
+
+/// OKX 입금 내역 모델
+struct OKXDepositRecord: Decodable {
+    let depId: String
+    let ccy: String
+    let amt: String
+    let state: String
+    let txId: String?
+    let ts: String
+}
+
+// MARK: - Fill / Deposit Mapping
+
+extension OKXFill {
+    /// OKXFill → 공통 Order 모델로 변환
+    func toOrder() -> Order {
+        // "BTC-USDT" → "BTC"
+        let symbol = instId.components(separatedBy: "-").first ?? instId
+        let orderSide: OrderSide = (side == "buy") ? .buy : .sell
+        let price = Double(fillPx) ?? 0
+        let amount = Double(fillSz) ?? 0
+        // OKX의 fee는 음수로 반환됩니다
+        let feeValue = abs(Double(fee) ?? 0)
+        let ms = Double(ts) ?? 0
+
+        return Order(
+            id: "okx-\(tradeId)",
+            symbol: symbol,
+            side: orderSide,
+            price: price,
+            amount: amount,
+            totalValue: price * amount,
+            fee: feeValue,
+            exchange: .okx,
+            executedAt: Date(timeIntervalSince1970: ms / 1000)
+        )
+    }
+}
+
+extension OKXDepositRecord {
+    /// OKXDepositRecord → 공통 Deposit 모델로 변환
+    func toDeposit() -> Deposit {
+        let depositStatus: DepositStatus
+        switch state {
+        case "2":
+            depositStatus = .completed
+        case "0", "1", "8":
+            depositStatus = .pending
+        default:
+            depositStatus = .cancelled
+        }
+
+        let ms = Double(ts) ?? 0
+
+        return Deposit(
+            id: "okx-\(depId)",
+            symbol: ccy,
+            amount: Double(amt) ?? 0,
+            type: .crypto,
+            status: depositStatus,
+            txId: txId,
+            exchange: .okx,
+            completedAt: Date(timeIntervalSince1970: ms / 1000)
+        )
+    }
+}
+
 // MARK: - Mapping Extensions
 
 extension OKXBalanceDetail {

@@ -1,182 +1,378 @@
 import Foundation
 import Observation
 
+/// CurrencySummary — 통화 그룹별 합계
+struct CurrencySummary: Equatable, Sendable {
+    let currency: QuoteCurrency
+    let totalValue: Double
+    let totalCost: Double
+    let totalProfit: Double
+    let profitRate: Double
+    let hasUnknownCostBasis: Bool
+}
+
+/// 거래소별 fetch 결과 추적.
+///
+/// `status` / `lastError`는 **자산(balance) 조회** 결과를 나타낸다 —
+/// 이 단계가 실패하면 해당 거래소의 어떤 코인도 대시보드에 뜨지 않는다.
+///
+/// `tickerError`는 **시세 조회** 실패 메시지를 별도로 담는다. 자산은
+/// 성공적으로 받았지만 시세(현재가/변동률)만 못 받은 경우 — 이때 UI는
+/// 행 자체는 표시하되 현재가/평가금액 칸을 "—"로 렌더한다. 시세 실패는
+/// 사용자 입장에서 "현재가가 왜 안 보이지?" 로 나타나므로 반드시 배너로
+/// 노출해야 한다.
+struct ExchangeFetchStatus: Identifiable, Hashable, Sendable {
+    let id: Exchange
+    var status: Status
+    var lastError: String?
+    var tickerError: String?
+
+    enum Status: Sendable, Hashable {
+        case loading, success, failed
+    }
+
+    /// 시세 조회 실패 여부 (자산 조회와 무관하게).
+    var hasTickerFailure: Bool { tickerError != nil }
+}
+
+/// A contiguous group of `PortfolioRow`s in the dashboard list, bounded by a
+/// single `QuoteCurrency`. When the filter is `.all`, the view model emits
+/// one section per currency present in the portfolio. When a single exchange
+/// is selected, exactly one section is emitted (for that exchange's currency).
+struct RowSection: Identifiable, Sendable {
+    var id: QuoteCurrency
+    var rows: [PortfolioRow]
+}
+
 /// 대시보드 화면의 상태와 비즈니스 로직을 관리합니다.
 @Observable
 @MainActor
 final class DashboardViewModel {
-    // MARK: - State
+
+    // MARK: - Raw Data
 
     var assets: [Asset] = []
     var tickers: [Ticker] = []
     var isLoading: Bool = false
     var errorMessage: String? = nil
+    var exchangeStatuses: [ExchangeFetchStatus] = []
 
-    // MARK: - Computed Properties
+    // MARK: - UI State
 
-    /// 각 자산의 현재 평가액 합계
-    var totalValue: Double {
-        assets.reduce(0) { sum, asset in
-            sum + currentValue(for: asset)
-        }
-    }
+    var selectedFilter: ExchangeFilter = .all
+    var hideDust: Bool = true
 
-    /// 총 매수 금액
-    var totalCost: Double {
-        assets.reduce(0) { $0 + $1.totalCost }
-    }
+    /// Sort state for the KRW section in the new `AssetTableSections` view.
+    /// The default order mirrors the pre-refactor behaviour.
+    var krwSortOrder: [KeyPathComparator<PortfolioRow>] = [
+        KeyPathComparator(\PortfolioRow.currentValue, order: .reverse)
+    ]
 
-    /// 총 평가 손익
-    var totalProfit: Double {
-        totalValue - totalCost
-    }
+    /// Sort state for the USDT section in the new `AssetTableSections` view.
+    var usdSortOrder: [KeyPathComparator<PortfolioRow>] = [
+        KeyPathComparator(\PortfolioRow.currentValue, order: .reverse)
+    ]
 
-    /// 총 수익률 (%)
-    var totalProfitRate: Double {
-        guard totalCost > 0 else { return 0 }
-        return (totalProfit / totalCost) * 100
-    }
+    var lastRefreshDate: Date?
 
-    // MARK: - Per-Asset Calculations
+    // MARK: - Constants
 
-    /// 특정 자산의 현재 시세를 반환합니다.
-    func ticker(for asset: Asset) -> Ticker? {
-        tickers.first { $0.symbol == asset.symbol && $0.exchange == asset.exchange }
-            ?? tickers.first { $0.symbol == asset.symbol }
-    }
-
-    /// 특정 자산의 현재 평가액을 반환합니다.
-    func currentValue(for asset: Asset) -> Double {
-        guard let ticker = ticker(for: asset) else { return asset.totalCost }
-        return asset.balance * ticker.currentPrice
-    }
-
-    /// 특정 자산의 평가 손익을 반환합니다.
-    func profit(for asset: Asset) -> Double {
-        currentValue(for: asset) - asset.totalCost
-    }
-
-    /// 특정 자산의 수익률(%)을 반환합니다.
-    func profitRate(for asset: Asset) -> Double {
-        guard asset.totalCost > 0 else { return 0 }
-        return (profit(for: asset) / asset.totalCost) * 100
-    }
+    private static let dustThresholdKRW: Double = 1_000
+    private static let dustThresholdUSD: Double = 1
+    private static let autoRefreshInterval: Duration = .seconds(30)
 
     // MARK: - Dependencies
 
     private let exchangeManager: ExchangeManager
 
-    init(exchangeManager: ExchangeManager = .shared) {
+    /// 대시보드 행에 표시되는 7일 미니 스파크라인의 데이터 소스.
+    /// `refresh()` 이후 fire-and-forget Task로 `hydrate`되며, 1시간 TTL.
+    let sparklineProvider: SparklineProvider
+
+    /// 해외 거래소(Binance/Bybit/OKX)처럼 `averageBuyPrice`를 반환하지 않는
+    /// 거래소의 평단가를 `fetchOrders` 이력으로 자체 계산해 채워 넣는다.
+    /// 사용자 트리거 방식이며, 24시간 TTL + UserDefaults 영속화.
+    let costBasisProvider: ForeignCostBasisProvider
+
+    init(
+        exchangeManager: ExchangeManager = .shared,
+        sparklineProvider: SparklineProvider? = nil,
+        costBasisProvider: ForeignCostBasisProvider? = nil
+    ) {
         self.exchangeManager = exchangeManager
+        self.sparklineProvider = sparklineProvider ?? SparklineProvider(exchangeManager: exchangeManager)
+        self.costBasisProvider = costBasisProvider ?? ForeignCostBasisProvider(exchangeManager: exchangeManager)
     }
 
-    // MARK: - Data Loading
+    // MARK: - Ticker Matching (fallback 제거 — 정확 매치만)
 
-    /// 등록된 거래소에서 자산 및 시세 데이터를 새로고침합니다.
+    /// 거래소+심볼이 정확히 일치하는 ticker만 반환한다.
+    /// 이전 코드는 같은 심볼이면 다른 거래소 ticker로 fallback했지만, 그 동작은
+    /// BTC@Binance(USDT)를 BTC@Upbit(KRW)로 잘못 매칭하는 버그를 만들었다.
+    func ticker(for asset: Asset) -> Ticker? {
+        tickers.first { $0.symbol == asset.symbol && $0.exchange == asset.exchange }
+    }
+
+    /// ticker가 없으면 0 반환. 이전 코드의 totalCost fallback은 제거됨 —
+    /// "총 평가액이 매수금액으로 표시" 버그의 본질적 원인이었다.
+    func currentValue(for asset: Asset) -> Double {
+        guard let ticker = ticker(for: asset) else { return 0 }
+        return asset.balance * ticker.currentPrice
+    }
+
+    private func matchesFilter(_ asset: Asset) -> Bool {
+        switch selectedFilter {
+        case .all:
+            return true
+        case .exchange(let exchange):
+            return asset.exchange == exchange
+        }
+    }
+
+    // MARK: - Display Sections (new sectioned API)
+
+    /// Filtered + aggregated + dust-filtered rows, grouped by quoteCurrency and
+    /// sorted per section. Returns zero, one, or two sections depending on
+    /// which currencies are present under the current filter.
+    var displayedSections: [RowSection] {
+        let filteredAssets = assets.filter { matchesFilter($0) }
+
+        let rawRows: [PortfolioRow]
+        switch selectedFilter {
+        case .all:
+            rawRows = PortfolioAggregator.aggregate(assets: filteredAssets, tickers: tickers)
+        case .exchange:
+            rawRows = PortfolioAggregator.singleExchangeRows(assets: filteredAssets, tickers: tickers)
+        }
+
+        let kept = rawRows.filter { !hideDust || !isDustRow($0) }
+
+        let krwRows = kept
+            .filter { $0.quoteCurrency == .krw }
+            .sorted(using: krwSortOrder)
+        let usdRows = kept
+            .filter { $0.quoteCurrency == .usdt }
+            .sorted(using: usdSortOrder)
+
+        var sections: [RowSection] = []
+        if !krwRows.isEmpty { sections.append(RowSection(id: .krw, rows: krwRows)) }
+        if !usdRows.isEmpty { sections.append(RowSection(id: .usdt, rows: usdRows)) }
+        return sections
+    }
+
+    /// Flat view of all rows across all sections. Preserved so that existing
+    /// `DashboardViewModelTests` cases can assert on row counts and ordering
+    /// without having to walk section by section.
+    var displayedRows: [PortfolioRow] {
+        displayedSections.flatMap(\.rows)
+    }
+
+    /// Post-aggregation dust filter. A row is dust when its aggregated
+    /// `currentValue` is below the per-currency threshold AND at least one
+    /// contributing asset has a ticker (we can judge the value). Rows with no
+    /// ticker anywhere are never hidden.
+    private func isDustRow(_ row: PortfolioRow) -> Bool {
+        guard row.hasTicker else { return false }
+        let threshold: Double = row.quoteCurrency == .krw
+            ? Self.dustThresholdKRW
+            : Self.dustThresholdUSD
+        return row.currentValue < threshold
+    }
+
+    // MARK: - Currency-grouped Summaries
+
+    /// 현재 필터 적용 후 KRW 통화 그룹의 합계. dust는 시각적으로 숨겨도 합산엔 포함.
+    var krwSummary: CurrencySummary? { summary(for: .krw) }
+
+    var usdSummary: CurrencySummary? { summary(for: .usdt) }
+
+    private func summary(for currency: QuoteCurrency) -> CurrencySummary? {
+        let group = assets
+            .filter { matchesFilter($0) }
+            .filter { $0.quoteCurrency == currency }
+        guard !group.isEmpty else { return nil }
+
+        let value = group.reduce(0.0) { $0 + currentValue(for: $1) }
+        let cost = group.reduce(0.0) { partial, asset in
+            asset.hasCostBasis ? partial + (asset.balance * asset.averageBuyPrice) : partial
+        }
+        let hasUnknown = group.contains { !$0.hasCostBasis }
+        let profit = value - cost
+        let rate: Double = cost > 0 ? (profit / cost) * 100 : 0
+
+        return CurrencySummary(
+            currency: currency,
+            totalValue: value,
+            totalCost: cost,
+            totalProfit: profit,
+            profitRate: rate,
+            hasUnknownCostBasis: hasUnknown
+        )
+    }
+
+    // MARK: - Auto-refresh Loop
+
+    /// SwiftUI `.task` 모디파이어에서 호출. View가 사라지면 자동 cancel된다.
+    func runAutoRefreshLoop() async {
+        await refresh()
+        while !Task.isCancelled {
+            do {
+                try await Task.sleep(for: Self.autoRefreshInterval)
+            } catch {
+                break  // CancellationError
+            }
+            await refresh()
+        }
+    }
+
+    // MARK: - Refresh (per-exchange status tracking)
+
     func refresh() async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
 
-        do {
-            let fetchedAssets = try await exchangeManager.fetchAllAssets()
-            let symbols = Array(Set(fetchedAssets.map { $0.symbol }))
-            let fetchedTickers = try await exchangeManager.fetchAllTickers(symbols: symbols)
+        let assetResults = await exchangeManager.fetchAssetsPerExchange()
 
-            assets = fetchedAssets
-            tickers = fetchedTickers
-
-            if assets.isEmpty && !exchangeManager.registeredExchanges.isEmpty {
-                errorMessage = "자산 데이터를 불러오지 못했습니다."
-            } else if exchangeManager.registeredExchanges.isEmpty {
-                errorMessage = "설정에서 거래소를 등록해주세요."
+        var newAssets: [Asset] = []
+        var statuses: [ExchangeFetchStatus] = []
+        for (exchange, result) in assetResults {
+            switch result {
+            case .success(let list):
+                newAssets.append(contentsOf: list)
+                statuses.append(.init(id: exchange, status: .success, lastError: nil))
+            case .failure(let error):
+                statuses.append(.init(id: exchange, status: .failed, lastError: error.localizedDescription))
             }
-        } catch {
-            errorMessage = error.localizedDescription
+        }
+
+        // Scope symbols per-exchange: each exchange only fetches tickers for
+        // symbols it actually holds. Previously the callsite passed the union of
+        // all symbols to every exchange, which caused batch ticker requests to
+        // fail entirely when any symbol wasn't listed.
+        let symbolsByExchange: [Exchange: [String]] = Dictionary(
+            grouping: newAssets, by: \.exchange
+        ).mapValues { Array(Set($0.map(\.symbol))) }
+
+        let tickerResults = await exchangeManager.fetchTickersPerExchange(
+            symbolsByExchange: symbolsByExchange
+        )
+
+        var newTickers: [Ticker] = []
+        // 거래소별 ticker 실패를 statuses에 기록. 자산은 받았는데 시세만
+        // 못 받으면 현재가/평가금액이 "—"로 표시되므로 사용자에게
+        // 알려야 한다 — 말없이 현재가만 "—"이면 원인을 짐작할 수 없다.
+        var tickerErrorsByExchange: [Exchange: String] = [:]
+        for (exchange, result) in tickerResults {
+            switch result {
+            case .success(let list):
+                newTickers.append(contentsOf: list)
+            case .failure(let error):
+                tickerErrorsByExchange[exchange] = error.localizedDescription
+            }
+        }
+        if !tickerErrorsByExchange.isEmpty {
+            for idx in statuses.indices {
+                if let err = tickerErrorsByExchange[statuses[idx].id] {
+                    statuses[idx].tickerError = err
+                }
+            }
+        }
+
+        // 해외 거래소(averageBuyPrice == 0)는 `ForeignCostBasisProvider`가
+        // 계산해 둔 평단가로 덮어 써서 Aggregator가 정상 cost basis로 인식
+        // 하도록 한다. 캐시 미스면 그대로 0 → "—" 표시.
+        let enrichedAssets = newAssets.map { asset -> Asset in
+            guard asset.averageBuyPrice == 0,
+                  let override = costBasisProvider.averageBuyPrice(exchange: asset.exchange, symbol: asset.symbol)
+            else { return asset }
+            return Asset(
+                id: asset.id,
+                symbol: asset.symbol,
+                balance: asset.balance,
+                averageBuyPrice: override,
+                exchange: asset.exchange,
+                lastUpdated: asset.lastUpdated
+            )
+        }
+
+        self.assets = enrichedAssets
+        self.tickers = newTickers
+        self.exchangeStatuses = statuses
+        self.lastRefreshDate = Date()
+
+        // 모든 거래소 실패 + 자산 없음 → 전체 에러
+        if newAssets.isEmpty && !statuses.isEmpty && statuses.allSatisfy({ $0.status == .failed }) {
+            errorMessage = "모든 거래소에서 데이터를 불러오지 못했습니다."
+        }
+
+        // 스파크라인은 tick rate limit 부담이 크므로 refresh 루프를 블록하지
+        // 않고 fire-and-forget으로 hydrate한다. 1시간 TTL 덕분에 대부분의
+        // 30초 refresh 사이클에서는 실제 네트워크 호출이 발생하지 않는다.
+        let pairs = Self.sparklinePairs(from: newAssets)
+        if !pairs.isEmpty {
+            Task { [sparklineProvider] in
+                await sparklineProvider.hydrate(pairs: pairs)
+            }
         }
     }
 
-    // MARK: - Sample Data
+    /// 표시 대상 (exchange, symbol) 페어를 Asset 목록에서 추출한다.
+    /// 같은 심볼이 여러 거래소에 있으면 각각 하나의 pair로 간주한다 — 행
+    /// 수준에서는 `row.exchanges.first`만 그리더라도, 사용자가 거래소를
+    /// 전환할 때 캐시 히트를 유지하기 위해 전부 데워둔다.
+    private static func sparklinePairs(from assets: [Asset]) -> Set<SparklineProvider.Key> {
+        Set(assets.map { SparklineProvider.Key(exchange: $0.exchange, symbol: $0.symbol) })
+    }
+
+    /// 행이 표시할 스파크라인 데이터를 반환한다. 집계 행의 경우 첫 번째
+    /// 기여 거래소(`row.exchanges.first`)의 7일 종가 배열을 사용한다.
+    func sparkline(for row: PortfolioRow) -> [Double]? {
+        guard let exchange = row.exchanges.first else { return nil }
+        return sparklineProvider.sparkline(exchange: exchange, symbol: row.symbol)
+    }
+
+    // MARK: - Foreign cost basis
+
+    /// 현재 보유 자산 중 `averageBuyPrice == 0`인 (exchange, symbol) 페어.
+    /// 평단가를 자체 계산해야 하는 대상 — 주로 해외 거래소 잔고이다.
+    var foreignCostBasisPairs: [ForeignCostBasisProvider.Pair] {
+        assets
+            .filter { $0.averageBuyPrice == 0 }
+            .map { ForeignCostBasisProvider.Pair(exchange: $0.exchange, symbol: $0.symbol) }
+    }
+
+    /// `ForeignCostBasisProvider.hydrate`를 트리거하고, 완료되면 대시보드를
+    /// 재새로고침해 새 평단가가 UI에 반영되도록 한다. 사용자 버튼 액션에서
+    /// 호출.
+    func syncForeignCostBasis() async {
+        let pairs = foreignCostBasisPairs
+        guard !pairs.isEmpty else { return }
+        await costBasisProvider.hydrate(pairs: pairs)
+        await refresh()
+    }
+
+    // MARK: - Sample Data (preview용)
 
     static let sampleAssets: [Asset] = [
-        Asset(
-            id: "upbit-BTC",
-            symbol: "BTC",
-            balance: 0.5,
-            averageBuyPrice: 55_000_000,
-            exchange: .upbit,
-            lastUpdated: Date()
-        ),
-        Asset(
-            id: "upbit-ETH",
-            symbol: "ETH",
-            balance: 3.2,
-            averageBuyPrice: 2_800_000,
-            exchange: .upbit,
-            lastUpdated: Date()
-        ),
-        Asset(
-            id: "binance-BTC",
-            symbol: "BTC",
-            balance: 0.25,
-            averageBuyPrice: 42_000,
-            exchange: .binance,
-            lastUpdated: Date()
-        ),
-        Asset(
-            id: "binance-ETH",
-            symbol: "ETH",
-            balance: 1.8,
-            averageBuyPrice: 2_200,
-            exchange: .binance,
-            lastUpdated: Date()
-        ),
+        Asset(id: "upbit-BTC", symbol: "BTC", balance: 0.5, averageBuyPrice: 55_000_000, exchange: .upbit, lastUpdated: Date()),
+        Asset(id: "upbit-ETH", symbol: "ETH", balance: 3.2, averageBuyPrice: 2_800_000, exchange: .upbit, lastUpdated: Date()),
+        Asset(id: "binance-BTC", symbol: "BTC", balance: 0.25, averageBuyPrice: 0, exchange: .binance, lastUpdated: Date()),
+        Asset(id: "binance-ETH", symbol: "ETH", balance: 1.8, averageBuyPrice: 0, exchange: .binance, lastUpdated: Date()),
     ]
 
     static let sampleTickers: [Ticker] = [
-        Ticker(
-            id: "upbit-BTC-ticker",
-            symbol: "BTC",
-            currentPrice: 62_000_000,
-            changeRate24h: 2.35,
-            volume24h: 1_500_000_000,
-            exchange: .upbit,
-            timestamp: Date()
-        ),
-        Ticker(
-            id: "upbit-ETH-ticker",
-            symbol: "ETH",
-            currentPrice: 3_100_000,
-            changeRate24h: -1.12,
-            volume24h: 800_000_000,
-            exchange: .upbit,
-            timestamp: Date()
-        ),
-        Ticker(
-            id: "binance-BTC-ticker",
-            symbol: "BTC",
-            currentPrice: 47_500,
-            changeRate24h: 2.41,
-            volume24h: 25_000,
-            exchange: .binance,
-            timestamp: Date()
-        ),
-        Ticker(
-            id: "binance-ETH-ticker",
-            symbol: "ETH",
-            currentPrice: 2_380,
-            changeRate24h: -0.98,
-            volume24h: 18_000,
-            exchange: .binance,
-            timestamp: Date()
-        ),
+        Ticker(id: "upbit-BTC-ticker", symbol: "BTC", currentPrice: 62_000_000, changeRate24h: 2.35, volume24h: 1_500_000_000, exchange: .upbit, timestamp: Date()),
+        Ticker(id: "upbit-ETH-ticker", symbol: "ETH", currentPrice: 3_100_000, changeRate24h: -1.12, volume24h: 800_000_000, exchange: .upbit, timestamp: Date()),
+        Ticker(id: "binance-BTC-ticker", symbol: "BTC", currentPrice: 47_500, changeRate24h: 2.41, volume24h: 25_000, exchange: .binance, timestamp: Date()),
+        Ticker(id: "binance-ETH-ticker", symbol: "ETH", currentPrice: 2_380, changeRate24h: -0.98, volume24h: 18_000, exchange: .binance, timestamp: Date()),
     ]
 
-    /// 프리뷰용 샘플 ViewModel
     static var preview: DashboardViewModel {
         let vm = DashboardViewModel(exchangeManager: ExchangeManager())
         vm.assets = sampleAssets
         vm.tickers = sampleTickers
+        vm.hideDust = false
         return vm
     }
 }
