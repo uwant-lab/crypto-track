@@ -37,7 +37,7 @@ struct OrderListView: View {
             if let error = errorMessage {
                 errorBanner(error)
             }
-            if !groupedOrders.isEmpty || !summary.isEmpty {
+            if loadedCount > 0 {
                 filterChips
                 summarySection
             }

@@ -299,10 +299,10 @@ final class UpbitService: ExchangeService, Sendable {
     /// 입금 내역을 조회합니다.
     /// Upbit API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
     /// - from/to: 서버 사이드 날짜 필터링
+    /// 입금 내역을 조회합니다 (원화 + 코인 모두 포함).
+    /// 업비트 API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
     func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
         let limit = 100
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime]
 
         guard var components = URLComponents(string: "\(baseURL)/v1/deposits") else {
             throw UpbitServiceError.invalidURL
@@ -310,8 +310,6 @@ final class UpbitService: ExchangeService, Sendable {
 
         let apiPage = page + 1
         let queryItems = [
-            URLQueryItem(name: "from", value: iso.string(from: from)),
-            URLQueryItem(name: "to", value: iso.string(from: to)),
             URLQueryItem(name: "page", value: "\(apiPage)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order_by", value: "desc")
@@ -348,9 +346,11 @@ final class UpbitService: ExchangeService, Sendable {
 
         do {
             let rawDeposits = try JSONDecoder().decode([UpbitDeposit].self, from: data)
-            let deposits = rawDeposits.map { $0.toDeposit() }
-            let hasMore = rawDeposits.count == limit
-            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
+            let mapped = rawDeposits.map { $0.toDeposit() }
+            let filtered = mapped.filter { $0.completedAt >= from && $0.completedAt <= to }
+            let passedRange = mapped.last.map { $0.completedAt < from } ?? false
+            let hasMore = rawDeposits.count == limit && !passedRange
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw UpbitServiceError.decodingFailed(error)
         }

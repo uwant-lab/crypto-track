@@ -247,20 +247,30 @@ extension UpbitDeposit {
             depositStatus = .pending
         }
 
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let date = formatter.date(from: createdAt) ?? Date()
+        let date = Self.parseDate(createdAt)
 
         return Deposit(
             id: "upbit-\(uuid)",
             symbol: currency,
             amount: Double(amount) ?? 0,
+            fee: Double(fee) ?? 0,
             type: depositType,
             status: depositStatus,
             txId: txid,
             exchange: .upbit,
             completedAt: date
         )
+    }
+
+    /// ISO 8601 날짜 파싱 (fractional seconds 유무 모두 처리)
+    private static func parseDate(_ string: String) -> Date {
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFrac.date(from: string) { return date }
+
+        let withoutFrac = ISO8601DateFormatter()
+        withoutFrac.formatOptions = [.withInternetDateTime]
+        return withoutFrac.date(from: string) ?? Date()
     }
 }
 

@@ -42,7 +42,7 @@ enum TransactionExporter {
     /// Exports deposits to .xlsx Data, grouping by exchange into separate sheets.
     static func exportDeposits(_ deposits: [Deposit]) throws -> Data {
         let writer = XLSXWriter()
-        let headers = ["입금일시", "코인", "유형", "수량", "상태", "TxID"]
+        let headers = ["입금일시", "코인", "유형", "수량", "수수료", "상태", "TxID"]
 
         if deposits.isEmpty {
             writer.addSheet(name: "입금 내역", headers: headers, rows: [])
@@ -60,6 +60,7 @@ enum TransactionExporter {
                     deposit.symbol,
                     deposit.type == .crypto ? "암호화폐" : "원화",
                     formatNumber(deposit.amount),
+                    formatNumber(deposit.fee),
                     statusLabel(deposit.status),
                     deposit.txId ?? "",
                 ]

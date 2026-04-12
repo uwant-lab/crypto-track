@@ -154,6 +154,7 @@ extension KorbitTransfer {
             id: "korbit-\(id)",
             symbol: symbol,
             amount: Double(amount) ?? 0,
+            fee: 0,
             type: depositType,
             status: .completed,
             txId: nil,

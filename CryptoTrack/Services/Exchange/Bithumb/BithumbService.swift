@@ -289,12 +289,36 @@ final class BithumbService: ExchangeService, Sendable {
         }
     }
 
-    /// 입금 내역을 조회합니다.
-    /// 빗썸 API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
+    /// 입금 내역을 조회합니다 (코인 + 원화).
+    /// 코인: GET /v1/deposits, 원화: GET /v1/deposits/krw (별도 엔드포인트)
     func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
+        // 코인 입금 조회
+        let cryptoResult = try await fetchDepositsPage(
+            path: "/v1/deposits", from: from, to: to, page: page
+        )
+
+        // 첫 페이지에서만 원화 입금도 함께 조회 (보통 건수가 적어 1페이지로 충분)
+        // 엔드포인트가 없는 경우(404) 무시하고 코인 입금만 반환
+        var allItems = cryptoResult.items
+        if page == 0 {
+            if let krwResult = try? await fetchDepositsPage(
+                path: "/v1/deposits/krw", from: from, to: to, page: 0
+            ) {
+                allItems.append(contentsOf: krwResult.items)
+                allItems.sort { $0.completedAt > $1.completedAt }
+            }
+        }
+
+        return PagedResult(items: allItems, hasMore: cryptoResult.hasMore, progress: nil)
+    }
+
+    /// 지정된 엔드포인트에서 입금 내역을 페이지 단위로 조회합니다.
+    private func fetchDepositsPage(
+        path: String, from: Date, to: Date, page: Int
+    ) async throws -> PagedResult<Deposit> {
         let limit = 100
 
-        guard var components = URLComponents(string: "\(baseURL)/v1/deposits") else {
+        guard var components = URLComponents(string: "\(baseURL)\(path)") else {
             throw BithumbServiceError.invalidURL
         }
 
