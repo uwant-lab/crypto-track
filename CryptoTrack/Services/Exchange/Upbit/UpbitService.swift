@@ -1,5 +1,8 @@
 import Foundation
 import CryptoKit
+import os
+
+private let logger = Logger(subsystem: "com.cryptotrack", category: "Upbit")
 
 // MARK: - Upbit Service
 
@@ -229,18 +232,27 @@ final class UpbitService: ExchangeService, Sendable {
         }
     }
 
+    /// API 최대 조회 기간: 체결내역 7일, 입금내역도 동일 적용
+    var maxQueryRangeDays: Int? { 7 }
+
     /// 체결 완료된 주문 내역을 조회합니다.
     /// Upbit API: GET /v1/orders/closed (JWT 인증, 쿼리 해시 필요)
+    /// - start_time/end_time: 서버 사이드 날짜 필터링 (최대 7일 구간)
     func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
         let limit = 100
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime]
 
         guard var components = URLComponents(string: "\(baseURL)/v1/orders/closed") else {
             throw UpbitServiceError.invalidURL
         }
 
+        let apiPage = page + 1
         let queryItems = [
             URLQueryItem(name: "state", value: "done"),
-            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "start_time", value: iso.string(from: from)),
+            URLQueryItem(name: "end_time", value: iso.string(from: to)),
+            URLQueryItem(name: "page", value: "\(apiPage)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order_by", value: "desc")
         ]
@@ -266,7 +278,7 @@ final class UpbitService: ExchangeService, Sendable {
         let data: Data
         do {
             let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
+            try validateHTTPResponse(response, data: responseData)
             data = responseData
         } catch let error as UpbitServiceError {
             throw error
@@ -275,15 +287,10 @@ final class UpbitService: ExchangeService, Sendable {
         }
 
         do {
-            let orders = try JSONDecoder().decode([UpbitOrder].self, from: data)
-            // 기간 필터링
-            let filtered = orders.compactMap { order -> Order? in
-                let mapped = order.toOrder()
-                guard mapped.executedAt >= from && mapped.executedAt <= to else { return nil }
-                return mapped
-            }
-            let hasMore = orders.count == limit
-            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+            let rawOrders = try JSONDecoder().decode([UpbitOrder].self, from: data)
+            let orders = rawOrders.map { $0.toOrder() }
+            let hasMore = rawOrders.count == limit
+            return PagedResult(items: orders, hasMore: hasMore, progress: nil)
         } catch {
             throw UpbitServiceError.decodingFailed(error)
         }
@@ -291,15 +298,21 @@ final class UpbitService: ExchangeService, Sendable {
 
     /// 입금 내역을 조회합니다.
     /// Upbit API: GET /v1/deposits (JWT 인증, 쿼리 해시 필요)
+    /// - from/to: 서버 사이드 날짜 필터링
     func fetchDeposits(from: Date, to: Date, page: Int) async throws -> PagedResult<Deposit> {
         let limit = 100
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime]
 
         guard var components = URLComponents(string: "\(baseURL)/v1/deposits") else {
             throw UpbitServiceError.invalidURL
         }
 
+        let apiPage = page + 1
         let queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "from", value: iso.string(from: from)),
+            URLQueryItem(name: "to", value: iso.string(from: to)),
+            URLQueryItem(name: "page", value: "\(apiPage)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order_by", value: "desc")
         ]
@@ -325,7 +338,7 @@ final class UpbitService: ExchangeService, Sendable {
         let data: Data
         do {
             let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
+            try validateHTTPResponse(response, data: responseData)
             data = responseData
         } catch let error as UpbitServiceError {
             throw error
@@ -334,15 +347,10 @@ final class UpbitService: ExchangeService, Sendable {
         }
 
         do {
-            let deposits = try JSONDecoder().decode([UpbitDeposit].self, from: data)
-            // 기간 필터링
-            let filtered = deposits.compactMap { deposit -> Deposit? in
-                let mapped = deposit.toDeposit()
-                guard mapped.completedAt >= from && mapped.completedAt <= to else { return nil }
-                return mapped
-            }
-            let hasMore = deposits.count == limit
-            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
+            let rawDeposits = try JSONDecoder().decode([UpbitDeposit].self, from: data)
+            let deposits = rawDeposits.map { $0.toDeposit() }
+            let hasMore = rawDeposits.count == limit
+            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
         } catch {
             throw UpbitServiceError.decodingFailed(error)
         }
@@ -350,11 +358,14 @@ final class UpbitService: ExchangeService, Sendable {
 
     // MARK: - Private Helpers
 
-    private func validateHTTPResponse(_ response: URLResponse) throws {
+    private func validateHTTPResponse(_ response: URLResponse, data: Data? = nil) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw UpbitServiceError.invalidResponse
         }
         guard (200..<300).contains(httpResponse.statusCode) else {
+            if let data, let body = String(data: data, encoding: .utf8) {
+                logger.error("HTTP \(httpResponse.statusCode) — \(body)")
+            }
             throw UpbitServiceError.httpError(httpResponse.statusCode)
         }
     }

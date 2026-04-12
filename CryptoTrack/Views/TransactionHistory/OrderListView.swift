@@ -7,11 +7,21 @@ struct OrderListView: View {
     let isLoading: Bool
     let progress: Double
     let loadedCount: Int
+    let progressMessage: String
     let errorMessage: String?
+    let summary: [OrderSymbolSummary]
+    let totalBuyValue: Double
+    let totalSellValue: Double
+    let totalFee: Double
+    let filteredCount: Int
+    let showBuy: Bool
+    let showSell: Bool
+    @Binding var isSummaryExpanded: Bool
+    let onToggleSide: (OrderSide) -> Void
 
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy.MM.dd (E)"
+        f.dateFormat = "yyyy/MM/dd (E)"
         f.locale = Locale(identifier: "ko_KR")
         return f
     }()
@@ -27,6 +37,10 @@ struct OrderListView: View {
             if let error = errorMessage {
                 errorBanner(error)
             }
+            if !groupedOrders.isEmpty || !summary.isEmpty {
+                filterChips
+                summarySection
+            }
             if groupedOrders.isEmpty && !isLoading {
                 emptyState
             } else {
@@ -36,6 +50,181 @@ struct OrderListView: View {
                 progressBar
             }
         }
+    }
+
+    // MARK: - Filter Chips
+
+    private var filterChips: some View {
+        HStack(spacing: 8) {
+            chipButton(label: "매수", isOn: showBuy, color: AppColor.bullish) {
+                onToggleSide(.buy)
+            }
+            chipButton(label: "매도", isOn: showSell, color: AppColor.bearish) {
+                onToggleSide(.sell)
+            }
+            Spacer()
+            Text("총 \(filteredCount)건")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
+    private func chipButton(label: String, isOn: Bool, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if isOn {
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.bold))
+                }
+                Text(label)
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(isOn ? color : .secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                Capsule()
+                    .fill(isOn ? color.opacity(0.15) : Color.clear)
+                    .overlay(Capsule().strokeBorder(isOn ? color.opacity(0.4) : Color.secondary.opacity(0.3), lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Summary
+
+    private var summarySection: some View {
+        VStack(spacing: 0) {
+            // 접힌 상태 바
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isSummaryExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: isSummaryExpanded ? "chevron.down" : "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("요약")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    if !isSummaryExpanded {
+                        if showBuy {
+                            Text("매수 \(PriceFormatter.formatAmount(totalBuyValue, currency: .krw))")
+                                .font(.caption)
+                                .foregroundStyle(AppColor.bullish)
+                        }
+                        if showSell {
+                            Text("매도 \(PriceFormatter.formatAmount(totalSellValue, currency: .krw))")
+                                .font(.caption)
+                                .foregroundStyle(AppColor.bearish)
+                        }
+                        Text("수수료 \(PriceFormatter.formatAmount(totalFee, currency: .krw))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            }
+            .buttonStyle(.plain)
+
+            // 펼친 상태 테이블
+            if isSummaryExpanded {
+                summaryTable
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            Divider()
+        }
+    }
+
+    private var summaryTable: some View {
+        VStack(spacing: 0) {
+            // 헤더
+            HStack(spacing: 0) {
+                Text("심볼").frame(width: 60, alignment: .leading)
+                if showBuy {
+                    Text("매수 수량").frame(maxWidth: .infinity, alignment: .trailing)
+                    Text("매수 금액").frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                if showSell {
+                    Text("매도 수량").frame(maxWidth: .infinity, alignment: .trailing)
+                    Text("매도 금액").frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                Text("수수료").frame(width: 90, alignment: .trailing)
+            }
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal)
+            .padding(.vertical, 4)
+
+            Divider()
+
+            // 심볼별 행
+            ForEach(summary) { row in
+                HStack(spacing: 0) {
+                    Text(row.symbol)
+                        .font(.caption.weight(.semibold))
+                        .frame(width: 60, alignment: .leading)
+                    if showBuy {
+                        Text(PriceFormatter.formatBalance(row.buyAmount))
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        Text(PriceFormatter.formatAmount(row.buyTotal, currency: .krw))
+                            .foregroundStyle(AppColor.bullish)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    if showSell {
+                        Text(PriceFormatter.formatBalance(row.sellAmount))
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        Text(PriceFormatter.formatAmount(row.sellTotal, currency: .krw))
+                            .foregroundStyle(AppColor.bearish)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    Text(PriceFormatter.formatAmount(row.fee, currency: .krw))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 90, alignment: .trailing)
+                }
+                .font(.caption)
+                .monospacedDigit()
+                .padding(.horizontal)
+                .padding(.vertical, 3)
+
+                Divider().padding(.horizontal)
+            }
+
+            // 합계 행
+            HStack(spacing: 0) {
+                Text("합계")
+                    .font(.caption.weight(.bold))
+                    .frame(width: 60, alignment: .leading)
+                if showBuy {
+                    Text("").frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(PriceFormatter.formatAmount(totalBuyValue, currency: .krw))
+                        .foregroundStyle(AppColor.bullish)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                if showSell {
+                    Text("").frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(PriceFormatter.formatAmount(totalSellValue, currency: .krw))
+                        .foregroundStyle(AppColor.bearish)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                Text(PriceFormatter.formatAmount(totalFee, currency: .krw))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 90, alignment: .trailing)
+            }
+            .font(.caption.weight(.bold))
+            .monospacedDigit()
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+        }
+        .padding(.bottom, 4)
     }
 
     // MARK: - Order List
@@ -124,6 +313,11 @@ struct OrderListView: View {
     private var progressBar: some View {
         VStack(spacing: 6) {
             ProgressView(value: progress)
+            if !progressMessage.isEmpty {
+                Text(progressMessage)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
             Text("\(Int(progress * 100))% (\(loadedCount)건 로드됨)")
                 .font(.caption)
                 .foregroundStyle(.secondary)

@@ -11,7 +11,7 @@ struct CrosshairOverlayView: View {
 
     private var dateFormatter: DateFormatter {
         let f = DateFormatter()
-        f.dateFormat = "MM/dd HH:mm"
+        f.dateFormat = "yyyy/MM/dd HH:mm"
         return f
     }
 

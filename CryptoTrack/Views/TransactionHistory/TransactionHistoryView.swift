@@ -2,6 +2,14 @@ import SwiftUI
 
 struct TransactionHistoryView: View {
     @State private var viewModel = TransactionHistoryViewModel()
+    @State private var showFromPicker = false
+    @State private var showToPicker = false
+
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy/MM/dd"
+        return f
+    }()
 
     var body: some View {
         NavigationStack {
@@ -34,11 +42,9 @@ struct TransactionHistoryView: View {
                 }
                 .frame(width: 120)
 
-                DatePicker("시작일", selection: $viewModel.dateFrom, displayedComponents: .date)
-                    .labelsHidden()
+                dateButton(date: $viewModel.dateFrom, showPicker: $showFromPicker)
                 Text("~")
-                DatePicker("종료일", selection: $viewModel.dateTo, displayedComponents: .date)
-                    .labelsHidden()
+                dateButton(date: $viewModel.dateTo, showPicker: $showToPicker)
 
                 Button("조회") {
                     if viewModel.selectedTab == .orders {
@@ -53,6 +59,26 @@ struct TransactionHistoryView: View {
         .padding()
     }
 
+    private func dateButton(date: Binding<Date>, showPicker: Binding<Bool>) -> some View {
+        Button(dateFormatter.string(from: date.wrappedValue)) {
+            showPicker.wrappedValue.toggle()
+        }
+        .monospacedDigit()
+        .popover(isPresented: showPicker) {
+            VStack(spacing: 12) {
+                DatePicker("", selection: date, displayedComponents: .date)
+                    .datePickerStyle(.field)
+                    .labelsHidden()
+                    .environment(\.locale, Locale(identifier: "ko_KR"))
+                DatePicker("", selection: date, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                    .environment(\.locale, Locale(identifier: "ko_KR"))
+            }
+            .padding()
+        }
+    }
+
     // MARK: - Tab Content
 
     @ViewBuilder
@@ -64,7 +90,17 @@ struct TransactionHistoryView: View {
                 isLoading: viewModel.isLoading,
                 progress: viewModel.progress,
                 loadedCount: viewModel.loadedCount,
-                errorMessage: viewModel.errorMessage
+                progressMessage: viewModel.progressMessage,
+                errorMessage: viewModel.errorMessage,
+                summary: viewModel.orderSummary,
+                totalBuyValue: viewModel.totalBuyValue,
+                totalSellValue: viewModel.totalSellValue,
+                totalFee: viewModel.totalFee,
+                filteredCount: viewModel.filteredOrders.count,
+                showBuy: viewModel.showBuy,
+                showSell: viewModel.showSell,
+                isSummaryExpanded: $viewModel.isSummaryExpanded,
+                onToggleSide: viewModel.toggleSide
             )
         case .deposits:
             DepositListView(
@@ -72,6 +108,7 @@ struct TransactionHistoryView: View {
                 isLoading: viewModel.isLoading,
                 progress: viewModel.progress,
                 loadedCount: viewModel.loadedCount,
+                progressMessage: viewModel.progressMessage,
                 errorMessage: viewModel.errorMessage
             )
         }

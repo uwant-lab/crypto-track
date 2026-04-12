@@ -177,11 +177,11 @@ final class KorbitService: ExchangeService, Sendable {
         }
 
         do {
-            let orders = try JSONDecoder().decode([KorbitOrder].self, from: data)
-            let filtered = orders
-                .map { $0.toOrder() }
-                .filter { $0.executedAt >= from && $0.executedAt <= to }
-            let hasMore = orders.count == limit
+            let rawOrders = try JSONDecoder().decode([KorbitOrder].self, from: data)
+            let mapped = rawOrders.map { $0.toOrder() }
+            let filtered = mapped.filter { $0.executedAt >= from && $0.executedAt <= to }
+            let passedRange = mapped.last.map { $0.executedAt < from } ?? false
+            let hasMore = rawOrders.count == limit && !passedRange
             return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw KorbitServiceError.decodingFailed(error)
@@ -227,11 +227,11 @@ final class KorbitService: ExchangeService, Sendable {
         }
 
         do {
-            let transfers = try JSONDecoder().decode([KorbitTransfer].self, from: data)
-            let filtered = transfers
-                .map { $0.toDeposit() }
-                .filter { $0.completedAt >= from && $0.completedAt <= to }
-            let hasMore = transfers.count == limit
+            let rawTransfers = try JSONDecoder().decode([KorbitTransfer].self, from: data)
+            let mapped = rawTransfers.map { $0.toDeposit() }
+            let filtered = mapped.filter { $0.completedAt >= from && $0.completedAt <= to }
+            let passedRange = mapped.last.map { $0.completedAt < from } ?? false
+            let hasMore = rawTransfers.count == limit && !passedRange
             return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw KorbitServiceError.decodingFailed(error)

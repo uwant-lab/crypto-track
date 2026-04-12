@@ -235,11 +235,12 @@ final class CoinoneService: ExchangeService, Sendable {
                 let code = response.errorCode ?? "알 수 없음"
                 throw CoinoneServiceError.apiError(code)
             }
-            let orders = (response.completedOrders ?? [])
-                .map { $0.toOrder() }
-                .filter { $0.executedAt >= from && $0.executedAt <= to }
-            let hasMore = (response.completedOrders?.count ?? 0) == limit
-            return PagedResult(items: orders, hasMore: hasMore, progress: nil)
+            let rawOrders = response.completedOrders ?? []
+            let mapped = rawOrders.map { $0.toOrder() }
+            let filtered = mapped.filter { $0.executedAt >= from && $0.executedAt <= to }
+            let passedRange = mapped.last.map { $0.executedAt < from } ?? false
+            let hasMore = rawOrders.count == limit && !passedRange
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch let error as CoinoneServiceError {
             throw error
         } catch {
@@ -304,11 +305,12 @@ final class CoinoneService: ExchangeService, Sendable {
                 let code = response.errorCode ?? "알 수 없음"
                 throw CoinoneServiceError.apiError(code)
             }
-            let deposits = (response.deposits ?? [])
-                .map { $0.toDeposit() }
-                .filter { $0.completedAt >= from && $0.completedAt <= to }
-            let hasMore = (response.deposits?.count ?? 0) == limit
-            return PagedResult(items: deposits, hasMore: hasMore, progress: nil)
+            let rawDeposits = response.deposits ?? []
+            let mapped = rawDeposits.map { $0.toDeposit() }
+            let filtered = mapped.filter { $0.completedAt >= from && $0.completedAt <= to }
+            let passedRange = mapped.last.map { $0.completedAt < from } ?? false
+            let hasMore = rawDeposits.count == limit && !passedRange
+            return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch let error as CoinoneServiceError {
             throw error
         } catch {

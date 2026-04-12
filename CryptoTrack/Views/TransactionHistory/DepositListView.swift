@@ -7,11 +7,12 @@ struct DepositListView: View {
     let isLoading: Bool
     let progress: Double
     let loadedCount: Int
+    let progressMessage: String
     let errorMessage: String?
 
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "yyyy.MM.dd (E)"
+        f.dateFormat = "yyyy/MM/dd (E)"
         f.locale = Locale(identifier: "ko_KR")
         return f
     }()
@@ -146,6 +147,11 @@ struct DepositListView: View {
     private var progressBar: some View {
         VStack(spacing: 6) {
             ProgressView(value: progress)
+            if !progressMessage.isEmpty {
+                Text(progressMessage)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
             Text("\(Int(progress * 100))% (\(loadedCount)건 로드됨)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
