@@ -74,6 +74,7 @@ enum PortfolioAggregator {
         var knownCost: Double = 0
         var knownValue: Double = 0
         var hasAnyTicker = false
+        var hasAnyModifiedCostBasis = false
         var contributingExchanges: Set<Exchange> = []
 
         // Value-weighted 24h change rate accumulators.
@@ -101,6 +102,7 @@ enum PortfolioAggregator {
                 knownBalance += asset.balance
                 knownCost += asset.balance * asset.averageBuyPrice
                 knownValue += assetValue
+                if asset.avgBuyPriceModified { hasAnyModifiedCostBasis = true }
             }
         }
 
@@ -127,7 +129,8 @@ enum PortfolioAggregator {
             changeRate24h: changeRate24h,
             hasCostBasis: knownBalance > 0,
             hasPartialCostBasis: knownBalance > 0 && knownBalance < totalBalance,
-            hasTicker: hasAnyTicker
+            hasTicker: hasAnyTicker,
+            hasModifiedCostBasis: hasAnyModifiedCostBasis
         )
     }
 }

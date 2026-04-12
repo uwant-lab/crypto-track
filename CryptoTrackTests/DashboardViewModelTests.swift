@@ -141,14 +141,14 @@ final class DashboardViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.displayedRows.count, 1)
     }
 
-    /// ticker가 없는 자산은 가치를 모르므로 dust로 분류하지 않는다 (숨기지 않음).
-    func testAssetWithoutTickerIsNotDust() {
+    /// ticker가 없는 자산(현재가 불명)은 currentValue == 0이므로 dust로 분류한다.
+    func testAssetWithoutTickerIsDust() {
         let asset = makeAsset(symbol: "DOGE", balance: 0.001, avgPrice: 500_000, exchange: .upbit)
         viewModel.assets = [asset]
         viewModel.tickers = []  // ticker fetch 실패
         viewModel.hideDust = true
 
-        XCTAssertEqual(viewModel.displayedRows.count, 1)
+        XCTAssertEqual(viewModel.displayedRows.count, 0)
     }
 
     // MARK: - Currency-grouped summary

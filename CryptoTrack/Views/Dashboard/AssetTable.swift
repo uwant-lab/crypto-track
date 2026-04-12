@@ -15,7 +15,6 @@ struct AssetTableSections: View {
     @Binding var usdSortOrder: [KeyPathComparator<PortfolioRow>]
     let showHeaders: Bool
     let colorMode: PriceColorMode
-    let sparkline: (PortfolioRow) -> [Double]?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -67,9 +66,15 @@ struct AssetTableSections: View {
             TableColumn("평단가", value: \.averageBuyPrice) { row in
                 if row.hasCostBasis {
                     HStack(spacing: 4) {
-                        Text(PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency))
+                        Text(row.hasModifiedCostBasis
+                             ? PriceFormatter.formatModifiedPrice(row.averageBuyPrice, currency: row.quoteCurrency)
+                             : PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency))
                             .monospacedDigit()
-                        if row.hasPartialCostBasis {
+                        if row.hasModifiedCostBasis {
+                            Text("(수정됨)")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        } else if row.hasPartialCostBasis {
                             Text("일부")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -101,26 +106,6 @@ struct AssetTableSections: View {
             }
             .width(min: 100, ideal: 140)
 
-            TableColumn("24h") { row in
-                if let rate = row.changeRate24h {
-                    Text(PriceFormatter.formatRate(rate))
-                        .foregroundStyle(PriceColor.color(for: rate, mode: colorMode))
-                        .monospacedDigit()
-                } else {
-                    Text("—").foregroundStyle(.secondary)
-                }
-            }
-            .width(min: 70, ideal: 90)
-
-            TableColumn("7일") { row in
-                Sparkline(
-                    prices: sparkline(row) ?? [],
-                    colorMode: colorMode
-                )
-                .frame(width: 60, height: 20)
-            }
-            .width(min: 70, ideal: 80)
-
             TableColumn("평가금액", value: \.currentValue) { row in
                 Text(PriceFormatter.formatAmount(row.currentValue, currency: row.quoteCurrency))
                     .monospacedDigit()
@@ -141,7 +126,10 @@ struct AssetTableSections: View {
 
             TableColumn("수익률", value: \.profitRate) { row in
                 if row.hasCostBasis {
-                    Text(PriceFormatter.formatRate(row.profitRate))
+                    let formatted = row.hasModifiedCostBasis
+                        ? PriceFormatter.formatApproxRate(row.profitRate)
+                        : PriceFormatter.formatRate(row.profitRate)
+                    Text(formatted)
                         .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
                         .monospacedDigit()
                 } else {

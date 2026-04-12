@@ -11,7 +11,6 @@ struct AssetCardList: View {
     let sections: [RowSection]
     let showSectionHeaders: Bool
     let colorMode: PriceColorMode
-    let sparkline: (PortfolioRow) -> [Double]?
 
     var body: some View {
         List {
@@ -21,8 +20,7 @@ struct AssetCardList: View {
                         AssetCardRow(
                             row: row,
                             showBadges: showSectionHeaders,
-                            colorMode: colorMode,
-                            sparklinePrices: sparkline(row) ?? []
+                            colorMode: colorMode
                         )
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
@@ -45,13 +43,10 @@ private struct AssetCardRow: View {
     let row: PortfolioRow
     let showBadges: Bool
     let colorMode: PriceColorMode
-    let sparklinePrices: [Double]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
-            Sparkline(prices: sparklinePrices, colorMode: colorMode)
-                .frame(height: 22)
             Divider()
             metricsGrid
             if row.hasPartialCostBasis {
@@ -79,18 +74,10 @@ private struct AssetCardRow: View {
                         ExchangeBadgeRow(exchanges: row.exchanges, size: 16)
                     }
                 }
-                HStack(spacing: 6) {
-                    Text(PriceFormatter.formatBalance(row.totalBalance))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                    if let rate = row.changeRate24h {
-                        Text(PriceFormatter.formatRate(rate))
-                            .font(.caption)
-                            .foregroundStyle(PriceColor.color(for: rate, mode: colorMode))
-                            .monospacedDigit()
-                    }
-                }
+                Text(PriceFormatter.formatBalance(row.totalBalance))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
@@ -98,7 +85,10 @@ private struct AssetCardRow: View {
                     .font(.headline)
                     .monospacedDigit()
                 if row.hasCostBasis {
-                    Text(PriceFormatter.formatRate(row.profitRate))
+                    let formatted = row.hasModifiedCostBasis
+                        ? PriceFormatter.formatApproxRate(row.profitRate)
+                        : PriceFormatter.formatRate(row.profitRate)
+                    Text(formatted)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(PriceColor.color(for: row.profitRate, mode: colorMode))
                         .monospacedDigit()
@@ -117,10 +107,13 @@ private struct AssetCardRow: View {
         Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
             GridRow {
                 metric(
-                    label: "평단",
+                    label: row.hasModifiedCostBasis ? "평단 (수정됨)" : "평단",
                     value: row.hasCostBasis
-                        ? PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency)
-                        : "—"
+                        ? (row.hasModifiedCostBasis
+                           ? PriceFormatter.formatModifiedPrice(row.averageBuyPrice, currency: row.quoteCurrency)
+                           : PriceFormatter.formatPrice(row.averageBuyPrice, currency: row.quoteCurrency))
+                        : "—",
+                    tint: row.hasModifiedCostBasis ? .orange : nil
                 )
                 metric(
                     label: "현재가",
