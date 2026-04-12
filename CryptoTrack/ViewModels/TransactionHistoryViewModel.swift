@@ -346,6 +346,41 @@ final class TransactionHistoryViewModel {
             showSell.toggle()
         }
     }
+
+    // MARK: - Export
+
+    /// 현재 조회된 데이터를 .xlsx 파일로 내보냅니다.
+    /// - Returns: 임시 디렉토리에 저장된 파일 URL, 실패 시 nil
+    func exportToExcel() -> URL? {
+        do {
+            let data: Data
+            let prefix: String
+            switch selectedTab {
+            case .orders:
+                data = try TransactionExporter.exportOrders(filteredOrders)
+                prefix = "CryptoTrack_체결내역"
+            case .deposits:
+                data = try TransactionExporter.exportDeposits(deposits)
+                prefix = "CryptoTrack_입금내역"
+            }
+
+            let dateStr = Self.fileDateFormatter.string(from: Date())
+            let filename = "\(prefix)_\(dateStr).xlsx"
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+            try data.write(to: url)
+            return url
+        } catch {
+            logger.error("엑셀 내보내기 실패: \(error)")
+            errorMessage = "내보내기에 실패했습니다: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    private static let fileDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 }
 
 // MARK: - Summary Model
