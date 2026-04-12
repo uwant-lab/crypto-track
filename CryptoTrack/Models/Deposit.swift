@@ -15,6 +15,7 @@ struct Deposit: Identifiable, Sendable {
     let id: String
     let symbol: String
     let amount: Double
+    let fee: Double
     let type: DepositType
     let status: DepositStatus
     let txId: String?

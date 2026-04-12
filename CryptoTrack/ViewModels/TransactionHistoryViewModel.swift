@@ -14,31 +14,51 @@ enum TransactionTab: String, CaseIterable {
 @MainActor
 final class TransactionHistoryViewModel {
 
-    // MARK: - State
+    // MARK: - Shared State
 
     var selectedTab: TransactionTab = .orders
-    var selectedExchange: Exchange? = nil
-    var dateFrom: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
-    var dateTo: Date = Date()
+
+    // MARK: - Orders State
+
+    var ordersExchange: Exchange? = nil
+    var ordersDateFrom: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+    var ordersDateTo: Date = Date()
     var orders: [Order] = []
-    var deposits: [Deposit] = []
-    var isLoading = false
-    var progress: Double = 0.0
-    var loadedCount = 0
-    var errorMessage: String?
-    var progressMessage: String = ""
+    var isLoadingOrders = false
+    var ordersProgress: Double = 0.0
+    var ordersLoadedCount = 0
+    var ordersErrorMessage: String?
+    var ordersProgressMessage: String = ""
     var showBuy: Bool = true
     var showSell: Bool = true
     var isSummaryExpanded: Bool = false
 
-    private var currentTask: Task<Void, Never>?
+    // MARK: - Deposits State
+
+    var depositsExchange: Exchange? = nil
+    var depositsDateFrom: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+    var depositsDateTo: Date = Date()
+    var deposits: [Deposit] = []
+    var isLoadingDeposits = false
+    var depositsProgress: Double = 0.0
+    var depositsLoadedCount = 0
+    var depositsErrorMessage: String?
+    var depositsProgressMessage: String = ""
+    var showFiat: Bool = true
+    var showCrypto: Bool = true
+    var isDepositSummaryExpanded: Bool = false
+
+    // MARK: - Tasks
+
+    private var ordersTask: Task<Void, Never>?
+    private var depositsTask: Task<Void, Never>?
 
     /// API 호출 간 딜레이 (나노초). 속도 제한(429) 방지용.
     private let requestDelayNs: UInt64 = 200_000_000 // 200ms
     /// 429 에러 시 최대 재시도 횟수
     private let maxRetries = 3
 
-    // MARK: - Computed Properties
+    // MARK: - Computed Properties (Orders)
 
     var filteredOrders: [Order] {
         orders.filter { order in
@@ -78,41 +98,73 @@ final class TransactionHistoryViewModel {
     var totalSellValue: Double { orderSummary.reduce(0) { $0 + $1.sellTotal } }
     var totalFee: Double { orderSummary.reduce(0) { $0 + $1.fee } }
 
+    // MARK: - Computed Properties (Deposits)
+
+    var filteredDeposits: [Deposit] {
+        deposits.filter { deposit in
+            switch deposit.type {
+            case .fiat: return showFiat
+            case .crypto: return showCrypto
+            }
+        }
+    }
+
     var groupedDeposits: [(Date, [Deposit])] {
         let calendar = Calendar.current
-        let grouped = Dictionary(grouping: deposits) { deposit in
+        let grouped = Dictionary(grouping: filteredDeposits) { deposit in
             calendar.startOfDay(for: deposit.completedAt)
         }
         return grouped.sorted { $0.key > $1.key }
     }
 
+    var depositSummary: [DepositSymbolSummary] {
+        let target = filteredDeposits
+        let grouped = Dictionary(grouping: target) { $0.symbol }
+        return grouped.map { symbol, items in
+            let fiatItems = items.filter { $0.type == .fiat }
+            let cryptoItems = items.filter { $0.type == .crypto }
+            return DepositSymbolSummary(
+                symbol: symbol,
+                fiatAmount: fiatItems.reduce(0) { $0 + $1.amount },
+                fiatCount: fiatItems.count,
+                cryptoAmount: cryptoItems.reduce(0) { $0 + $1.amount },
+                cryptoCount: cryptoItems.count,
+                fee: items.reduce(0) { $0 + $1.fee }
+            )
+        }.sorted { ($0.fiatAmount + $0.cryptoAmount) > ($1.fiatAmount + $1.cryptoAmount) }
+    }
+
+    var totalDepositFiatAmount: Double { depositSummary.reduce(0) { $0 + $1.fiatAmount } }
+    var totalDepositCryptoCount: Int { depositSummary.reduce(0) { $0 + $1.cryptoCount } }
+    var totalDepositFee: Double { depositSummary.reduce(0) { $0 + $1.fee } }
+
     // MARK: - Actions
 
     func fetchOrders() {
-        cancel()
+        ordersTask?.cancel()
         orders = []
-        loadedCount = 0
-        progress = 0.0
-        isLoading = true
-        errorMessage = nil
-        progressMessage = ""
+        ordersLoadedCount = 0
+        ordersProgress = 0.0
+        isLoadingOrders = true
+        ordersErrorMessage = nil
+        ordersProgressMessage = ""
 
-        logger.info("📋 체결내역 조회 시작: \(self.formatDate(self.dateFrom)) ~ \(self.formatDate(self.dateTo))")
+        logger.info("📋 체결내역 조회 시작: \(self.formatDate(self.ordersDateFrom)) ~ \(self.formatDate(self.ordersDateTo))")
 
-        currentTask = Task {
+        ordersTask = Task {
             do {
-                let services = targetServices()
+                let services = targetServices(for: ordersExchange)
                 let totalExchanges = services.count
                 logger.info("  대상 거래소: \(totalExchanges)개")
                 guard totalExchanges > 0 else {
                     logger.warning("  등록된 거래소 없음 — 조회 중단")
-                    isLoading = false
+                    isLoadingOrders = false
                     return
                 }
 
                 for (index, service) in services.enumerated() {
                     let chunks = generateDateChunks(
-                        from: dateFrom, to: dateTo,
+                        from: ordersDateFrom, to: ordersDateTo,
                         maxDays: service.maxQueryRangeDays
                     )
                     let totalChunks = chunks.count
@@ -122,28 +174,30 @@ final class TransactionHistoryViewModel {
                         guard !Task.isCancelled else { break }
 
                         if totalChunks > 1 {
-                            progressMessage = "\(formatChunkRange(chunk)) 조회중..."
+                            ordersProgressMessage = "\(formatChunkRange(chunk)) 조회중..."
                         }
                         logger.info("  [\(service.exchange.rawValue)] 청크 \(chunkIndex + 1)/\(totalChunks): \(self.formatDate(chunk.from)) ~ \(self.formatDate(chunk.to))")
 
                         var page = 0
                         while !Task.isCancelled {
                             let currentPage = page
-                            let result: PagedResult<Order> = try await requestWithRetry {
+                            let result: PagedResult<Order> = try await requestWithRetry(
+                                onRateLimit: { self.ordersProgressMessage = $0 }
+                            ) {
                                 try await service.fetchOrders(
                                     from: chunk.from, to: chunk.to, page: currentPage
                                 )
                             }
                             orders.append(contentsOf: result.items)
-                            loadedCount = orders.count
+                            ordersLoadedCount = orders.count
 
-                            logger.info("    page \(page): \(result.items.count)건 (hasMore: \(result.hasMore), 총 \(self.loadedCount)건)")
+                            logger.info("    page \(page): \(result.items.count)건 (hasMore: \(result.hasMore), 총 \(self.ordersLoadedCount)건)")
 
                             let pageProgress = result.progress
                                 ?? (result.hasMore ? 0.5 : 1.0)
                             let chunkProgress = (Double(chunkIndex) + pageProgress)
                                 / Double(totalChunks)
-                            progress = (Double(index) + chunkProgress)
+                            ordersProgress = (Double(index) + chunkProgress)
                                 / Double(totalExchanges)
 
                             if !result.hasMore { break }
@@ -152,44 +206,44 @@ final class TransactionHistoryViewModel {
                         }
                     }
                 }
-                progressMessage = ""
-                progress = 1.0
+                ordersProgressMessage = ""
+                ordersProgress = 1.0
                 logger.info("📋 체결내역 조회 완료: 총 \(self.orders.count)건")
             } catch is CancellationError {
                 logger.info("📋 체결내역 조회 취소됨")
             } catch {
                 logger.error("📋 체결내역 조회 실패: \(error)")
-                errorMessage = error.localizedDescription
+                ordersErrorMessage = error.localizedDescription
             }
-            isLoading = false
+            isLoadingOrders = false
         }
     }
 
     func fetchDeposits() {
-        cancel()
+        depositsTask?.cancel()
         deposits = []
-        loadedCount = 0
-        progress = 0.0
-        isLoading = true
-        errorMessage = nil
-        progressMessage = ""
+        depositsLoadedCount = 0
+        depositsProgress = 0.0
+        isLoadingDeposits = true
+        depositsErrorMessage = nil
+        depositsProgressMessage = ""
 
-        logger.info("💰 입금내역 조회 시작: \(self.formatDate(self.dateFrom)) ~ \(self.formatDate(self.dateTo))")
+        logger.info("💰 입금내역 조회 시작: \(self.formatDate(self.depositsDateFrom)) ~ \(self.formatDate(self.depositsDateTo))")
 
-        currentTask = Task {
+        depositsTask = Task {
             do {
-                let services = targetServices()
+                let services = targetServices(for: depositsExchange)
                 let totalExchanges = services.count
                 logger.info("  대상 거래소: \(totalExchanges)개")
                 guard totalExchanges > 0 else {
                     logger.warning("  등록된 거래소 없음 — 조회 중단")
-                    isLoading = false
+                    isLoadingDeposits = false
                     return
                 }
 
                 for (index, service) in services.enumerated() {
                     let chunks = generateDateChunks(
-                        from: dateFrom, to: dateTo,
+                        from: depositsDateFrom, to: depositsDateTo,
                         maxDays: service.maxQueryRangeDays
                     )
                     let totalChunks = chunks.count
@@ -199,28 +253,30 @@ final class TransactionHistoryViewModel {
                         guard !Task.isCancelled else { break }
 
                         if totalChunks > 1 {
-                            progressMessage = "\(formatChunkRange(chunk)) 조회중..."
+                            depositsProgressMessage = "\(formatChunkRange(chunk)) 조회중..."
                         }
                         logger.info("  [\(service.exchange.rawValue)] 청크 \(chunkIndex + 1)/\(totalChunks): \(self.formatDate(chunk.from)) ~ \(self.formatDate(chunk.to))")
 
                         var page = 0
                         while !Task.isCancelled {
                             let currentPage = page
-                            let result: PagedResult<Deposit> = try await requestWithRetry {
+                            let result: PagedResult<Deposit> = try await requestWithRetry(
+                                onRateLimit: { self.depositsProgressMessage = $0 }
+                            ) {
                                 try await service.fetchDeposits(
                                     from: chunk.from, to: chunk.to, page: currentPage
                                 )
                             }
                             deposits.append(contentsOf: result.items)
-                            loadedCount = deposits.count
+                            depositsLoadedCount = deposits.count
 
-                            logger.info("    page \(page): \(result.items.count)건 (hasMore: \(result.hasMore), 총 \(self.loadedCount)건)")
+                            logger.info("    page \(page): \(result.items.count)건 (hasMore: \(result.hasMore), 총 \(self.depositsLoadedCount)건)")
 
                             let pageProgress = result.progress
                                 ?? (result.hasMore ? 0.5 : 1.0)
                             let chunkProgress = (Double(chunkIndex) + pageProgress)
                                 / Double(totalChunks)
-                            progress = (Double(index) + chunkProgress)
+                            depositsProgress = (Double(index) + chunkProgress)
                                 / Double(totalExchanges)
 
                             if !result.hasMore { break }
@@ -229,22 +285,34 @@ final class TransactionHistoryViewModel {
                         }
                     }
                 }
-                progressMessage = ""
-                progress = 1.0
+                depositsProgressMessage = ""
+                depositsProgress = 1.0
                 logger.info("💰 입금내역 조회 완료: 총 \(self.deposits.count)건")
             } catch is CancellationError {
                 logger.info("💰 입금내역 조회 취소됨")
             } catch {
                 logger.error("💰 입금내역 조회 실패: \(error)")
-                errorMessage = error.localizedDescription
+                depositsErrorMessage = error.localizedDescription
             }
-            isLoading = false
+            isLoadingDeposits = false
         }
     }
 
+    func cancelOrders() {
+        ordersTask?.cancel()
+        ordersTask = nil
+        isLoadingOrders = false
+    }
+
+    func cancelDeposits() {
+        depositsTask?.cancel()
+        depositsTask = nil
+        isLoadingDeposits = false
+    }
+
     func cancel() {
-        currentTask?.cancel()
-        currentTask = nil
+        cancelOrders()
+        cancelDeposits()
     }
 
     // MARK: - Private
@@ -253,10 +321,10 @@ final class TransactionHistoryViewModel {
     /// 꺼내 쓴다 — 매번 `UpbitService()` 같은 fresh 인스턴스를 만들면 앱
     /// 시작 시 preload해 둔 Keychain 캐시를 재사용하지 못해 조회마다 로그인
     /// 프롬프트가 반복 뜬다.
-    private func targetServices() -> [any ExchangeService] {
+    private func targetServices(for exchange: Exchange?) -> [any ExchangeService] {
         let manager = ExchangeManager.shared
         let candidates: [Exchange]
-        if let selected = selectedExchange {
+        if let selected = exchange {
             candidates = manager.registeredExchanges.contains(selected) ? [selected] : []
         } else {
             candidates = manager.registeredExchanges
@@ -267,6 +335,7 @@ final class TransactionHistoryViewModel {
     /// 429(Too Many Requests) 에러 시 지수 백오프로 재시도합니다.
     /// 1초 → 2초 → 4초 대기 후 재시도, 최대 3회.
     private func requestWithRetry<T: Sendable>(
+        onRateLimit: @MainActor (String) -> Void,
         _ operation: @Sendable () async throws -> T
     ) async throws -> T {
         for attempt in 0...maxRetries {
@@ -277,7 +346,7 @@ final class TransactionHistoryViewModel {
                 if isRateLimited && attempt < maxRetries {
                     let delaySec = pow(2.0, Double(attempt)) // 1, 2, 4초
                     logger.warning("  ⏳ 429 속도 제한 — \(delaySec)초 후 재시도 (\(attempt + 1)/\(self.maxRetries))")
-                    progressMessage = "속도 제한 — \(Int(delaySec))초 대기중..."
+                    onRateLimit("속도 제한 — \(Int(delaySec))초 대기중...")
                     try await Task.sleep(nanoseconds: UInt64(delaySec * 1_000_000_000))
                     continue
                 }
@@ -347,6 +416,18 @@ final class TransactionHistoryViewModel {
         }
     }
 
+    /// 원화/코인 토글. 최소 하나는 항상 선택된 상태를 유지합니다.
+    func toggleDepositType(_ type: DepositType) {
+        switch type {
+        case .fiat:
+            if showFiat && !showCrypto { return }
+            showFiat.toggle()
+        case .crypto:
+            if showCrypto && !showFiat { return }
+            showCrypto.toggle()
+        }
+    }
+
     // MARK: - Export
 
     /// 현재 조회된 데이터를 .xlsx 파일로 내보냅니다.
@@ -360,7 +441,7 @@ final class TransactionHistoryViewModel {
                 data = try TransactionExporter.exportOrders(filteredOrders)
                 prefix = "CryptoTrack_체결내역"
             case .deposits:
-                data = try TransactionExporter.exportDeposits(deposits)
+                data = try TransactionExporter.exportDeposits(filteredDeposits)
                 prefix = "CryptoTrack_입금내역"
             }
 
@@ -371,7 +452,6 @@ final class TransactionHistoryViewModel {
             return url
         } catch {
             logger.error("엑셀 내보내기 실패: \(error)")
-            errorMessage = "내보내기에 실패했습니다: \(error.localizedDescription)"
             return nil
         }
     }
@@ -392,5 +472,15 @@ struct OrderSymbolSummary: Identifiable {
     let buyTotal: Double
     let sellAmount: Double
     let sellTotal: Double
+    let fee: Double
+}
+
+struct DepositSymbolSummary: Identifiable {
+    var id: String { symbol }
+    let symbol: String
+    let fiatAmount: Double
+    let fiatCount: Int
+    let cryptoAmount: Double
+    let cryptoCount: Int
     let fee: Double
 }

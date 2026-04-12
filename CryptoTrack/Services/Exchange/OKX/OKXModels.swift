@@ -171,6 +171,7 @@ extension OKXDepositRecord {
             id: "okx-\(depId)",
             symbol: ccy,
             amount: Double(amt) ?? 0,
+            fee: 0,
             type: .crypto,
             status: depositStatus,
             txId: txId,

@@ -168,6 +168,7 @@ extension BybitDepositRecord {
             id: "bybit-\(id)",
             symbol: coin,
             amount: Double(amount) ?? 0,
+            fee: 0,
             type: .crypto,
             status: depositStatus,
             txId: txID,

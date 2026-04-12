@@ -230,6 +230,7 @@ extension CoinoneDeposit {
             id: "coinone-\(transactionId)",
             symbol: symbol,
             amount: Double(amount) ?? 0,
+            fee: 0,
             type: depositType,
             status: depositStatus,
             txId: txid,

@@ -20,11 +20,11 @@ final class TransactionExporterTests: XCTestCase {
 
     func testExportDepositsGroupsByExchange() throws {
         let deposits = [
-            Deposit(id: "1", symbol: "BTC", amount: 1.0, type: .crypto,
-                    status: .completed, txId: "abc123",
+            Deposit(id: "1", symbol: "BTC", amount: 1.0, fee: 0.0005,
+                    type: .crypto, status: .completed, txId: "abc123",
                     exchange: .upbit, completedAt: Date()),
-            Deposit(id: "2", symbol: "KRW", amount: 1_000_000, type: .fiat,
-                    status: .completed, txId: nil,
+            Deposit(id: "2", symbol: "KRW", amount: 1_000_000, fee: 0,
+                    type: .fiat, status: .completed, txId: nil,
                     exchange: .bithumb, completedAt: Date()),
         ]
         let data = try TransactionExporter.exportDeposits(deposits)
