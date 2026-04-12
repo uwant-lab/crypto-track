@@ -64,23 +64,56 @@ struct BithumbKline: Decodable, Sendable {
 
 // MARK: - Order (GET /v1/orders)
 
-/// 빗썸 체결 완료 주문 응답 모델 (Upbit과 동일)
+/// 빗썸 주문 응답 모델 (GET /v1/orders, GET /v1/order)
 struct BithumbOrder: Decodable, Sendable {
     let uuid: String
     let side: String
     let market: String
+    let ordType: String?
+    let price: String?
     let avgPrice: String?
+    let volume: String?
     let executedVolume: String
+    let executedFunds: String?
     let paidFee: String
+    let tradesCount: Int?
     let createdAt: String
+    let trades: [BithumbTrade]?
 
     enum CodingKeys: String, CodingKey {
         case uuid
         case side
         case market
+        case ordType = "ord_type"
+        case price
         case avgPrice = "avg_price"
+        case volume
         case executedVolume = "executed_volume"
+        case executedFunds = "executed_funds"
         case paidFee = "paid_fee"
+        case tradesCount = "trades_count"
+        case createdAt = "created_at"
+        case trades
+    }
+}
+
+/// 빗썸 체결 상세 정보 (trades 배열 내 항목)
+struct BithumbTrade: Decodable, Sendable {
+    let market: String
+    let uuid: String
+    let price: String
+    let volume: String
+    let funds: String
+    let side: String
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case market
+        case uuid
+        case price
+        case volume
+        case funds
+        case side
         case createdAt = "created_at"
     }
 }
@@ -113,13 +146,14 @@ struct BithumbDeposit: Decodable, Sendable {
 extension BithumbAccount {
     /// 빗썸 계좌 응답을 공통 Asset 모델로 변환합니다.
     func toAsset() -> Asset {
-        let balanceValue = Double(balance) ?? 0
+        let balanceValue = (Double(balance) ?? 0) + (Double(locked) ?? 0)
         let avgPrice = Double(avgBuyPrice) ?? 0
         return Asset(
             id: "bithumb-\(currency)",
             symbol: currency,
             balance: balanceValue,
             averageBuyPrice: avgPrice,
+            avgBuyPriceModified: avgBuyPriceModified,
             exchange: .bithumb,
             lastUpdated: Date()
         )
@@ -169,25 +203,55 @@ extension BithumbOrder {
         // market 형식: "KRW-BTC" → symbol: "BTC"
         let symbol = market.split(separator: "-").last.map(String.init) ?? market
         let orderSide: OrderSide = (side == "bid") ? .buy : .sell
-        let price = Double(avgPrice ?? "0") ?? 0
-        let volume = Double(executedVolume) ?? 0
+        let execVolume = Double(executedVolume) ?? 0
         let fee = Double(paidFee) ?? 0
 
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let date = formatter.date(from: createdAt) ?? Date()
+        // 체결 금액: executed_funds → avg_price × volume → price × volume
+        let funds = Double(executedFunds ?? "") ?? 0
+        let avg = Double(avgPrice ?? "") ?? 0
+        let limitPrice = Double(price ?? "") ?? 0
+
+        let total: Double
+        let unitPrice: Double
+        if funds > 0 {
+            total = funds
+            unitPrice = execVolume > 0 ? funds / execVolume : avg
+        } else if avg > 0 {
+            unitPrice = avg
+            total = avg * execVolume
+        } else {
+            unitPrice = limitPrice
+            total = limitPrice * execVolume
+        }
+
+        // 체결 시각: trades 배열의 마지막 체결 시각 → 주문 생성 시각 폴백
+        let dateString = trades?.last?.createdAt ?? createdAt
+        let date = Self.parseDate(dateString)
 
         return Order(
             id: "bithumb-\(uuid)",
             symbol: symbol,
             side: orderSide,
-            price: price,
-            amount: volume,
-            totalValue: price * volume,
+            price: unitPrice,
+            amount: execVolume,
+            totalValue: total,
             fee: fee,
             exchange: .bithumb,
             executedAt: date
         )
+    }
+
+    /// ISO 8601 날짜 파싱 (fractional seconds 유무 모두 처리)
+    private static func parseDate(_ string: String) -> Date {
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFrac.date(from: string) { return date }
+
+        let withoutFrac = ISO8601DateFormatter()
+        withoutFrac.formatOptions = [.withInternetDateTime]
+        if let date = withoutFrac.date(from: string) { return date }
+
+        return Date()
     }
 }
 
