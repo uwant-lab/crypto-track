@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		XLSX0004A1B2C3D4E5F6A7B8 /* XLSXWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = XLSX0001A1B2C3D4E5F6A7B8 /* XLSXWriter.swift */; };
+		XLSX0005A1B2C3D4E5F6A7B8 /* XLSXWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = XLSX0001A1B2C3D4E5F6A7B8 /* XLSXWriter.swift */; };
+		XLSX0006A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = XLSX0002A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift */; };
+		XLSX0007A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = XLSX0002A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift */; };
 		00DFECF5401AE90285BE83D6 /* Deposit.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0238E405DEDB6D9FAEAE881 /* Deposit.swift */; };
 		B2C3D4E5F6A7B8C9D0E1F2A1 /* DonutChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* DonutChartView.swift */; };
 		C3D4E5F6A7B8C9D0E1F2A1B2 /* DonutChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* DonutChartView.swift */; };
@@ -325,6 +329,8 @@
 		ED6E2B632B4DF17045B1451D /* IndicatorOverlayCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorOverlayCanvas.swift; sourceTree = "<group>"; };
 		EDD0401607BBB70624C4C581 /* PortfolioAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioAggregator.swift; sourceTree = "<group>"; };
 		EE92905CC6A894C1C5D85684 /* CryptoTrackApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoTrackApp.swift; sourceTree = "<group>"; };
+		XLSX0001A1B2C3D4E5F6A7B8 /* XLSXWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XLSXWriter.swift; sourceTree = "<group>"; };
+		XLSX0002A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XLSXWriterTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -357,11 +363,20 @@
 				EDD0401607BBB70624C4C581 /* PortfolioAggregator.swift */,
 				29C061CA72900C2345DD1AD4 /* Auth */,
 				51F27B882986CCFB52362A83 /* Exchange */,
+				XLSX0003A1B2C3D4E5F6A7B8 /* Export */,
 				9003A6CA121A071231AAB49E /* Keychain */,
 				389D73B788C4E2721E800C95 /* Settings */,
 				EA44F9FC418B960B7D6E9F7B /* Sync */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		XLSX0003A1B2C3D4E5F6A7B8 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				XLSX0001A1B2C3D4E5F6A7B8 /* XLSXWriter.swift */,
+			);
+			path = Export;
 			sourceTree = "<group>";
 		};
 		1994F1769C36FD809D61F4D5 /* Products */ = {
@@ -609,6 +624,7 @@
 				347A014BCB1363317FFA3468 /* KeychainServiceTests.swift */,
 				4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */,
 				60D81378C7CBEDE06ABE702D /* PortfolioAggregatorTests.swift */,
+				XLSX0002A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift */,
 			);
 			path = CryptoTrackTests;
 			sourceTree = "<group>";
@@ -882,6 +898,7 @@
 				8F9127AA55E3231BCE5F897B /* UpbitService.swift in Sources */,
 				5B55CD0CFC63A1DFA13EA416 /* ViewModifiers.swift in Sources */,
 				2D6EAD059902F121E1197C59 /* VolumeBarCanvas.swift in Sources */,
+				XLSX0004A1B2C3D4E5F6A7B8 /* XLSXWriter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -895,6 +912,7 @@
 				3545122DD543B52CE0C4060E /* KeychainServiceTests.swift in Sources */,
 				E1E072307C92DD67D053808C /* ModelTests.swift in Sources */,
 				A48C386BADB55E78F653E789 /* PortfolioAggregatorTests.swift in Sources */,
+				XLSX0007A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -908,6 +926,7 @@
 				D9A485C2F2B2E7F23EBD8EE1 /* KeychainServiceTests.swift in Sources */,
 				C571460A82C1A8A8559A4FD7 /* ModelTests.swift in Sources */,
 				EBEDA28E452E0AEC2BE74DE8 /* PortfolioAggregatorTests.swift in Sources */,
+				XLSX0006A1B2C3D4E5F6A7B8 /* XLSXWriterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1005,6 +1024,7 @@
 				A9CDD485BC0B104FD906A05D /* UpbitService.swift in Sources */,
 				3DD4706ED1DEE53EC9680019 /* ViewModifiers.swift in Sources */,
 				8223A42ABDACB908D27E11A7 /* VolumeBarCanvas.swift in Sources */,
+				XLSX0005A1B2C3D4E5F6A7B8 /* XLSXWriter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
