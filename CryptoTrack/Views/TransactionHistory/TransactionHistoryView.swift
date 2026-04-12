@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TransactionHistoryView: View {
     @State private var viewModel = TransactionHistoryViewModel()
@@ -19,6 +20,17 @@ struct TransactionHistoryView: View {
                 tabContent
             }
             .navigationTitle("거래 내역")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        exportToFile()
+                    } label: {
+                        Label("엑셀로 내보내기", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(viewModel.isLoading || !hasData)
+                    .help("현재 조회된 데이터를 엑셀 파일로 내보냅니다")
+                }
+            }
         }
     }
 
@@ -79,6 +91,13 @@ struct TransactionHistoryView: View {
         }
     }
 
+    private var hasData: Bool {
+        switch viewModel.selectedTab {
+        case .orders: return !viewModel.filteredOrders.isEmpty
+        case .deposits: return !viewModel.deposits.isEmpty
+        }
+    }
+
     // MARK: - Tab Content
 
     @ViewBuilder
@@ -111,6 +130,28 @@ struct TransactionHistoryView: View {
                 progressMessage: viewModel.progressMessage,
                 errorMessage: viewModel.errorMessage
             )
+        }
+    }
+    private func exportToFile() {
+        guard let tempURL = viewModel.exportToExcel() else { return }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.init(filenameExtension: "xlsx")!]
+        panel.nameFieldStringValue = tempURL.lastPathComponent
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let destURL = panel.url else {
+            try? FileManager.default.removeItem(at: tempURL)
+            return
+        }
+
+        do {
+            if FileManager.default.fileExists(atPath: destURL.path) {
+                try FileManager.default.removeItem(at: destURL)
+            }
+            try FileManager.default.moveItem(at: tempURL, to: destURL)
+        } catch {
+            viewModel.errorMessage = "파일 저장에 실패했습니다: \(error.localizedDescription)"
         }
     }
 }
