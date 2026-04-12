@@ -137,6 +137,8 @@ final class OKXService: ExchangeService {
         }
     }
 
+    var maxQueryRangeDays: Int? { 89 }
+
     /// 체결 완료된 주문 내역을 조회합니다.
     /// OKX API: GET /api/v5/trade/fills-history (커서 기반 페이지네이션)
     func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {

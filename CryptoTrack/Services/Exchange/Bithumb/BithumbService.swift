@@ -1,5 +1,8 @@
 import Foundation
 import CryptoKit
+import os
+
+private let logger = Logger(subsystem: "com.cryptotrack", category: "Bithumb")
 
 // MARK: - Bithumb Service
 
@@ -237,9 +240,10 @@ final class BithumbService: ExchangeService, Sendable {
             throw BithumbServiceError.invalidURL
         }
 
+        let apiPage = page + 1
         let queryItems = [
             URLQueryItem(name: "state", value: "done"),
-            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "page", value: "\(apiPage)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order_by", value: "desc")
         ]
@@ -265,7 +269,7 @@ final class BithumbService: ExchangeService, Sendable {
         let data: Data
         do {
             let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
+            try validateHTTPResponse(response, data: responseData)
             data = responseData
         } catch let error as BithumbServiceError {
             throw error
@@ -274,14 +278,11 @@ final class BithumbService: ExchangeService, Sendable {
         }
 
         do {
-            let orders = try JSONDecoder().decode([BithumbOrder].self, from: data)
-            // 기간 필터링
-            let filtered = orders.compactMap { order -> Order? in
-                let mapped = order.toOrder()
-                guard mapped.executedAt >= from && mapped.executedAt <= to else { return nil }
-                return mapped
-            }
-            let hasMore = orders.count == limit
+            let rawOrders = try JSONDecoder().decode([BithumbOrder].self, from: data)
+            let mapped = rawOrders.map { $0.toOrder() }
+            let filtered = mapped.filter { $0.executedAt >= from && $0.executedAt <= to }
+            let passedRange = mapped.last.map { $0.executedAt < from } ?? false
+            let hasMore = rawOrders.count == limit && !passedRange
             return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw BithumbServiceError.decodingFailed(error)
@@ -297,8 +298,9 @@ final class BithumbService: ExchangeService, Sendable {
             throw BithumbServiceError.invalidURL
         }
 
+        let apiPage = page + 1
         let queryItems = [
-            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "page", value: "\(apiPage)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "order_by", value: "desc")
         ]
@@ -324,7 +326,7 @@ final class BithumbService: ExchangeService, Sendable {
         let data: Data
         do {
             let (responseData, response) = try await session.data(for: request)
-            try validateHTTPResponse(response)
+            try validateHTTPResponse(response, data: responseData)
             data = responseData
         } catch let error as BithumbServiceError {
             throw error
@@ -333,14 +335,11 @@ final class BithumbService: ExchangeService, Sendable {
         }
 
         do {
-            let deposits = try JSONDecoder().decode([BithumbDeposit].self, from: data)
-            // 기간 필터링
-            let filtered = deposits.compactMap { deposit -> Deposit? in
-                let mapped = deposit.toDeposit()
-                guard mapped.completedAt >= from && mapped.completedAt <= to else { return nil }
-                return mapped
-            }
-            let hasMore = deposits.count == limit
+            let rawDeposits = try JSONDecoder().decode([BithumbDeposit].self, from: data)
+            let mapped = rawDeposits.map { $0.toDeposit() }
+            let filtered = mapped.filter { $0.completedAt >= from && $0.completedAt <= to }
+            let passedRange = mapped.last.map { $0.completedAt < from } ?? false
+            let hasMore = rawDeposits.count == limit && !passedRange
             return PagedResult(items: filtered, hasMore: hasMore, progress: nil)
         } catch {
             throw BithumbServiceError.decodingFailed(error)
@@ -349,11 +348,14 @@ final class BithumbService: ExchangeService, Sendable {
 
     // MARK: - Private Helpers
 
-    private func validateHTTPResponse(_ response: URLResponse) throws {
+    private func validateHTTPResponse(_ response: URLResponse, data: Data? = nil) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw BithumbServiceError.invalidResponse
         }
         guard (200..<300).contains(httpResponse.statusCode) else {
+            if let data, let body = String(data: data, encoding: .utf8) {
+                logger.error("HTTP \(httpResponse.statusCode) — \(body)")
+            }
             throw BithumbServiceError.httpError(httpResponse.statusCode)
         }
     }

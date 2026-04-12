@@ -124,6 +124,8 @@ final class BinanceService: ExchangeService {
         }
     }
 
+    var maxQueryRangeDays: Int? { 89 }
+
     /// 체결 완료된 주문 내역을 조회합니다.
     /// Binance API: GET /api/v3/myTrades (심볼별 조회 필요)
     /// page는 현재 심볼 인덱스로 사용됩니다.

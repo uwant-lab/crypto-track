@@ -140,6 +140,8 @@ final class BybitService: ExchangeService {
         return true
     }
 
+    var maxQueryRangeDays: Int? { 179 }
+
     /// 체결 완료된 주문 내역을 조회합니다.
     /// Bybit API: GET /v5/execution/list (커서 기반 페이지네이션)
     func fetchOrders(from: Date, to: Date, page: Int) async throws -> PagedResult<Order> {
