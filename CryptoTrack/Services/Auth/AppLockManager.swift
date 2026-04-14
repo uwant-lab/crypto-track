@@ -7,66 +7,83 @@ final class AppLockManager {
     static let shared = AppLockManager()
 
     var isLocked: Bool = false
-    var isAppLockEnabled: Bool {
+    private(set) var isPINSet: Bool = false
+
+    var isBiometricEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(isAppLockEnabled, forKey: Self.appLockEnabledKey)
-            isLocked = isAppLockEnabled
-            // iCloud에 설정 동기화
-            let settings = AppSettings(isAppLockEnabled: isAppLockEnabled, lastSyncDate: Date())
+            UserDefaults.standard.set(isBiometricEnabled, forKey: Self.biometricEnabledKey)
+            let settings = AppSettings(isBiometricEnabled: isBiometricEnabled, lastSyncDate: Date())
             CloudSyncService.shared.syncSettings(settings)
         }
     }
 
-    private static let appLockEnabledKey = "appLockEnabled"
+    private static let biometricEnabledKey = "biometricEnabled"
     private let authService = BiometricAuthService.shared
+    private let pinService = PINService.shared
 
     private init() {
-        self.isAppLockEnabled = UserDefaults.standard.bool(forKey: Self.appLockEnabledKey)
-        if isAppLockEnabled {
+        self.isBiometricEnabled = UserDefaults.standard.bool(forKey: Self.biometricEnabledKey)
+        self.isPINSet = pinService.isPINSet
+        if isPINSet {
             self.isLocked = true
         }
         syncFromCloud()
     }
 
-    // MARK: - Cloud Sync
+    // MARK: - PIN State
 
-    /// iCloud에서 앱 잠금 설정을 가져와 로컬 상태를 업데이트합니다.
-    func syncFromCloud() {
-        guard let settings = CloudSyncService.shared.loadSettings() else { return }
-        let cloudValue = settings.isAppLockEnabled
-        guard cloudValue != isAppLockEnabled else { return }
-        isAppLockEnabled = cloudValue
-        UserDefaults.standard.set(isAppLockEnabled, forKey: Self.appLockEnabledKey)
+    /// PINService의 상태를 읽어 isPINSet을 갱신합니다.
+    /// PIN 설정/변경/해제 후 호출해야 SwiftUI가 변경을 감지합니다.
+    func refreshPINState() {
+        isPINSet = pinService.isPINSet
     }
 
-    func unlock() async {
-        guard isAppLockEnabled else {
-            isLocked = false
-            return
-        }
+    // MARK: - Cloud Sync
+
+    func syncFromCloud() {
+        guard let settings = CloudSyncService.shared.loadSettings() else { return }
+        let cloudValue = settings.isBiometricEnabled
+        guard cloudValue != isBiometricEnabled else { return }
+        isBiometricEnabled = cloudValue
+        UserDefaults.standard.set(isBiometricEnabled, forKey: Self.biometricEnabledKey)
+    }
+
+    // MARK: - Unlock
+
+    /// PIN으로 잠금 해제를 시도합니다. 성공하면 true를 반환합니다.
+    func unlockWithPIN(_ pin: String) -> Bool {
+        guard pinService.verifyPIN(pin) else { return false }
+        performUnlock()
+        return true
+    }
+
+    /// 생체인증으로 잠금 해제를 시도합니다. 성공하면 true를 반환합니다.
+    func unlockWithBiometrics() async -> Bool {
+        guard isBiometricEnabled, authService.canUseBiometrics() else { return false }
         do {
             let success = try await authService.authenticate()
             if success {
-                isLocked = false
-                // 잠금 해제 후 등록된 거래소의 API 키를 일괄 preload한다.
-                // 이후 대시보드 refresh는 캐시에서 바로 응답돼 키체인 프롬프트가
-                // 발생하지 않는다.
-                ExchangeManager.shared.preloadKeychainCache()
+                performUnlock()
+                return true
             }
+            return false
         } catch {
-            // Authentication failed or was cancelled — remain locked
+            return false
         }
     }
 
+    // MARK: - Lock
+
     func lock() {
-        guard isAppLockEnabled else { return }
+        guard isPINSet else { return }
         isLocked = true
-        // 앱이 잠기면 메모리 캐시도 비워 민감 정보가 RAM에 머무르지 않게 한다.
-        // Keychain 자체는 그대로 유지된다.
         KeychainService.shared.invalidateCache()
     }
 
-    func toggleAppLock() {
-        isAppLockEnabled.toggle()
+    // MARK: - Private
+
+    private func performUnlock() {
+        isLocked = false
+        ExchangeManager.shared.preloadKeychainCache()
     }
 }
