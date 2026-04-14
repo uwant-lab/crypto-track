@@ -1,4 +1,3 @@
-// CryptoTrack/Views/Auth/PINInputView.swift
 import SwiftUI
 
 enum PINFlowMode: Hashable {
@@ -96,19 +95,23 @@ struct PINInputView: View {
         case (.change, .enterNew): "새로운 PIN을 입력하세요"
         case (.change, .confirm): "PIN을 다시 입력하세요"
         case (.remove, .initial): "현재 PIN을 입력하세요"
-        default: ""
+        default:
+            assertionFailure("Unexpected (mode, step): \(mode), \(step)")
+            return ""
         }
     }
 
     private var subtitleText: String {
         switch (mode, step) {
-        case (.setup, .initial): "4자리 숫자"
+        case (.setup, .initial): "4자리 숫자를 입력해주세요"
         case (.setup, .confirm): "확인을 위해 한 번 더 입력해주세요"
         case (.change, .initial): "변경을 위해 현재 PIN을 입력해주세요"
-        case (.change, .enterNew): "4자리 숫자"
+        case (.change, .enterNew): "4자리 숫자를 입력해주세요"
         case (.change, .confirm): "확인을 위해 한 번 더 입력해주세요"
         case (.remove, .initial): "해제를 위해 현재 PIN을 입력해주세요"
-        default: ""
+        default:
+            assertionFailure("Unexpected (mode, step): \(mode), \(step)")
+            return ""
         }
     }
 
@@ -127,10 +130,11 @@ struct PINInputView: View {
     private func handleNumberInput(_ number: Int) {
         guard pin.count < pinLength else { return }
         withAnimation { errorMessage = nil }
-        pin += "\(number)"
+        pin += String(number)
 
         if pin.count == pinLength {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(150))
                 processPIN()
             }
         }
@@ -186,6 +190,7 @@ struct PINInputView: View {
             if pinService.verifyPIN(pin) {
                 do {
                     try pinService.deletePIN()
+                    resetFlow()
                     onComplete()
                 } catch {
                     alertMessage = "PIN 해제에 실패했습니다. 다시 시도해주세요."
@@ -197,13 +202,14 @@ struct PINInputView: View {
             }
 
         default:
-            break
+            assertionFailure("Unexpected (mode, step): \(mode), \(step)")
         }
     }
 
     private func savePIN(_ value: String) {
         do {
             try pinService.setPIN(value)
+            resetFlow()
             onComplete()
         } catch {
             let action = mode == .setup ? "설정" : "변경"
@@ -219,7 +225,8 @@ struct PINInputView: View {
         withAnimation(.default.speed(6).repeatCount(4, autoreverses: true)) {
             shakeOffset = 8
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
             withAnimation { shakeOffset = 0 }
         }
     }
@@ -229,5 +236,25 @@ struct PINInputView: View {
         newPIN = ""
         step = .initial
         errorMessage = nil
+    }
+}
+
+// MARK: - Preview
+
+#Preview("PIN 설정") {
+    NavigationStack {
+        PINInputView(mode: .setup, onComplete: {})
+    }
+}
+
+#Preview("PIN 변경") {
+    NavigationStack {
+        PINInputView(mode: .change, onComplete: {})
+    }
+}
+
+#Preview("PIN 해제") {
+    NavigationStack {
+        PINInputView(mode: .remove, onComplete: {})
     }
 }
