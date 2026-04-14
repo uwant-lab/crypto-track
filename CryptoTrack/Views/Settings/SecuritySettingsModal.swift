@@ -1,8 +1,11 @@
 import SwiftUI
 
+/// 보안 설정 전용 모달 — PIN 설정/변경/해제 및 생체인증 토글을 관리합니다.
 struct SecuritySettingsModal: View {
     @State private var lockManager = AppLockManager.shared
     @State private var navigationPath = NavigationPath()
+    @State private var canUseBiometrics: Bool = false
+    @State private var biometricTypeRawValue: String = ""
     @Environment(\.dismiss) private var dismiss
 
     private let authService = BiometricAuthService.shared
@@ -21,15 +24,16 @@ struct SecuritySettingsModal: View {
                 }
                 .navigationDestination(for: PINFlowMode.self) { mode in
                     PINInputView(mode: mode) {
-                        navigationPath = NavigationPath()
                         lockManager.refreshPINState()
-                        if mode == .remove {
-                            lockManager.isBiometricEnabled = false
-                        }
+                        navigationPath = NavigationPath()
                     }
                 }
         }
-        .frame(idealWidth: 420, idealHeight: 500)
+        .frame(minWidth: 380, idealWidth: 420, minHeight: 460, idealHeight: 500)
+        .task {
+            canUseBiometrics = authService.canUseBiometrics()
+            biometricTypeRawValue = authService.biometricType.rawValue
+        }
     }
 
     // MARK: - Content
@@ -40,9 +44,6 @@ struct SecuritySettingsModal: View {
             convenienceSection
             if lockManager.isPINSet {
                 dangerZoneSection
-            }
-            Section {} footer: {
-                Text("앱이 백그라운드로 전환되면 자동으로 잠깁니다.")
             }
         }
     }
@@ -113,7 +114,7 @@ struct SecuritySettingsModal: View {
 
     private var convenienceSection: some View {
         Section {
-            if lockManager.isPINSet && authService.canUseBiometrics() {
+            if lockManager.isPINSet && canUseBiometrics {
                 Toggle(isOn: Binding(
                     get: { lockManager.isBiometricEnabled },
                     set: { lockManager.isBiometricEnabled = $0 }
@@ -122,7 +123,7 @@ struct SecuritySettingsModal: View {
                         Image(systemName: biometricIcon)
                             .foregroundStyle(.blue)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(authService.biometricType.rawValue)로 잠금 해제")
+                            Text("\(biometricTypeRawValue)로 잠금 해제")
                                 .font(.body)
                             Text("PIN 대신 생체인증으로 빠르게 해제")
                                 .font(.caption)
@@ -155,6 +156,8 @@ struct SecuritySettingsModal: View {
             }
         } header: {
             Text("편의 기능")
+        } footer: {
+            Text("앱이 백그라운드로 전환되면 자동으로 잠깁니다.")
         }
     }
 
@@ -200,5 +203,8 @@ struct SecuritySettingsModal: View {
 }
 
 #Preview {
-    SecuritySettingsModal()
+    Text("보안 설정 열기")
+        .sheet(isPresented: .constant(true)) {
+            SecuritySettingsModal()
+        }
 }

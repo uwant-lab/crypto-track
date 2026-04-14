@@ -89,12 +89,12 @@ struct PINInputView: View {
 
     private var instructionText: String {
         switch (mode, step) {
-        case (.setup, .initial): "새로운 PIN을 입력하세요"
-        case (.setup, .confirm): "PIN을 다시 입력하세요"
-        case (.change, .initial): "현재 PIN을 입력하세요"
-        case (.change, .enterNew): "새로운 PIN을 입력하세요"
-        case (.change, .confirm): "PIN을 다시 입력하세요"
-        case (.remove, .initial): "현재 PIN을 입력하세요"
+        case (.setup, .initial): return "새로운 PIN을 입력하세요"
+        case (.setup, .confirm): return "PIN을 다시 입력하세요"
+        case (.change, .initial): return "현재 PIN을 입력하세요"
+        case (.change, .enterNew): return "새로운 PIN을 입력하세요"
+        case (.change, .confirm): return "PIN을 다시 입력하세요"
+        case (.remove, .initial): return "현재 PIN을 입력하세요"
         default:
             assertionFailure("Unexpected (mode, step): \(mode), \(step)")
             return ""
@@ -103,12 +103,12 @@ struct PINInputView: View {
 
     private var subtitleText: String {
         switch (mode, step) {
-        case (.setup, .initial): "4자리 숫자를 입력해주세요"
-        case (.setup, .confirm): "확인을 위해 한 번 더 입력해주세요"
-        case (.change, .initial): "변경을 위해 현재 PIN을 입력해주세요"
-        case (.change, .enterNew): "4자리 숫자를 입력해주세요"
-        case (.change, .confirm): "확인을 위해 한 번 더 입력해주세요"
-        case (.remove, .initial): "해제를 위해 현재 PIN을 입력해주세요"
+        case (.setup, .initial): return "4자리 숫자를 입력해주세요"
+        case (.setup, .confirm): return "확인을 위해 한 번 더 입력해주세요"
+        case (.change, .initial): return "변경을 위해 현재 PIN을 입력해주세요"
+        case (.change, .enterNew): return "4자리 숫자를 입력해주세요"
+        case (.change, .confirm): return "확인을 위해 한 번 더 입력해주세요"
+        case (.remove, .initial): return "해제를 위해 현재 PIN을 입력해주세요"
         default:
             assertionFailure("Unexpected (mode, step): \(mode), \(step)")
             return ""

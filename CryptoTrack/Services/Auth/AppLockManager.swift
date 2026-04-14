@@ -34,8 +34,12 @@ final class AppLockManager {
 
     /// PINService의 상태를 읽어 isPINSet을 갱신합니다.
     /// PIN 설정/변경/해제 후 호출해야 SwiftUI가 변경을 감지합니다.
+    /// PIN이 해제된 경우 생체인증도 자동으로 비활성화합니다.
     func refreshPINState() {
         isPINSet = pinService.isPINSet
+        if !isPINSet {
+            isBiometricEnabled = false
+        }
     }
 
     // MARK: - Cloud Sync
