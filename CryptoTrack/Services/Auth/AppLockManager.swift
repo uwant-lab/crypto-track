@@ -12,7 +12,10 @@ final class AppLockManager {
     var isBiometricEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isBiometricEnabled, forKey: Self.biometricEnabledKey)
-            let settings = AppSettings(isBiometricEnabled: isBiometricEnabled, lastSyncDate: Date())
+            // 기존 설정을 읽어 isBiometricEnabled만 갱신 — priceColorMode 등 다른 필드 보존
+            var settings = CloudSyncService.shared.loadSettings() ?? AppSettings()
+            settings.isBiometricEnabled = isBiometricEnabled
+            settings.lastSyncDate = Date()
             CloudSyncService.shared.syncSettings(settings)
         }
     }

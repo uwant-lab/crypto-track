@@ -235,7 +235,7 @@ final class ExchangeManager {
     }
 
     /// 등록된 모든 거래소의 Keychain 아이템을 한 번에 읽어 캐시에 적재합니다.
-    /// `AppLockManager.unlock()` 성공 이후에도 호출해 잠금 해제 후 첫 refresh가
+    /// `AppLockManager.unlockWithPIN()` / `unlockWithBiometrics()` 성공 이후에도 호출해 잠금 해제 후 첫 refresh가
     /// 프롬프트 없이 돌아가도록 합니다.
     func preloadKeychainCache() {
         for exchange in registeredExchanges {
