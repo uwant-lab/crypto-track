@@ -87,7 +87,7 @@
 
 ### PIN 입력 화면 (PINInputView)
 
-보안 모달 위에 NavigationStack으로 push되는 화면. 320px 너비.
+보안 모달 내부의 NavigationStack에서 push되는 화면. 모달 콘텐츠가 PIN 입력 화면으로 전환되며, 뒤로가기로 보안 설정 목록으로 복귀한다. 320px 너비.
 
 **구성 요소:**
 - 뒤로가기 버튼 + 제목
@@ -129,11 +129,15 @@
 | `isPINSet` | computed `Bool` | Keychain 조회 | PIN 설정 여부 |
 | `isBiometricEnabled` | `Bool` | UserDefaults | 생체인증 사용 여부 |
 
-기존 `isAppLockEnabled`는 `isPINSet`으로 대체한다. PIN이 설정되면 앱 잠금이 활성화된 것이며, PIN을 해제하면 앱 잠금도 해제된다.
+기존 `isAppLockEnabled`는 `isPINSet`으로 대체한다. PIN이 설정되면 앱 잠금이 활성화된 것이며, PIN을 해제하면 앱 잠금도 해제된다. `isPINSet`은 KeychainService의 캐시를 통해 조회하므로 매번 Keychain I/O가 발생하지 않는다.
 
-### AppSettings 모델 확장
+**마이그레이션:** 기존 `isAppLockEnabled` UserDefaults 키와 `AppSettings.isAppLockEnabled` 필드는 제거한다. PIN 존재 여부가 곧 앱 잠금 활성화 상태이므로 별도 플래그가 불필요하다.
 
-`isBiometricEnabled` 필드를 추가하여 iCloud 동기화를 지원한다. PIN 해시 자체는 동기화하지 않는다 (디바이스별 Keychain에만 저장).
+### AppSettings 모델 변경
+
+- `isAppLockEnabled` 필드 제거 (PIN 존재 여부로 대체)
+- `isBiometricEnabled` 필드 추가
+- iCloud 동기화는 `isBiometricEnabled`만 대상. PIN 해시는 동기화하지 않는다 (디바이스별 Keychain에만 저장).
 
 ## 에러 처리
 
