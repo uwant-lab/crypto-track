@@ -56,6 +56,8 @@
 		441B1056B75F5E7233770C6B /* LockScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDAEBAF23818CADBF19CE59 /* LockScreenView.swift */; };
 		A2B3C4D5E6F7081929304A5B /* PINPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5067182930A4B5C /* PINPadView.swift */; };
 		C3D4E5F6071829304A5B6C7D /* PINPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5067182930A4B5C /* PINPadView.swift */; };
+		D4E5F6071829304A5B6C7D8E /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F6071829304A5B6C7D8E9F /* PINInputView.swift */; };
+		F6071829304A5B6C7D8E9FA0 /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F6071829304A5B6C7D8E9F /* PINInputView.swift */; };
 		45DED8CE4C279202AE79DCF1 /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809FB31723C5AD62E650CB0 /* AppLockManager.swift */; };
 		46B48F5D33D0CAE3C97108CE /* last-tool-error.json in Resources */ = {isa = PBXBuildFile; fileRef = BD65983A177A63B3FC1C9582 /* last-tool-error.json */; };
 		46D0931E743893778DE89C8E /* ExchangeSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB11900502BD1E82CF55967D /* ExchangeSetupView.swift */; };
@@ -286,6 +288,7 @@
 		4EBBEA14CC4DD7124768EC12 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		4EDAEBAF23818CADBF19CE59 /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5067182930A4B5C /* PINPadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINPadView.swift; sourceTree = "<group>"; };
+		E5F6071829304A5B6C7D8E9F /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
 		4EDB7112A2E3301111993033 /* ExchangeBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeBadge.swift; sourceTree = "<group>"; };
 		4EE5DD232B80F0DC9AA2D98C /* BybitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BybitService.swift; sourceTree = "<group>"; };
 		525038E39BE977B2E2F01350 /* settings.local.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = settings.local.json; sourceTree = "<group>"; };
