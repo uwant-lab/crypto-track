@@ -1,7 +1,7 @@
 import Foundation
 import CryptoKit
 
-final class PINService: @unchecked Sendable {
+final class PINService: Sendable {
     static let shared = PINService()
 
     private let keychain = KeychainService.shared
@@ -11,15 +11,18 @@ final class PINService: @unchecked Sendable {
 
     private init() {}
 
-    /// PIN이 설정되어 있는지 확인합니다. KeychainService 캐시를 통해 조회합니다.
+    /// 저장된 PIN이 있으면 true를 반환합니다.
     var isPINSet: Bool {
         (try? keychain.read(key: Self.hashKey, account: Self.account)) != nil
     }
 
     /// 새 PIN을 해싱하여 Keychain에 저장합니다.
+    /// 기존 PIN 데이터를 먼저 제거하여 부분 쓰기 상태를 방지합니다.
     func setPIN(_ pin: String) throws {
         let salt = generateSalt()
         let hash = hashPIN(pin, salt: salt)
+        try? keychain.delete(key: Self.hashKey, account: Self.account)
+        try? keychain.delete(key: Self.saltKey, account: Self.account)
         try keychain.save(key: Self.saltKey, value: salt, account: Self.account)
         try keychain.save(key: Self.hashKey, value: hash, account: Self.account)
     }
