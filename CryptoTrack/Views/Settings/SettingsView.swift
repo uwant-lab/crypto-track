@@ -117,7 +117,7 @@ private struct ExchangeRowView: View {
 // MARK: - Security Section (Modal Trigger)
 
 private struct SecuritySettingsTriggerView: View {
-    var lockManager: AppLockManager
+    let lockManager: AppLockManager
     @State private var showModal = false
 
     var body: some View {
@@ -143,15 +143,15 @@ private struct SecuritySettingsTriggerView: View {
                 }
             }
             .buttonStyle(.plain)
-            .sheet(isPresented: $showModal) {
-                SecuritySettingsModal()
-            }
         } header: {
             Text("보안")
         } footer: {
             if lockManager.isPINSet {
                 Text("앱이 백그라운드로 이동하면 자동으로 잠깁니다.")
             }
+        }
+        .sheet(isPresented: $showModal) {
+            SecuritySettingsModal()
         }
     }
 }
