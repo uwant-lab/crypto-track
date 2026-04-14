@@ -45,7 +45,6 @@ final class AppLockManager {
         let cloudValue = settings.isBiometricEnabled
         guard cloudValue != isBiometricEnabled else { return }
         isBiometricEnabled = cloudValue
-        UserDefaults.standard.set(isBiometricEnabled, forKey: Self.biometricEnabledKey)
     }
 
     // MARK: - Unlock
