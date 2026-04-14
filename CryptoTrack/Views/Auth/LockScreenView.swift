@@ -6,6 +6,7 @@ struct LockScreenView: View {
     @State private var errorMessage: String?
     @State private var shakeOffset: CGFloat = 0
     @State private var isAuthenticating = false
+    @State private var biometricAttempted = false
 
     private let authService = BiometricAuthService.shared
     private let pinLength = 4
@@ -67,9 +68,11 @@ struct LockScreenView: View {
             .padding(.horizontal, 40)
         }
         .task {
-            if lockManager.isBiometricEnabled && authService.canUseBiometrics() {
-                await attemptBiometric()
-            }
+            guard !biometricAttempted,
+                  lockManager.isBiometricEnabled,
+                  authService.canUseBiometrics() else { return }
+            biometricAttempted = true
+            await attemptBiometric()
         }
     }
 
@@ -102,9 +105,10 @@ struct LockScreenView: View {
         pin += String(number)
 
         if pin.count == pinLength {
+            let capturedPIN = pin
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(150))
-                verifyPIN()
+                verifyPIN(capturedPIN)
             }
         }
     }
@@ -117,8 +121,8 @@ struct LockScreenView: View {
 
     // MARK: - Auth
 
-    private func verifyPIN() {
-        if lockManager.unlockWithPIN(pin) {
+    private func verifyPIN(_ pinToCheck: String) {
+        if lockManager.unlockWithPIN(pinToCheck) {
             // 성공 — AppLockManager가 isLocked = false 처리
         } else {
             pin = ""
