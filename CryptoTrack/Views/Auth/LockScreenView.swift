@@ -2,28 +2,74 @@ import SwiftUI
 
 struct LockScreenView: View {
     @State private var lockManager = AppLockManager.shared
-    @State private var errorMessage: String? = nil
+    @State private var pin: String = ""
+    @State private var errorMessage: String?
+    @State private var shakeOffset: CGFloat = 0
     @State private var isAuthenticating = false
+
+    private let authService = BiometricAuthService.shared
+    private let pinLength = 4
 
     var body: some View {
         ZStack {
             AppColor.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 32) {
+            VStack(spacing: 0) {
                 Spacer()
 
                 appIconSection
+                    .padding(.bottom, 24)
 
-                appNameSection
+                Text("PIN을 입력하세요")
+                    .font(.headline)
+                    .padding(.bottom, 24)
+
+                PINDotsView(
+                    enteredCount: pin.count,
+                    totalDigits: pinLength,
+                    isError: errorMessage != nil
+                )
+                .offset(x: shakeOffset)
+                .padding(.bottom, 8)
+
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .transition(.opacity)
+                }
 
                 Spacer()
 
-                unlockSection
+                PINPadView(
+                    onNumberTap: { handleNumberInput($0) },
+                    onDeleteTap: { handleDelete() }
+                )
+
+                if lockManager.isBiometricEnabled && authService.canUseBiometrics() {
+                    Button {
+                        Task { await attemptBiometric() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: biometricIcon)
+                            Text("\(authService.biometricType.rawValue)로 해제")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
+                    }
+                    .disabled(isAuthenticating)
+                    .padding(.top, 20)
+                }
 
                 Spacer()
             }
             .padding(.horizontal, 40)
+        }
+        .task {
+            if lockManager.isBiometricEnabled && authService.canUseBiometrics() {
+                await attemptBiometric()
+            }
         }
     }
 
@@ -39,91 +85,65 @@ struct LockScreenView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 100, height: 100)
+                .frame(width: 80, height: 80)
 
             Image(systemName: "bitcoinsign.circle.fill")
-                .font(.system(size: 52))
+                .font(.system(size: 40))
                 .foregroundStyle(.white)
         }
         .shadow(color: .blue.opacity(0.3), radius: 16, x: 0, y: 8)
     }
 
-    private var appNameSection: some View {
-        VStack(spacing: 8) {
-            Text("CryptoTrack")
-                .font(.title.bold())
+    // MARK: - Input
 
-            Text("계속하려면 잠금을 해제하세요")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    private func handleNumberInput(_ number: Int) {
+        guard pin.count < pinLength else { return }
+        withAnimation { errorMessage = nil }
+        pin += String(number)
+
+        if pin.count == pinLength {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(150))
+                verifyPIN()
+            }
         }
     }
 
-    private var unlockSection: some View {
-        VStack(spacing: 16) {
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .transition(.opacity)
-            }
+    private func handleDelete() {
+        guard !pin.isEmpty else { return }
+        withAnimation { errorMessage = nil }
+        pin.removeLast()
+    }
 
-            Button {
-                Task {
-                    await performUnlock()
-                }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: biometricIcon)
-                        .font(.body.weight(.semibold))
-                    Text("잠금 해제")
-                        .font(.body.weight(.semibold))
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.accentColor)
-                .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    // MARK: - Auth
+
+    private func verifyPIN() {
+        if lockManager.unlockWithPIN(pin) {
+            // 성공 — AppLockManager가 isLocked = false 처리
+        } else {
+            pin = ""
+            withAnimation { errorMessage = "PIN이 일치하지 않습니다" }
+            withAnimation(.default.speed(6).repeatCount(4, autoreverses: true)) {
+                shakeOffset = 8
             }
-            .disabled(isAuthenticating)
-            .opacity(isAuthenticating ? 0.6 : 1)
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
+                withAnimation { shakeOffset = 0 }
+            }
         }
     }
 
-    // MARK: - Helpers
+    private func attemptBiometric() async {
+        isAuthenticating = true
+        defer { isAuthenticating = false }
+        _ = await lockManager.unlockWithBiometrics()
+    }
 
     private var biometricIcon: String {
-        switch BiometricAuthService.shared.biometricType {
-        case .faceID:
-            return "faceid"
-        case .touchID:
-            return "touchid"
-        case .none:
-            return "lock.open.fill"
-        }
-    }
-
-    private func performUnlock() async {
-        isAuthenticating = true
-        errorMessage = nil
-        defer { isAuthenticating = false }
-
-        do {
-            let success = try await BiometricAuthService.shared.authenticate()
-            if success {
-                withAnimation {
-                    lockManager.isLocked = false
-                }
-            }
-        } catch let error as BiometricAuthError {
-            withAnimation {
-                errorMessage = error.errorDescription
-            }
-        } catch {
-            withAnimation {
-                errorMessage = "인증 중 오류가 발생했습니다."
-            }
+        switch authService.biometricType {
+        case .faceID: "faceid"
+        case .touchID: "touchid"
+        case .none: "lock.open.fill"
         }
     }
 }
