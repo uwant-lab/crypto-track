@@ -15,18 +15,25 @@ struct PINDotsView: View {
                     .fill(dotFill(at: index))
                     .frame(width: 14, height: 14)
                     .overlay {
-                        if index >= enteredCount && !isError {
+                        if index >= enteredCount {
                             Circle()
                                 .stroke(Color.secondary.opacity(0.5), lineWidth: 2)
                         }
                     }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
     }
 
     private func dotFill(at index: Int) -> Color {
-        if isError { return .red }
+        if isError && index < enteredCount { return .red }
         return index < enteredCount ? .accentColor : .clear
+    }
+
+    private var accessibilityLabel: String {
+        if isError { return "PIN 오류" }
+        return "\(enteredCount)자리 입력됨, 총 \(totalDigits)자리"
     }
 }
 
@@ -63,6 +70,7 @@ struct PINPadView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(number)")
     }
 
     private var deleteButton: some View {
@@ -76,6 +84,7 @@ struct PINPadView: View {
                 .frame(height: 52)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("삭제")
     }
 }
 
@@ -85,6 +94,7 @@ struct PINPadView: View {
     VStack(spacing: 32) {
         PINDotsView(enteredCount: 2, totalDigits: 4)
         PINDotsView(enteredCount: 4, totalDigits: 4, isError: true)
+        PINDotsView(enteredCount: 2, totalDigits: 4, isError: true)
         PINPadView(onNumberTap: { _ in }, onDeleteTap: {})
     }
     .padding()
