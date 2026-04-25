@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @State private var lockManager = AppLockManager.shared
     @State private var syncService = CloudSyncService.shared
+    @State private var showSecurityModal = false
 
     var body: some View {
         NavigationStack {
@@ -32,7 +33,10 @@ struct SettingsView: View {
 
                 DisplaySettingsSectionView()
 
-                SecuritySectionView(lockManager: lockManager)
+                SecuritySettingsTriggerView(
+                    lockManager: lockManager,
+                    showModal: $showSecurityModal
+                )
 
                 iCloudSyncSectionView(syncService: syncService)
             }
@@ -43,6 +47,9 @@ struct SettingsView: View {
             .task {
                 await viewModel.refreshConnectionStatuses()
             }
+        }
+        .sheet(isPresented: $showSecurityModal) {
+            SecuritySettingsModal()
         }
     }
 }
@@ -114,58 +121,41 @@ private struct ExchangeRowView: View {
     }
 }
 
-// MARK: - Security Section
+// MARK: - Security Section (Modal Trigger)
 
-private struct SecuritySectionView: View {
-    var lockManager: AppLockManager
-
-    private let authService = BiometricAuthService.shared
+private struct SecuritySettingsTriggerView: View {
+    let lockManager: AppLockManager
+    @Binding var showModal: Bool
 
     var body: some View {
         Section {
-            if authService.canUseBiometrics() {
-                Toggle(isOn: Binding(
-                    get: { lockManager.isAppLockEnabled },
-                    set: { _ in lockManager.toggleAppLock() }
-                )) {
-                    HStack(spacing: 12) {
-                        Image(systemName: biometricIcon)
-                            .foregroundStyle(.blue)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("앱 잠금 (\(authService.biometricType.rawValue))")
-                                .font(.body)
-                            Text("앱 시작 시 생체 인증으로 잠금 해제")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            } else {
+            Button {
+                showModal = true
+            } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: "lock.slash")
-                        .foregroundStyle(.secondary)
-                    Text("이 기기에서는 생체 인증을 사용할 수 없습니다.")
-                        .font(.body)
+                    Image(systemName: "lock.shield")
+                        .foregroundStyle(.blue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("보안")
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                        Text(lockManager.isPINSet ? "PIN 잠금 활성화됨" : "잠금 미설정")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
+            .buttonStyle(.plain)
         } header: {
             Text("보안")
         } footer: {
-            if authService.canUseBiometrics() {
+            if lockManager.isPINSet {
                 Text("앱이 백그라운드로 이동하면 자동으로 잠깁니다.")
             }
-        }
-    }
-
-    private var biometricIcon: String {
-        switch authService.biometricType {
-        case .faceID:
-            return "faceid"
-        case .touchID:
-            return "touchid"
-        case .none:
-            return "lock.fill"
         }
     }
 }

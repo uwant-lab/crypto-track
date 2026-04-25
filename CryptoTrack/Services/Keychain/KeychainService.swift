@@ -179,8 +179,8 @@ final class KeychainService: @unchecked Sendable {
 
     /// 지정한 account의 키들을 한꺼번에 읽어 캐시에 적재합니다.
     /// 개별 실패(`errSecItemNotFound` 등)는 무시합니다 — best-effort.
-    /// 앱 시작 또는 `AppLockManager.unlock()` 성공 시 호출해 키체인 프롬프트를
-    /// 시작 시점으로 모아주세요.
+    /// 앱 시작 또는 `AppLockManager.unlockWithPIN()` / `unlockWithBiometrics()` 성공 시
+    /// 호출해 키체인 프롬프트를 시작 시점으로 모아주세요.
     func preloadCache(account: String, keys: [String]) {
         for key in keys {
             _ = try? read(key: key, account: account)
