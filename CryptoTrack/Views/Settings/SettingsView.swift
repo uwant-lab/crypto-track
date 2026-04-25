@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @State private var lockManager = AppLockManager.shared
     @State private var syncService = CloudSyncService.shared
+    @State private var showSecurityModal = false
 
     var body: some View {
         NavigationStack {
@@ -32,7 +33,10 @@ struct SettingsView: View {
 
                 DisplaySettingsSectionView()
 
-                SecuritySettingsTriggerView(lockManager: lockManager)
+                SecuritySettingsTriggerView(
+                    lockManager: lockManager,
+                    showModal: $showSecurityModal
+                )
 
                 iCloudSyncSectionView(syncService: syncService)
             }
@@ -43,6 +47,9 @@ struct SettingsView: View {
             .task {
                 await viewModel.refreshConnectionStatuses()
             }
+        }
+        .sheet(isPresented: $showSecurityModal) {
+            SecuritySettingsModal()
         }
     }
 }
@@ -118,7 +125,7 @@ private struct ExchangeRowView: View {
 
 private struct SecuritySettingsTriggerView: View {
     let lockManager: AppLockManager
-    @State private var showModal = false
+    @Binding var showModal: Bool
 
     var body: some View {
         Section {
@@ -149,9 +156,6 @@ private struct SecuritySettingsTriggerView: View {
             if lockManager.isPINSet {
                 Text("앱이 백그라운드로 이동하면 자동으로 잠깁니다.")
             }
-        }
-        .sheet(isPresented: $showModal) {
-            SecuritySettingsModal()
         }
     }
 }

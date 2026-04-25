@@ -5,6 +5,7 @@ struct SecuritySettingsModal: View {
     @State private var lockManager = AppLockManager.shared
     @State private var navigationPath = NavigationPath()
     @State private var canUseBiometrics: Bool = false
+    @State private var biometricUnavailableReason: String? = nil
     @State private var biometricTypeRawValue: String = ""
     @Environment(\.dismiss) private var dismiss
 
@@ -31,7 +32,9 @@ struct SecuritySettingsModal: View {
         }
         .frame(minWidth: 380, idealWidth: 420, minHeight: 460, idealHeight: 500)
         .task {
-            canUseBiometrics = authService.canUseBiometrics()
+            let availability = authService.biometricAvailability()
+            canUseBiometrics = availability.canUse
+            biometricUnavailableReason = availability.reason?.errorDescription
             biometricTypeRawValue = authService.biometricType.rawValue
         }
     }
@@ -132,12 +135,20 @@ struct SecuritySettingsModal: View {
                     }
                 }
             } else if lockManager.isPINSet {
-                HStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "lock.slash")
                         .foregroundStyle(.secondary)
-                    Text("이 기기에서는 생체 인증을 사용할 수 없습니다.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("생체 인증을 사용할 수 없습니다")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                        if let reason = biometricUnavailableReason {
+                            Text(reason)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
             } else {
                 HStack(spacing: 12) {

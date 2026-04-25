@@ -63,6 +63,18 @@ final class BiometricAuthService: Sendable {
         return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
     }
 
+    /// 생체 인증 가용 여부와 불가 사유를 함께 반환합니다.
+    func biometricAvailability() -> (canUse: Bool, reason: BiometricAuthError?) {
+        let context = LAContext()
+        var error: NSError?
+        let canUse = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        if canUse { return (true, nil) }
+        if let laError = error as? LAError {
+            return (false, mapLAError(laError))
+        }
+        return (false, .notAvailable)
+    }
+
     func authenticate() async throws -> Bool {
         let context = LAContext()
         var policyError: NSError?
